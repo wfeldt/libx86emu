@@ -78,8 +78,9 @@ void X86EMU_trace_code (void)
 void X86EMU_trace_xregs (void)
 {
 	if (DEBUG_TRACE()) {
+		printk("\n");
 		x86emu_dump_xregs();
-    }
+	}
 }
 
 void x86emu_just_disassemble (void)
