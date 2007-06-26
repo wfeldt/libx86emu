@@ -126,6 +126,8 @@ DB(		if (CHECK_IP_FETCH())
 
 		/* handle prefixes here */
 		while (is_prefix[op1 = (*sys_rdb)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP++))]) {
+			INC_DECODED_INST_LEN(1);
+
 			switch(op1) {
 				case 0x26:
 					DECODE_PRINTF("es: ");
