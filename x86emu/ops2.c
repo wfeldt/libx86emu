@@ -53,7 +53,7 @@ static void x86emuOp2_illegal_op(
 	u8 op2)
 {
 	START_OF_INSTR();
-	DECODE_PRINTF("ILLEGAL EXTENDED X86 OPCODE\n");
+	DECODE_PRINTF("illegal extended x86 opcode\n");
 	TRACE_REGS();
 	printk("%04x:%04x: %02X ILLEGAL EXTENDED X86 OPCODE!\n",
 		M.x86.R_CS, M.x86.R_IP-2,op2);
@@ -272,7 +272,7 @@ Handles opcode 0x0f,0xa0
 static void x86emuOp2_push_FS(u8 X86EMU_UNUSED(op2))
 {
     START_OF_INSTR();
-    DECODE_PRINTF("PUSH\tFS\n");
+    DECODE_PRINTF("push\tfs\n");
     TRACE_AND_STEP();
     push_word(M.x86.R_FS);
     DECODE_CLEAR_SEGOVR();
@@ -286,7 +286,7 @@ Handles opcode 0x0f,0xa1
 static void x86emuOp2_pop_FS(u8 X86EMU_UNUSED(op2))
 {
     START_OF_INSTR();
-    DECODE_PRINTF("POP\tFS\n");
+    DECODE_PRINTF("pop\tfs\n");
     TRACE_AND_STEP();
     M.x86.R_FS = pop_word();
     DECODE_CLEAR_SEGOVR();
@@ -304,7 +304,7 @@ static void x86emuOp2_bt_R(u8 X86EMU_UNUSED(op2))
     int bit,disp;
 
     START_OF_INSTR();
-    DECODE_PRINTF("BT\t");
+    DECODE_PRINTF("bt\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -425,7 +425,7 @@ static void x86emuOp2_shld_IMM(u8 X86EMU_UNUSED(op2))
 	u8 shift;
 
     START_OF_INSTR();
-    DECODE_PRINTF("SHLD\t");
+    DECODE_PRINTF("shld\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -561,7 +561,7 @@ static void x86emuOp2_shld_CL(u8 X86EMU_UNUSED(op2))
     uint destoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("SHLD\t");
+    DECODE_PRINTF("shld\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -572,7 +572,7 @@ static void x86emuOp2_shld_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm00_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_LONG_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_long(destoffset);
             destval = shld_long(destval,*shiftreg,M.x86.R_CL);
@@ -584,7 +584,7 @@ static void x86emuOp2_shld_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm00_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_WORD_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_word(destoffset);
             destval = shld_word(destval,*shiftreg,M.x86.R_CL);
@@ -599,7 +599,7 @@ static void x86emuOp2_shld_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm01_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_LONG_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_long(destoffset);
             destval = shld_long(destval,*shiftreg,M.x86.R_CL);
@@ -611,7 +611,7 @@ static void x86emuOp2_shld_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm01_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_WORD_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_word(destoffset);
             destval = shld_word(destval,*shiftreg,M.x86.R_CL);
@@ -626,7 +626,7 @@ static void x86emuOp2_shld_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm10_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_LONG_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_long(destoffset);
             destval = shld_long(destval,*shiftreg,M.x86.R_CL);
@@ -638,7 +638,7 @@ static void x86emuOp2_shld_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm10_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_WORD_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_word(destoffset);
             destval = shld_word(destval,*shiftreg,M.x86.R_CL);
@@ -652,7 +652,7 @@ static void x86emuOp2_shld_CL(u8 X86EMU_UNUSED(op2))
             destreg = DECODE_RM_LONG_REGISTER(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_LONG_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             *destreg = shld_long(*destreg,*shiftreg,M.x86.R_CL);
         } else {
@@ -661,7 +661,7 @@ static void x86emuOp2_shld_CL(u8 X86EMU_UNUSED(op2))
             destreg = DECODE_RM_WORD_REGISTER(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_WORD_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             *destreg = shld_word(*destreg,*shiftreg,M.x86.R_CL);
         }
@@ -678,7 +678,7 @@ Handles opcode 0x0f,0xa8
 static void x86emuOp2_push_GS(u8 X86EMU_UNUSED(op2))
 {
     START_OF_INSTR();
-    DECODE_PRINTF("PUSH\tGS\n");
+    DECODE_PRINTF("push\tgs\n");
     TRACE_AND_STEP();
     push_word(M.x86.R_GS);
     DECODE_CLEAR_SEGOVR();
@@ -692,7 +692,7 @@ Handles opcode 0x0f,0xa9
 static void x86emuOp2_pop_GS(u8 X86EMU_UNUSED(op2))
 {
     START_OF_INSTR();
-    DECODE_PRINTF("POP\tGS\n");
+    DECODE_PRINTF("pop\tgs\n");
     TRACE_AND_STEP();
     M.x86.R_GS = pop_word();
     DECODE_CLEAR_SEGOVR();
@@ -710,7 +710,7 @@ static void x86emuOp2_bts_R(u8 X86EMU_UNUSED(op2))
     int bit,disp;
 
     START_OF_INSTR();
-    DECODE_PRINTF("BTS\t");
+    DECODE_PRINTF("bts\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -849,7 +849,7 @@ static void x86emuOp2_shrd_IMM(u8 X86EMU_UNUSED(op2))
 	u8 shift;
 
     START_OF_INSTR();
-    DECODE_PRINTF("SHLD\t");
+    DECODE_PRINTF("shld\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -985,7 +985,7 @@ static void x86emuOp2_shrd_CL(u8 X86EMU_UNUSED(op2))
     uint destoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("SHLD\t");
+    DECODE_PRINTF("shld\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -996,7 +996,7 @@ static void x86emuOp2_shrd_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm00_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_LONG_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_long(destoffset);
             destval = shrd_long(destval,*shiftreg,M.x86.R_CL);
@@ -1008,7 +1008,7 @@ static void x86emuOp2_shrd_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm00_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_WORD_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_word(destoffset);
             destval = shrd_word(destval,*shiftreg,M.x86.R_CL);
@@ -1023,7 +1023,7 @@ static void x86emuOp2_shrd_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm01_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_LONG_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_long(destoffset);
             destval = shrd_long(destval,*shiftreg,M.x86.R_CL);
@@ -1035,7 +1035,7 @@ static void x86emuOp2_shrd_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm01_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_WORD_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_word(destoffset);
             destval = shrd_word(destval,*shiftreg,M.x86.R_CL);
@@ -1050,7 +1050,7 @@ static void x86emuOp2_shrd_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm10_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_LONG_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_long(destoffset);
             destval = shrd_long(destval,*shiftreg,M.x86.R_CL);
@@ -1062,7 +1062,7 @@ static void x86emuOp2_shrd_CL(u8 X86EMU_UNUSED(op2))
             destoffset = decode_rm10_address(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_WORD_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             destval = fetch_data_word(destoffset);
             destval = shrd_word(destval,*shiftreg,M.x86.R_CL);
@@ -1076,7 +1076,7 @@ static void x86emuOp2_shrd_CL(u8 X86EMU_UNUSED(op2))
             destreg = DECODE_RM_LONG_REGISTER(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_LONG_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             *destreg = shrd_long(*destreg,*shiftreg,M.x86.R_CL);
         } else {
@@ -1085,7 +1085,7 @@ static void x86emuOp2_shrd_CL(u8 X86EMU_UNUSED(op2))
             destreg = DECODE_RM_WORD_REGISTER(rl);
             DECODE_PRINTF(",");
             shiftreg = DECODE_RM_WORD_REGISTER(rh);
-            DECODE_PRINTF(",CL\n");
+            DECODE_PRINTF(",cl\n");
             TRACE_AND_STEP();
             *destreg = shrd_word(*destreg,*shiftreg,M.x86.R_CL);
         }
@@ -1105,7 +1105,7 @@ static void x86emuOp2_imul_R_RM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("IMUL\t");
+    DECODE_PRINTF("imul\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1283,7 +1283,7 @@ static void x86emuOp2_lss_R_IMM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("LSS\t");
+    DECODE_PRINTF("lss\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1332,7 +1332,7 @@ static void x86emuOp2_btr_R(u8 X86EMU_UNUSED(op2))
 	int bit,disp;
 
 	START_OF_INSTR();
-	DECODE_PRINTF("BTR\t");
+	DECODE_PRINTF("btr\t");
 	FETCH_DECODE_MODRM(mod, rh, rl);
 	switch (mod) {
 	case 0:
@@ -1471,7 +1471,7 @@ static void x86emuOp2_lfs_R_IMM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("LFS\t");
+    DECODE_PRINTF("lfs\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1520,7 +1520,7 @@ static void x86emuOp2_lgs_R_IMM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("LGS\t");
+    DECODE_PRINTF("lgs\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1568,7 +1568,7 @@ static void x86emuOp2_movzx_byte_R_RM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("MOVZX\t");
+    DECODE_PRINTF("movzx\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1687,7 +1687,7 @@ static void x86emuOp2_movzx_word_R_RM(u8 X86EMU_UNUSED(op2))
     u16 *srcreg;
 
     START_OF_INSTR();
-    DECODE_PRINTF("MOVZX\t");
+    DECODE_PRINTF("movzx\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1744,19 +1744,19 @@ static void x86emuOp2_btX_I(u8 X86EMU_UNUSED(op2))
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (rh) {
     case 4:
-	DECODE_PRINTF("BT\t");
+	DECODE_PRINTF("bt\t");
 	break;
     case 5:
-	DECODE_PRINTF("BTS\t");
+	DECODE_PRINTF("bts\t");
 	break;
     case 6:
-	DECODE_PRINTF("BTR\t");
+	DECODE_PRINTF("btr\t");
 	break;
     case 7:
-	DECODE_PRINTF("BTC\t");
+	DECODE_PRINTF("btc\t");
 	break;
     default:
-	DECODE_PRINTF("ILLEGAL EXTENDED X86 OPCODE\n");
+	DECODE_PRINTF("illegal extended x86 opcode\n");
 	TRACE_REGS();
 	printk("%04x:%04x: %02X%02X ILLEGAL EXTENDED X86 OPCODE EXTENSION!\n",
 		M.x86.R_CS, M.x86.R_IP-3,op2, (mod<<6)|(rh<<3)|rl);
@@ -1991,7 +1991,7 @@ static void x86emuOp2_btc_R(u8 X86EMU_UNUSED(op2))
     int bit,disp;
 
     START_OF_INSTR();
-    DECODE_PRINTF("BTC\t");
+    DECODE_PRINTF("btc\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -2129,7 +2129,7 @@ static void x86emuOp2_bsf(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("BSF\n");
+    DECODE_PRINTF("bsf\n");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch(mod) {
     case 0:
@@ -2245,7 +2245,7 @@ static void x86emuOp2_bsr(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("BSF\n");
+    DECODE_PRINTF("bsf\n");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch(mod) {
     case 0:
@@ -2361,7 +2361,7 @@ static void x86emuOp2_movsx_byte_R_RM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("MOVSX\t");
+    DECODE_PRINTF("movsx\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -2480,7 +2480,7 @@ static void x86emuOp2_movsx_word_R_RM(u8 X86EMU_UNUSED(op2))
     u16 *srcreg;
 
     START_OF_INSTR();
-    DECODE_PRINTF("MOVSX\t");
+    DECODE_PRINTF("movsx\t");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:

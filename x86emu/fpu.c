@@ -45,7 +45,7 @@
 void x86emuOp_esc_coprocess_d8(u8 X86EMU_UNUSED(op1))
 {
     START_OF_INSTR();
-    DECODE_PRINTF("ESC D8\n");
+    DECODE_PRINTF("esc d8\n");
     DECODE_CLEAR_SEGOVR();
     END_OF_INSTR_NO_TRACE();
 }
@@ -123,7 +123,7 @@ void x86emuOp_esc_coprocess_d9(u8 X86EMU_UNUSED(op1))
       case 3:                   /* register to register */
 		stkelem = (u8)rl;
 		if (rh < 4) {
-				DECODE_PRINTF2("ST(%d)\n", stkelem);
+				DECODE_PRINTF2("st(%d)\n", stkelem);
 		} else {
 				DECODE_PRINTF("\n");
 		}
@@ -346,7 +346,7 @@ void x86emuOp_esc_coprocess_da(u8 X86EMU_UNUSED(op1))
         break;
       case 3:           /* register to register */
 		stkelem = (u8)rl;
-        DECODE_PRINTF2("\tST(%d),ST\n", stkelem);
+        DECODE_PRINTF2("\tst(%d),st\n", stkelem);
         break;
     }
 #ifdef X86EMU_FPU_PRESENT
@@ -419,20 +419,20 @@ void x86emuOp_esc_coprocess_db(u8 X86EMU_UNUSED(op1))
     } else if (rh == 4) {       /* === 11 10 0 nnn */
         switch (rl) {
           case 0:
-            DECODE_PRINTF("FENI\n");
+            DECODE_PRINTF("feni\n");
             break;
           case 1:
-            DECODE_PRINTF("FDISI\n");
+            DECODE_PRINTF("fdisi\n");
             break;
           case 2:
-            DECODE_PRINTF("FCLEX\n");
+            DECODE_PRINTF("fclex\n");
             break;
           case 3:
-            DECODE_PRINTF("FINIT\n");
+            DECODE_PRINTF("finit\n");
             break;
         }
     } else {
-        DECODE_PRINTF2("ESC_DB %0x\n", (mod << 6) + (rh << 3) + (rl));
+        DECODE_PRINTF2("esc_db %0x\n", (mod << 6) + (rh << 3) + (rl));
     }
 #endif /* DEBUG */
     switch (mod) {
@@ -559,7 +559,7 @@ void x86emuOp_esc_coprocess_dc(u8 X86EMU_UNUSED(op1))
         break;
       case 3:                   /* register to register */
 		stkelem = (u8)rl;
-        DECODE_PRINTF2("\tST(%d),ST\n", stkelem);
+        DECODE_PRINTF2("\tst(%d),st\n", stkelem);
         break;
     }
 #ifdef X86EMU_FPU_PRESENT
@@ -672,7 +672,7 @@ void x86emuOp_esc_coprocess_dd(u8 X86EMU_UNUSED(op1))
         break;
       case 3:                   /* register to register */
 		stkelem = (u8)rl;
-        DECODE_PRINTF2("\tST(%d),ST\n", stkelem);
+        DECODE_PRINTF2("\tst(%d),st\n", stkelem);
         break;
     }
 #ifdef X86EMU_FPU_PRESENT
@@ -782,7 +782,7 @@ void x86emuOp_esc_coprocess_de(u8 X86EMU_UNUSED(op1))
         break;
       case 3:                   /* register to register */
 		stkelem = (u8)rl;
-        DECODE_PRINTF2("\tST(%d),ST\n", stkelem);
+        DECODE_PRINTF2("\tst(%d),st\n", stkelem);
         break;
     }
 #ifdef X86EMU_FPU_PRESENT
@@ -904,7 +904,7 @@ void x86emuOp_esc_coprocess_df(u8 X86EMU_UNUSED(op1))
         break;
       case 3:                   /* register to register */
 		stkelem = (u8)rl;
-        DECODE_PRINTF2("\tST(%d)\n", stkelem);
+        DECODE_PRINTF2("\tst(%d)\n", stkelem);
         break;
     }
 #ifdef X86EMU_FPU_PRESENT
