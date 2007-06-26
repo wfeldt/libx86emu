@@ -53,40 +53,40 @@ void x86emuOp_esc_coprocess_d8(u8 X86EMU_UNUSED(op1))
 #ifdef DEBUG
 
 static char *x86emu_fpu_op_d9_tab[] = {
-    "FLD\tDWORD PTR ", "ESC_D9\t", "FST\tDWORD PTR ", "FSTP\tDWORD PTR ",
-    "FLDENV\t", "FLDCW\t", "FSTENV\t", "FSTCW\t",
+    "fld dword ptr ", "esc_d9 ", "fst dword ptr ", "fstp dword ptr ",
+    "fldenv ", "fldcw ", "fstenv ", "fstcw ",
 
-    "FLD\tDWORD PTR ", "ESC_D9\t", "FST\tDWORD PTR ", "FSTP\tDWORD PTR ",
-    "FLDENV\t", "FLDCW\t", "FSTENV\t", "FSTCW\t",
+    "fld dword ptr ", "esc_d9 ", "fst dword ptr ", "fstp dword ptr ",
+    "fldenv ", "fldcw ", "fstenv ", "fstcw ",
 
-    "FLD\tDWORD PTR ", "ESC_D9\t", "FST\tDWORD PTR ", "FSTP\tDWORD PTR ",
-    "FLDENV\t", "FLDCW\t", "FSTENV\t", "FSTCW\t",
+    "fld dword ptr ", "esc_d9 ", "fst dword ptr ", "fstp dword ptr ",
+    "fldenv ", "fldcw ", "fstenv ", "fstcw ",
 };
 
 static char *x86emu_fpu_op_d9_tab1[] = {
-    "FLD\t", "FLD\t", "FLD\t", "FLD\t",
-    "FLD\t", "FLD\t", "FLD\t", "FLD\t",
+    "fld ", "fld ", "fld ", "fld ",
+    "fld ", "fld ", "fld ", "fld ",
 
-    "FXCH\t", "FXCH\t", "FXCH\t", "FXCH\t",
-    "FXCH\t", "FXCH\t", "FXCH\t", "FXCH\t",
+    "fxch ", "fxch ", "fxch ", "fxch ",
+    "fxch ", "fxch ", "fxch ", "fxch ",
 
-    "FNOP", "ESC_D9", "ESC_D9", "ESC_D9",
-    "ESC_D9", "ESC_D9", "ESC_D9", "ESC_D9",
+    "fnop", "esc_d9", "esc_d9", "esc_d9",
+    "esc_d9", "esc_d9", "esc_d9", "esc_d9",
 
-    "FSTP\t", "FSTP\t", "FSTP\t", "FSTP\t",
-    "FSTP\t", "FSTP\t", "FSTP\t", "FSTP\t",
+    "fstp ", "fstp ", "fstp ", "fstp ",
+    "fstp ", "fstp ", "fstp ", "fstp ",
 
-    "FCHS", "FABS", "ESC_D9", "ESC_D9",
-    "FTST", "FXAM", "ESC_D9", "ESC_D9",
+    "fchs", "fabs", "esc_d9", "esc_d9",
+    "ftst", "fxam", "esc_d9", "esc_d9",
 
-    "FLD1", "FLDL2T", "FLDL2E", "FLDPI",
-    "FLDLG2", "FLDLN2", "FLDZ", "ESC_D9",
+    "fld1", "fldl2t", "fldl2e", "fldpi",
+    "fldlg2", "fldln2", "fldz", "esc_d9",
 
-    "F2XM1", "FYL2X", "FPTAN", "FPATAN",
-    "FXTRACT", "ESC_D9", "FDECSTP", "FINCSTP",
+    "f2xm1", "fyl2x", "fptan", "fpatan",
+    "fxtract", "esc_d9", "fdecstp", "fincstp",
 
-    "FPREM", "FYL2XP1", "FSQRT", "ESC_D9",
-    "FRNDINT", "FSCALE", "ESC_D9", "ESC_D9",
+    "fprem", "fyl2xp1", "fsqrt", "esc_d9",
+    "frndint", "fscale", "esc_d9", "esc_d9",
 };
 
 #endif /* DEBUG */
@@ -300,23 +300,23 @@ void x86emuOp_esc_coprocess_d9(u8 X86EMU_UNUSED(op1))
 #ifdef DEBUG
 
 char *x86emu_fpu_op_da_tab[] = {
-    "FIADD\tDWORD PTR ", "FIMUL\tDWORD PTR ", "FICOM\tDWORD PTR ",
-    "FICOMP\tDWORD PTR ",
-    "FISUB\tDWORD PTR ", "FISUBR\tDWORD PTR ", "FIDIV\tDWORD PTR ",
-    "FIDIVR\tDWORD PTR ",
+    "fiadd dword ptr ", "fimul dword ptr ", "ficom dword ptr ",
+    "ficomp dword ptr ",
+    "fisub dword ptr ", "fisubr dword ptr ", "fidiv dword ptr ",
+    "fidivr dword ptr ",
 
-    "FIADD\tDWORD PTR ", "FIMUL\tDWORD PTR ", "FICOM\tDWORD PTR ",
-    "FICOMP\tDWORD PTR ",
-    "FISUB\tDWORD PTR ", "FISUBR\tDWORD PTR ", "FIDIV\tDWORD PTR ",
-    "FIDIVR\tDWORD PTR ",
+    "fiadd dword ptr ", "fimul dword ptr ", "ficom dword ptr ",
+    "ficomp dword ptr ",
+    "fisub dword ptr ", "fisubr dword ptr ", "fidiv dword ptr ",
+    "fidivr dword ptr ",
     
-    "FIADD\tDWORD PTR ", "FIMUL\tDWORD PTR ", "FICOM\tDWORD PTR ",
-    "FICOMP\tDWORD PTR ",
-    "FISUB\tDWORD PTR ", "FISUBR\tDWORD PTR ", "FIDIV\tDWORD PTR ",
-    "FIDIVR\tDWORD PTR ",
+    "fiadd dword ptr ", "fimul dword ptr ", "ficom dword ptr ",
+    "ficomp dword ptr ",
+    "fisub dword ptr ", "fisubr dword ptr ", "fidiv dword ptr ",
+    "fidivr dword ptr ",
 
-    "ESC_DA ", "ESC_DA ", "ESC_DA ", "ESC_DA ",
-    "ESC_DA     ", "ESC_DA ", "ESC_DA   ", "ESC_DA ",
+    "esc_da ", "esc_da ", "esc_da ", "esc_da ",
+    "esc_da     ", "esc_da ", "esc_da   ", "esc_da ",
 };
 
 #endif /* DEBUG */
@@ -346,7 +346,7 @@ void x86emuOp_esc_coprocess_da(u8 X86EMU_UNUSED(op1))
         break;
       case 3:           /* register to register */
 		stkelem = (u8)rl;
-        DECODE_PRINTF2("\tst(%d),st\n", stkelem);
+        DECODE_PRINTF2(" st(%d),st\n", stkelem);
         break;
     }
 #ifdef X86EMU_FPU_PRESENT
@@ -393,14 +393,14 @@ void x86emuOp_esc_coprocess_da(u8 X86EMU_UNUSED(op1))
 #ifdef DEBUG
 
 char *x86emu_fpu_op_db_tab[] = {
-    "FILD\tDWORD PTR ", "ESC_DB\t19", "FIST\tDWORD PTR ", "FISTP\tDWORD PTR ",
-    "ESC_DB\t1C", "FLD\tTBYTE PTR ", "ESC_DB\t1E", "FSTP\tTBYTE PTR ",
+    "fild dword ptr ", "esc_db 19", "fist dword ptr ", "fistp dword ptr ",
+    "esc_db 1c", "fld tbyte ptr ", "esc_db 1e", "fstp tbyte ptr ",
 
-    "FILD\tDWORD PTR ", "ESC_DB\t19", "FIST\tDWORD PTR ", "FISTP\tDWORD PTR ",
-    "ESC_DB\t1C", "FLD\tTBYTE PTR ", "ESC_DB\t1E", "FSTP\tTBYTE PTR ",
+    "fild dword ptr ", "esc_db 19", "fist dword ptr ", "fistp dword ptr ",
+    "esc_db 1c", "fld tbyte ptr ", "esc_db 1e", "fstp tbyte ptr ",
 
-    "FILD\tDWORD PTR ", "ESC_DB\t19", "FIST\tDWORD PTR ", "FISTP\tDWORD PTR ",
-    "ESC_DB\t1C", "FLD\tTBYTE PTR ", "ESC_DB\t1E", "FSTP\tTBYTE PTR ",
+    "fild dword ptr ", "esc_db 19", "fist dword ptr ", "fistp dword ptr ",
+    "esc_db 1c", "fld tbyte ptr ", "esc_db 1e", "fstp tbyte ptr ",
 };
 
 #endif /* DEBUG */
@@ -514,23 +514,23 @@ void x86emuOp_esc_coprocess_db(u8 X86EMU_UNUSED(op1))
 
 #ifdef DEBUG
 char *x86emu_fpu_op_dc_tab[] = {
-    "FADD\tQWORD PTR ", "FMUL\tQWORD PTR ", "FCOM\tQWORD PTR ",
-    "FCOMP\tQWORD PTR ",
-    "FSUB\tQWORD PTR ", "FSUBR\tQWORD PTR ", "FDIV\tQWORD PTR ",
-    "FDIVR\tQWORD PTR ",
+    "fadd qword ptr ", "fmul qword ptr ", "fcom qword ptr ",
+    "fcomp qword ptr ",
+    "fsub qword ptr ", "fsubr qword ptr ", "fdiv qword ptr ",
+    "fdivr qword ptr ",
 
-    "FADD\tQWORD PTR ", "FMUL\tQWORD PTR ", "FCOM\tQWORD PTR ",
-    "FCOMP\tQWORD PTR ",
-    "FSUB\tQWORD PTR ", "FSUBR\tQWORD PTR ", "FDIV\tQWORD PTR ",
-    "FDIVR\tQWORD PTR ",
+    "fadd qword ptr ", "fmul qword ptr ", "fcom qword ptr ",
+    "fcomp qword ptr ",
+    "fsub qword ptr ", "fsubr qword ptr ", "fdiv qword ptr ",
+    "fdivr qword ptr ",
 
-    "FADD\tQWORD PTR ", "FMUL\tQWORD PTR ", "FCOM\tQWORD PTR ",
-    "FCOMP\tQWORD PTR ",
-    "FSUB\tQWORD PTR ", "FSUBR\tQWORD PTR ", "FDIV\tQWORD PTR ",
-    "FDIVR\tQWORD PTR ",
+    "fadd qword ptr ", "fmul qword ptr ", "fcom qword ptr ",
+    "fcomp qword ptr ",
+    "fsub qword ptr ", "fsubr qword ptr ", "fdiv qword ptr ",
+    "fdivr qword ptr ",
 
-    "FADD\t", "FMUL\t", "FCOM\t", "FCOMP\t",
-    "FSUBR\t", "FSUB\t", "FDIVR\t", "FDIV\t",
+    "fadd ", "fmul ", "fcom ", "fcomp ",
+    "fsubr ", "fsub ", "fdivr ", "fdiv ",
 };
 #endif /* DEBUG */
 
@@ -559,7 +559,7 @@ void x86emuOp_esc_coprocess_dc(u8 X86EMU_UNUSED(op1))
         break;
       case 3:                   /* register to register */
 		stkelem = (u8)rl;
-        DECODE_PRINTF2("\tst(%d),st\n", stkelem);
+        DECODE_PRINTF2(" st(%d),st\n", stkelem);
         break;
     }
 #ifdef X86EMU_FPU_PRESENT
@@ -632,17 +632,17 @@ void x86emuOp_esc_coprocess_dc(u8 X86EMU_UNUSED(op1))
 #ifdef DEBUG
 
 static char *x86emu_fpu_op_dd_tab[] = {
-    "FLD\tQWORD PTR ", "ESC_DD\t29,", "FST\tQWORD PTR ", "FSTP\tQWORD PTR ",
-    "FRSTOR\t", "ESC_DD\t2D,", "FSAVE\t", "FSTSW\t",
+    "fld qword ptr ", "esc_dd 29,", "fst qword ptr ", "fstp qword ptr ",
+    "frstor ", "esc_dd 2d,", "fsave ", "fstsw ",
 
-    "FLD\tQWORD PTR ", "ESC_DD\t29,", "FST\tQWORD PTR ", "FSTP\tQWORD PTR ",
-    "FRSTOR\t", "ESC_DD\t2D,", "FSAVE\t", "FSTSW\t",
+    "fld qword ptr ", "esc_dd 29,", "fst qword ptr ", "fstp qword ptr ",
+    "frstor ", "esc_dd 2d,", "fsave ", "fstsw ",
 
-    "FLD\tQWORD PTR ", "ESC_DD\t29,", "FST\tQWORD PTR ", "FSTP\tQWORD PTR ",
-    "FRSTOR\t", "ESC_DD\t2D,", "FSAVE\t", "FSTSW\t",
+    "fld qword ptr ", "esc_dd 29,", "fst qword ptr ", "fstp qword ptr ",
+    "frstor ", "esc_dd 2d,", "fsave ", "fstsw ",
 
-    "FFREE\t", "FXCH\t", "FST\t", "FSTP\t",
-    "ESC_DD\t2C,", "ESC_DD\t2D,", "ESC_DD\t2E,", "ESC_DD\t2F,",
+    "ffree ", "fxch ", "fst ", "fstp ",
+    "esc_dd 2c,", "esc_dd 2d,", "esc_dd 2e,", "esc_dd 2f,",
 };
 
 #endif /* DEBUG */
@@ -672,7 +672,7 @@ void x86emuOp_esc_coprocess_dd(u8 X86EMU_UNUSED(op1))
         break;
       case 3:                   /* register to register */
 		stkelem = (u8)rl;
-        DECODE_PRINTF2("\tst(%d),st\n", stkelem);
+        DECODE_PRINTF2(" st(%d),st\n", stkelem);
         break;
     }
 #ifdef X86EMU_FPU_PRESENT
@@ -736,23 +736,23 @@ void x86emuOp_esc_coprocess_dd(u8 X86EMU_UNUSED(op1))
 
 static char *x86emu_fpu_op_de_tab[] =
 {
-    "FIADD\tWORD PTR ", "FIMUL\tWORD PTR ", "FICOM\tWORD PTR ",
-    "FICOMP\tWORD PTR ",
-    "FISUB\tWORD PTR ", "FISUBR\tWORD PTR ", "FIDIV\tWORD PTR ",
-    "FIDIVR\tWORD PTR ",
+    "fiadd word ptr ", "fimul word ptr ", "ficom word ptr ",
+    "ficomp word ptr ",
+    "fisub word ptr ", "fisubr word ptr ", "fidiv word ptr ",
+    "fidivr word ptr ",
 
-    "FIADD\tWORD PTR ", "FIMUL\tWORD PTR ", "FICOM\tWORD PTR ",
-    "FICOMP\tWORD PTR ",
-    "FISUB\tWORD PTR ", "FISUBR\tWORD PTR ", "FIDIV\tWORD PTR ",
-    "FIDIVR\tWORD PTR ",
+    "fiadd word ptr ", "fimul word ptr ", "ficom word ptr ",
+    "ficomp word ptr ",
+    "fisub word ptr ", "fisubr word ptr ", "fidiv word ptr ",
+    "fidivr word ptr ",
 
-    "FIADD\tWORD PTR ", "FIMUL\tWORD PTR ", "FICOM\tWORD PTR ",
-    "FICOMP\tWORD PTR ",
-    "FISUB\tWORD PTR ", "FISUBR\tWORD PTR ", "FIDIV\tWORD PTR ",
-    "FIDIVR\tWORD PTR ",
+    "fiadd word ptr ", "fimul word ptr ", "ficom word ptr ",
+    "ficomp word ptr ",
+    "fisub word ptr ", "fisubr word ptr ", "fidiv word ptr ",
+    "fidivr word ptr ",
 
-    "FADDP\t", "FMULP\t", "FCOMP\t", "FCOMPP\t",
-    "FSUBRP\t", "FSUBP\t", "FDIVRP\t", "FDIVP\t",
+    "faddp ", "fmulp ", "fcomp ", "fcompp ",
+    "fsubrp ", "fsubp ", "fdivrp ", "fdivp ",
 };
 
 #endif /* DEBUG */
@@ -782,7 +782,7 @@ void x86emuOp_esc_coprocess_de(u8 X86EMU_UNUSED(op1))
         break;
       case 3:                   /* register to register */
 		stkelem = (u8)rl;
-        DECODE_PRINTF2("\tst(%d),st\n", stkelem);
+        DECODE_PRINTF2(" st(%d),st\n", stkelem);
         break;
     }
 #ifdef X86EMU_FPU_PRESENT
@@ -858,23 +858,23 @@ void x86emuOp_esc_coprocess_de(u8 X86EMU_UNUSED(op1))
 
 static char *x86emu_fpu_op_df_tab[] = {
     /* mod == 00 */
-    "FILD\tWORD PTR ", "ESC_DF\t39\n", "FIST\tWORD PTR ", "FISTP\tWORD PTR ",
-    "FBLD\tTBYTE PTR ", "FILD\tQWORD PTR ", "FBSTP\tTBYTE PTR ",
-    "FISTP\tQWORD PTR ",
+    "fild word ptr ", "esc_df 39\n", "fist word ptr ", "fistp word ptr ",
+    "fbld tbyte ptr ", "fild qword ptr ", "fbstp tbyte ptr ",
+    "fistp qword ptr ",
 
     /* mod == 01 */
-    "FILD\tWORD PTR ", "ESC_DF\t39 ", "FIST\tWORD PTR ", "FISTP\tWORD PTR ",
-    "FBLD\tTBYTE PTR ", "FILD\tQWORD PTR ", "FBSTP\tTBYTE PTR ",
-    "FISTP\tQWORD PTR ",
+    "fild word ptr ", "esc_df 39 ", "fist word ptr ", "fistp word ptr ",
+    "fbld tbyte ptr ", "fild qword ptr ", "fbstp tbyte ptr ",
+    "fistp qword ptr ",
 
     /* mod == 10 */
-    "FILD\tWORD PTR ", "ESC_DF\t39 ", "FIST\tWORD PTR ", "FISTP\tWORD PTR ",
-    "FBLD\tTBYTE PTR ", "FILD\tQWORD PTR ", "FBSTP\tTBYTE PTR ",
-    "FISTP\tQWORD PTR ",
+    "fild word ptr ", "esc_df 39 ", "fist word ptr ", "fistp word ptr ",
+    "fbld tbyte ptr ", "fild qword ptr ", "fbstp tbyte ptr ",
+    "fistp qword ptr ",
 
     /* mod == 11 */
-    "FFREE\t", "FXCH\t", "FST\t", "FSTP\t",
-    "ESC_DF\t3C,", "ESC_DF\t3D,", "ESC_DF\t3E,", "ESC_DF\t3F,"
+    "ffree ", "fxch ", "fst ", "fstp ",
+    "esc_df 3c,", "esc_df 3d,", "esc_df 3e,", "esc_df 3f,"
 };
 
 #endif /* DEBUG */
@@ -904,7 +904,7 @@ void x86emuOp_esc_coprocess_df(u8 X86EMU_UNUSED(op1))
         break;
       case 3:                   /* register to register */
 		stkelem = (u8)rl;
-        DECODE_PRINTF2("\tst(%d)\n", stkelem);
+        DECODE_PRINTF2(" st(%d)\n", stkelem);
         break;
     }
 #ifdef X86EMU_FPU_PRESENT

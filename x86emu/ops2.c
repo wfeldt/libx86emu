@@ -77,68 +77,68 @@ static void x86emuOp2_long_jump(u8 op2)
     START_OF_INSTR();
     switch (op2) {
       case 0x80:
-        name = "JO\t";
+        name = "jo ";
         cond =  ACCESS_FLAG(F_OF);
         break;
       case 0x81:
-        name = "JNO\t";
+        name = "jno ";
         cond = !ACCESS_FLAG(F_OF);
         break;
       case 0x82:
-        name = "JB\t";
+        name = "jb ";
         cond = ACCESS_FLAG(F_CF);
         break;
       case 0x83:
-        name = "JNB\t";
+        name = "jnb ";
         cond = !ACCESS_FLAG(F_CF);
         break;
       case 0x84:
-        name = "JZ\t";
+        name = "jz ";
         cond = ACCESS_FLAG(F_ZF);
         break;
       case 0x85:
-        name = "JNZ\t";
+        name = "jnz ";
         cond = !ACCESS_FLAG(F_ZF);
         break;
       case 0x86:
-        name = "JBE\t";
+        name = "jbe ";
         cond = ACCESS_FLAG(F_CF) || ACCESS_FLAG(F_ZF);
         break;
       case 0x87:
-        name = "JNBE\t";
+        name = "jnbe ";
         cond = !(ACCESS_FLAG(F_CF) || ACCESS_FLAG(F_ZF));
         break;
       case 0x88:
-        name = "JS\t";
+        name = "js ";
         cond = ACCESS_FLAG(F_SF);
         break;
       case 0x89:
-        name = "JNS\t";
+        name = "jns ";
         cond = !ACCESS_FLAG(F_SF);
         break;
       case 0x8a:
-        name = "JP\t";
+        name = "jp ";
         cond = ACCESS_FLAG(F_PF);
         break;
       case 0x8b:
-        name = "JNP\t";
+        name = "jnp ";
         cond = !ACCESS_FLAG(F_PF);
         break;
       case 0x8c:
-        name = "JL\t";
+        name = "jl ";
         cond = xorl(ACCESS_FLAG(F_SF), ACCESS_FLAG(F_OF));
         break;
       case 0x8d:
-        name = "JNL\t";
+        name = "jnl ";
         cond = !(xorl(ACCESS_FLAG(F_SF), ACCESS_FLAG(F_OF)));
         break;
       case 0x8e:
-        name = "JLE\t";
+        name = "jle ";
         cond = (xorl(ACCESS_FLAG(F_SF), ACCESS_FLAG(F_OF)) ||
                 ACCESS_FLAG(F_ZF));
         break;
       case 0x8f:
-        name = "JNLE\t";
+        name = "jnle ";
         cond = !(xorl(ACCESS_FLAG(F_SF), ACCESS_FLAG(F_OF)) ||
                  ACCESS_FLAG(F_ZF));
         break;
@@ -170,68 +170,68 @@ static void x86emuOp2_set_byte(u8 op2)
     START_OF_INSTR();
     switch (op2) {
       case 0x90:
-        name = "SETO\t";
+        name = "seto ";
         cond =  ACCESS_FLAG(F_OF);
         break;
       case 0x91:
-        name = "SETNO\t";
+        name = "setno ";
         cond = !ACCESS_FLAG(F_OF);
         break;
       case 0x92:
-        name = "SETB\t";
+        name = "setb ";
         cond = ACCESS_FLAG(F_CF);
         break;
       case 0x93:
-        name = "SETNB\t";
+        name = "setnb ";
         cond = !ACCESS_FLAG(F_CF);
         break;
       case 0x94:
-        name = "SETZ\t";
+        name = "setz ";
         cond = ACCESS_FLAG(F_ZF);
         break;
       case 0x95:
-        name = "SETNZ\t";
+        name = "setnz ";
         cond = !ACCESS_FLAG(F_ZF);
         break;
       case 0x96:
-        name = "SETBE\t";
+        name = "setbe ";
         cond = ACCESS_FLAG(F_CF) || ACCESS_FLAG(F_ZF);
         break;
       case 0x97:
-        name = "SETNBE\t";
+        name = "setnbe ";
         cond = !(ACCESS_FLAG(F_CF) || ACCESS_FLAG(F_ZF));
         break;
       case 0x98:
-        name = "SETS\t";
+        name = "sets ";
         cond = ACCESS_FLAG(F_SF);
         break;
       case 0x99:
-        name = "SETNS\t";
+        name = "setns ";
         cond = !ACCESS_FLAG(F_SF);
         break;
       case 0x9a:
-        name = "SETP\t";
+        name = "setp ";
         cond = ACCESS_FLAG(F_PF);
         break;
       case 0x9b:
-        name = "SETNP\t";
+        name = "setnp ";
         cond = !ACCESS_FLAG(F_PF);
         break;
       case 0x9c:
-        name = "SETL\t";
+        name = "setl ";
         cond = xorl(ACCESS_FLAG(F_SF), ACCESS_FLAG(F_OF));
         break;
       case 0x9d:
-        name = "SETNL\t";
+        name = "setnl ";
         cond = xorl(ACCESS_FLAG(F_SF), ACCESS_FLAG(F_OF));
         break;
       case 0x9e:
-        name = "SETLE\t";
+        name = "setle ";
         cond = (xorl(ACCESS_FLAG(F_SF), ACCESS_FLAG(F_OF)) ||
                 ACCESS_FLAG(F_ZF));
         break;
       case 0x9f:
-        name = "SETNLE\t";
+        name = "setnle ";
         cond = !(xorl(ACCESS_FLAG(F_SF), ACCESS_FLAG(F_OF)) ||
                  ACCESS_FLAG(F_ZF));
         break;
@@ -272,7 +272,7 @@ Handles opcode 0x0f,0xa0
 static void x86emuOp2_push_FS(u8 X86EMU_UNUSED(op2))
 {
     START_OF_INSTR();
-    DECODE_PRINTF("push\tfs\n");
+    DECODE_PRINTF("push fs\n");
     TRACE_AND_STEP();
     push_word(M.x86.R_FS);
     DECODE_CLEAR_SEGOVR();
@@ -286,7 +286,7 @@ Handles opcode 0x0f,0xa1
 static void x86emuOp2_pop_FS(u8 X86EMU_UNUSED(op2))
 {
     START_OF_INSTR();
-    DECODE_PRINTF("pop\tfs\n");
+    DECODE_PRINTF("pop fs\n");
     TRACE_AND_STEP();
     M.x86.R_FS = pop_word();
     DECODE_CLEAR_SEGOVR();
@@ -304,7 +304,7 @@ static void x86emuOp2_bt_R(u8 X86EMU_UNUSED(op2))
     int bit,disp;
 
     START_OF_INSTR();
-    DECODE_PRINTF("bt\t");
+    DECODE_PRINTF("bt ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -425,7 +425,7 @@ static void x86emuOp2_shld_IMM(u8 X86EMU_UNUSED(op2))
 	u8 shift;
 
     START_OF_INSTR();
-    DECODE_PRINTF("shld\t");
+    DECODE_PRINTF("shld ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -561,7 +561,7 @@ static void x86emuOp2_shld_CL(u8 X86EMU_UNUSED(op2))
     uint destoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("shld\t");
+    DECODE_PRINTF("shld ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -678,7 +678,7 @@ Handles opcode 0x0f,0xa8
 static void x86emuOp2_push_GS(u8 X86EMU_UNUSED(op2))
 {
     START_OF_INSTR();
-    DECODE_PRINTF("push\tgs\n");
+    DECODE_PRINTF("push gs\n");
     TRACE_AND_STEP();
     push_word(M.x86.R_GS);
     DECODE_CLEAR_SEGOVR();
@@ -692,7 +692,7 @@ Handles opcode 0x0f,0xa9
 static void x86emuOp2_pop_GS(u8 X86EMU_UNUSED(op2))
 {
     START_OF_INSTR();
-    DECODE_PRINTF("pop\tgs\n");
+    DECODE_PRINTF("pop gs\n");
     TRACE_AND_STEP();
     M.x86.R_GS = pop_word();
     DECODE_CLEAR_SEGOVR();
@@ -710,7 +710,7 @@ static void x86emuOp2_bts_R(u8 X86EMU_UNUSED(op2))
     int bit,disp;
 
     START_OF_INSTR();
-    DECODE_PRINTF("bts\t");
+    DECODE_PRINTF("bts ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -849,7 +849,7 @@ static void x86emuOp2_shrd_IMM(u8 X86EMU_UNUSED(op2))
 	u8 shift;
 
     START_OF_INSTR();
-    DECODE_PRINTF("shld\t");
+    DECODE_PRINTF("shld ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -985,7 +985,7 @@ static void x86emuOp2_shrd_CL(u8 X86EMU_UNUSED(op2))
     uint destoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("shld\t");
+    DECODE_PRINTF("shld ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1105,7 +1105,7 @@ static void x86emuOp2_imul_R_RM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("imul\t");
+    DECODE_PRINTF("imul ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1283,7 +1283,7 @@ static void x86emuOp2_lss_R_IMM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("lss\t");
+    DECODE_PRINTF("lss ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1332,7 +1332,7 @@ static void x86emuOp2_btr_R(u8 X86EMU_UNUSED(op2))
 	int bit,disp;
 
 	START_OF_INSTR();
-	DECODE_PRINTF("btr\t");
+	DECODE_PRINTF("btr ");
 	FETCH_DECODE_MODRM(mod, rh, rl);
 	switch (mod) {
 	case 0:
@@ -1471,7 +1471,7 @@ static void x86emuOp2_lfs_R_IMM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("lfs\t");
+    DECODE_PRINTF("lfs ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1520,7 +1520,7 @@ static void x86emuOp2_lgs_R_IMM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("lgs\t");
+    DECODE_PRINTF("lgs ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1568,7 +1568,7 @@ static void x86emuOp2_movzx_byte_R_RM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("movzx\t");
+    DECODE_PRINTF("movzx ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1687,7 +1687,7 @@ static void x86emuOp2_movzx_word_R_RM(u8 X86EMU_UNUSED(op2))
     u16 *srcreg;
 
     START_OF_INSTR();
-    DECODE_PRINTF("movzx\t");
+    DECODE_PRINTF("movzx ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -1744,16 +1744,16 @@ static void x86emuOp2_btX_I(u8 X86EMU_UNUSED(op2))
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (rh) {
     case 4:
-	DECODE_PRINTF("bt\t");
+	DECODE_PRINTF("bt ");
 	break;
     case 5:
-	DECODE_PRINTF("bts\t");
+	DECODE_PRINTF("bts ");
 	break;
     case 6:
-	DECODE_PRINTF("btr\t");
+	DECODE_PRINTF("btr ");
 	break;
     case 7:
-	DECODE_PRINTF("btc\t");
+	DECODE_PRINTF("btc ");
 	break;
     default:
 	DECODE_PRINTF("illegal extended x86 opcode\n");
@@ -1991,7 +1991,7 @@ static void x86emuOp2_btc_R(u8 X86EMU_UNUSED(op2))
     int bit,disp;
 
     START_OF_INSTR();
-    DECODE_PRINTF("btc\t");
+    DECODE_PRINTF("btc ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -2361,7 +2361,7 @@ static void x86emuOp2_movsx_byte_R_RM(u8 X86EMU_UNUSED(op2))
     uint srcoffset;
 
     START_OF_INSTR();
-    DECODE_PRINTF("movsx\t");
+    DECODE_PRINTF("movsx ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
@@ -2480,7 +2480,7 @@ static void x86emuOp2_movsx_word_R_RM(u8 X86EMU_UNUSED(op2))
     u16 *srcreg;
 
     START_OF_INSTR();
-    DECODE_PRINTF("movsx\t");
+    DECODE_PRINTF("movsx ");
     FETCH_DECODE_MODRM(mod, rh, rl);
     switch (mod) {
     case 0:
