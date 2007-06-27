@@ -57,7 +57,7 @@ static int      parse_line (char *s, int *ps, int *n);
 void X86EMU_trace_regs (void)
 {
 	if (DEBUG_TRACE()) {
-		x86emu_dump_xregs();
+		x86emu_dump_regs();
 	}
 	if (DEBUG_DECODE() && ! DEBUG_DECODE_NOPRINT()) {
 		printk("%04x:%04x ",M.x86.saved_cs, M.x86.saved_ip);
@@ -69,7 +69,7 @@ void X86EMU_trace_regs (void)
 void X86EMU_trace_code (void)
 {
 	if (DEBUG_DECODE() && ! DEBUG_DECODE_NOPRINT()) {
-		printk("%04x:%04x ",M.x86.saved_cs, M.x86.saved_ip);
+		printk("  %04x:%04x ",M.x86.saved_cs, M.x86.saved_ip);
 		print_encoded_bytes(M.x86.saved_cs, M.x86.saved_ip);
 		print_decoded_instruction();
 	}
@@ -421,22 +421,14 @@ void x86emu_dump_xregs (void)
 	printk("es %04x, ", M.x86.R_ES );
 	printk("fs %04x, ", M.x86.R_FS );
 	printk("gs %04x\n", M.x86.R_GS );
-	printk("  eip %08x, flags ", M.x86.R_EIP );
-	if (ACCESS_FLAG(F_OF))    printk("OV ");     /* CHECKED... */
-	else                        printk("NV ");
-	if (ACCESS_FLAG(F_DF))    printk("DN ");
-	else                        printk("UP ");
-	if (ACCESS_FLAG(F_IF))    printk("EI ");
-	else                        printk("DI ");
-	if (ACCESS_FLAG(F_SF))    printk("NG ");
-	else                        printk("PL ");
-	if (ACCESS_FLAG(F_ZF))    printk("ZR ");
-	else                        printk("NZ ");
-	if (ACCESS_FLAG(F_AF))    printk("AC ");
-	else                        printk("NA ");
-	if (ACCESS_FLAG(F_PF))    printk("PE ");
-	else                        printk("PO ");
-	if (ACCESS_FLAG(F_CF))    printk("CY ");
-	else                        printk("NC ");
+	printk("  eip %08x, eflags ", M.x86.R_EIP );
+	if (ACCESS_FLAG(F_OF))    printk("OF ");
+	if (ACCESS_FLAG(F_DF))    printk("DF ");
+	if (ACCESS_FLAG(F_IF))    printk("IF ");
+	if (ACCESS_FLAG(F_SF))    printk("SF ");
+	if (ACCESS_FLAG(F_ZF))    printk("ZF ");
+	if (ACCESS_FLAG(F_AF))    printk("AF ");
+	if (ACCESS_FLAG(F_PF))    printk("PF ");
+	if (ACCESS_FLAG(F_CF))    printk("CF ");
 	printk("\n");
 }

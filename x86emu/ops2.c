@@ -54,9 +54,12 @@ static void x86emuOp2_illegal_op(
 {
 	START_OF_INSTR();
 	DECODE_PRINTF("illegal extended x86 opcode\n");
+	TRACE_AND_STEP();
+#if 0
 	TRACE_REGS();
 	printk("%04x:%04x: %02X ILLEGAL EXTENDED X86 OPCODE!\n",
 		M.x86.R_CS, M.x86.R_IP-2,op2);
+#endif
     HALT_SYS();
     END_OF_INSTR();
 }
