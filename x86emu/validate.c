@@ -45,8 +45,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "x86emu.h"
-#include "x86emu/prim_asm.h"
+#include "include/x86emu.h"
+#include "include/prim_asm.h"
 
 /*-------------------------- Implementation -------------------------------*/
 

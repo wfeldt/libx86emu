@@ -40,16 +40,9 @@
 *
 ****************************************************************************/
 
-#include "x86emu/x86emu.h"
-#include "x86emu/x86emui.h"
-#include "x86emu/regs.h"
-#include "x86emu/debug.h"
-#include "x86emu/prim_ops.h"
-#ifdef IN_MODULE
-#include "xf86_ansic.h"
-#else
+#include "include/x86emui.h"
 #include <string.h>
-#endif                                                                                           
+
 /*------------------------- Global Variables ------------------------------*/
 
 X86EMU_sysEnv		_X86EMU_env;		/* Global emulator machine state */

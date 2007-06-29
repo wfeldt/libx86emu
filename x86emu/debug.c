@@ -37,13 +37,9 @@
 *
 ****************************************************************************/
 
-#include "x86emu/x86emui.h"
-#ifdef IN_MODULE
-#include "xf86_ansic.h"
-#else
+#include "include/x86emui.h"
 #include <stdarg.h>
 #include <stdlib.h>
-#endif
 
 /*----------------------------- Implementation ----------------------------*/
 
