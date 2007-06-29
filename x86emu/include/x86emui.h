@@ -62,7 +62,6 @@
 #endif
 
 #include "x86emu.h"
-#include "regs.h"
 #include "debug.h"
 #include "decode.h"
 #include "ops.h"
