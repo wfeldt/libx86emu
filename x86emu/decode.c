@@ -174,11 +174,9 @@ DB(		if (CHECK_IP_FETCH())
 					break;
 			}
 		}
-
 		(*x86emu_optab[op1])(op1);
 
 DB(		X86EMU_trace_code();)
-
 	}
 
 #if 0
@@ -214,8 +212,7 @@ void fetch_decode_modrm(
 {
 	int fetched;
 
-DB(	if (CHECK_IP_FETCH())
-	  x86emu_check_ip_access();)
+// DB(	if (CHECK_IP_FETCH()) x86emu_check_ip_access();)
 	fetched = (*sys_rdb)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP++));
 	INC_DECODED_INST_LEN(1);
 	*mod  = (fetched >> 6) & 0x03;
@@ -237,8 +234,7 @@ u8 fetch_byte_imm(void)
 {
 	u8 fetched;
 
-DB(	if (CHECK_IP_FETCH())
-		x86emu_check_ip_access();)
+// DB(	if (CHECK_IP_FETCH()) x86emu_check_ip_access();)
 	fetched = (*sys_rdb)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP++));
 	INC_DECODED_INST_LEN(1);
 	return fetched;
@@ -258,8 +254,7 @@ u16 fetch_word_imm(void)
 {
 	u16	fetched;
 
-DB(	if (CHECK_IP_FETCH())
-		x86emu_check_ip_access();)
+// DB(	if (CHECK_IP_FETCH()) x86emu_check_ip_access();)
 	fetched = (*sys_rdw)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP));
 	M.x86.R_IP += 2;
 	INC_DECODED_INST_LEN(2);
@@ -280,8 +275,7 @@ u32 fetch_long_imm(void)
 {
 	u32 fetched;
 
-DB(	if (CHECK_IP_FETCH())
-	  x86emu_check_ip_access();)
+// DB(	if (CHECK_IP_FETCH()) x86emu_check_ip_access();)
 	fetched = (*sys_rdl)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP));
 	M.x86.R_IP += 4;
 	INC_DECODED_INST_LEN(4);

@@ -97,6 +97,8 @@ extern void (X86APIP sys_outb)(X86EMU_pioAddr addr,u8 val);
 extern void (X86APIP sys_outw)(X86EMU_pioAddr addr,u16 val);
 extern void	(X86APIP sys_outl)(X86EMU_pioAddr addr,u32 val);
 
+extern void  	(* sys_check_ip)(void);
+
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/
 #endif

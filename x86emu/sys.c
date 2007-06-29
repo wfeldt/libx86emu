@@ -514,6 +514,8 @@ void 	(X86APIP sys_outb)(X86EMU_pioAddr addr, u8 val) 	= p_outb;
 void 	(X86APIP sys_outw)(X86EMU_pioAddr addr, u16 val)	= p_outw;
 void 	(X86APIP sys_outl)(X86EMU_pioAddr addr, u32 val)	= p_outl;
 
+void 	(* sys_check_ip)(void)	= NULL;
+
 /*----------------------------- Setup -------------------------------------*/
 
 /****************************************************************************
@@ -580,6 +582,11 @@ void X86EMU_setupIntrFuncs(
 		for (i = 0; i < 256; i++)
 			_X86EMU_intrTab[i] = funcs[i];
 		}
+}
+
+void X86EMU_setupCheckFuncs(X86EMU_checkFuncs *funcs)
+{
+    sys_check_ip = funcs->ip;
 }
 
 /****************************************************************************

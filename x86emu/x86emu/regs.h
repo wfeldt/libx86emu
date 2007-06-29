@@ -103,14 +103,20 @@ struct i386_special_regs {
 	u32 FLAGS;
 	};
 
+
+typedef struct {
+  u32 base, limit;
+  u16 sel;
+  u16 acc;
+} sel_t;
+
 /*  
  * Segment registers here represent the 16 bit quantities
  * CS, DS, ES, SS.
  */
-
 struct i386_segment_regs {
-    u16 CS, DS, SS, ES, FS, GS;
-	};
+  sel_t CS, DS, SS, ES, FS, GS;
+};
 
 /* 8 bit registers */
 #define R_AH  gen.A.I8_reg.h_reg
@@ -143,14 +149,6 @@ struct i386_segment_regs {
 #define R_FLG spc.FLAGS
 
 /* special registers */
-#define R_SP  spc.SP.I16_reg.x_reg
-#define R_BP  spc.BP.I16_reg.x_reg
-#define R_SI  spc.SI.I16_reg.x_reg
-#define R_DI  spc.DI.I16_reg.x_reg
-#define R_IP  spc.IP.I16_reg.x_reg
-#define R_FLG spc.FLAGS
-
-/* special registers */
 #define R_ESP  spc.SP.I32_reg.e_reg
 #define R_EBP  spc.BP.I32_reg.e_reg
 #define R_ESI  spc.SI.I32_reg.e_reg
@@ -159,12 +157,12 @@ struct i386_segment_regs {
 #define R_EFLG spc.FLAGS
 
 /* segment registers */
-#define R_CS  seg.CS
-#define R_DS  seg.DS
-#define R_SS  seg.SS
-#define R_ES  seg.ES
-#define R_FS  seg.FS
-#define R_GS  seg.GS
+#define R_CS  seg.CS.sel
+#define R_DS  seg.DS.sel
+#define R_SS  seg.SS.sel
+#define R_ES  seg.ES.sel
+#define R_FS  seg.FS.sel
+#define R_GS  seg.GS.sel
 
 /* flag conditions   */
 #define FB_CF 0x0001            /* CARRY flag  */

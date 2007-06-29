@@ -131,6 +131,12 @@ extern void X86API wrl(u32 addr, u32 val);
  
 /*  #pragma	pack() */
 
+typedef struct {
+	void (* ip)(void);
+} X86EMU_checkFuncs;
+
+
+
 /*--------------------- type definitions -----------------------------------*/
 
 typedef void (X86APIP X86EMU_intrFuncs)(int num);
@@ -146,6 +152,7 @@ void 	X86EMU_setupMemFuncs(X86EMU_memFuncs *funcs);
 void 	X86EMU_setupPioFuncs(X86EMU_pioFuncs *funcs);
 void 	X86EMU_setupIntrFuncs(X86EMU_intrFuncs funcs[]);
 void 	X86EMU_prepareForInt(int num);
+void 	X86EMU_setupCheckFuncs(X86EMU_checkFuncs *funcs);
 
 /* decode.c */
 
@@ -157,6 +164,13 @@ void 	X86EMU_halt_sys(void);
 #else
 #define	HALT_SYS()	X86EMU_halt_sys()
 #endif
+
+/* checks to be enabled for "runtime" */
+
+#define CHECK_IP_FETCH_F                0x1
+#define CHECK_SP_ACCESS_F               0x2
+#define CHECK_MEM_ACCESS_F              0x4 /*using regular linear pointer */
+#define CHECK_DATA_ACCESS_F             0x8 /*using segment:offset*/
 
 /* Debug options */
 

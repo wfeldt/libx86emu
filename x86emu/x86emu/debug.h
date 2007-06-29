@@ -41,13 +41,6 @@
 
 /*---------------------- Macros and type definitions ----------------------*/
 
-/* checks to be enabled for "runtime" */
-
-#define CHECK_IP_FETCH_F                0x1
-#define CHECK_SP_ACCESS_F               0x2
-#define CHECK_MEM_ACCESS_F              0x4 /*using regular linear pointer */
-#define CHECK_DATA_ACCESS_F             0x8 /*using segment:offset*/
-
 #ifdef DEBUG
 # define CHECK_IP_FETCH()              	(M.x86.check & CHECK_IP_FETCH_F)
 # define CHECK_SP_ACCESS()             	(M.x86.check & CHECK_SP_ACCESS_F)

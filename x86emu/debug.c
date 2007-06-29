@@ -151,7 +151,7 @@ static void disassemble_forward (u16 seg, u16 off, int n)
 
 void x86emu_check_ip_access (void)
 {
-    /* NULL as of now */
+	if(sys_check_ip) (*sys_check_ip)();
 }
 
 void x86emu_check_sp_access (void)
