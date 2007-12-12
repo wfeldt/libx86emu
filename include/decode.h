@@ -32,74 +32,59 @@
 * Environment:	Any
 * Developer:    Kendall Bennett
 *
-* Description:  Header file for system specific functions. These functions
-*				are always compiled and linked in the OS depedent libraries,
-*				and never in a binary portable driver.
+* Description:  Header file for instruction decoding logic.
 *
 ****************************************************************************/
 
+#ifndef __X86EMU_DECODE_H
+#define __X86EMU_DECODE_H
 
-#ifndef __X86EMU_X86EMUI_H
-#define __X86EMU_X86EMUI_H
+/*---------------------- Macros and type definitions ----------------------*/
 
-/* If we are compiling in C++ mode, we can compile some functions as
- * inline to increase performance (however the code size increases quite
- * dramatically in this case).
- */
+/* Instruction Decoding Stuff */
 
-#if	defined(__cplusplus) && !defined(_NO_INLINE)
-#define	_INLINE	inline
-#else
-#define	_INLINE static
-#endif
+#define FETCH_DECODE_MODRM(mod,rh,rl) 	fetch_decode_modrm(&mod,&rh,&rl)
+#define DECODE_RM_BYTE_REGISTER(r)    	decode_rm_byte_register(r)
+#define DECODE_RM_WORD_REGISTER(r)    	decode_rm_word_register(r)
+#define DECODE_RM_LONG_REGISTER(r)    	decode_rm_long_register(r)
+#define DECODE_CLEAR_SEGOVR()         	M.x86.mode &= ~SYSMODE_CLRMASK
 
-/* Get rid of unused parameters in C++ compilation mode */
-
-#ifdef __cplusplus
-#define	X86EMU_UNUSED(v)
-#else
-#define	X86EMU_UNUSED(v)	v
-#endif
-
-#include "x86emu.h"
-#include "debug.h"
-#include "decode.h"
-#include "ops.h"
-#include "prim_ops.h"
-#include "fpu.h"
-#include "fpu_regs.h"
-
-#ifdef IN_MODULE
-#include <xf86_ansic.h>
-#else
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#endif                                                                                           
-/*--------------------------- Inline Functions ----------------------------*/
+/*-------------------------- Function Prototypes --------------------------*/
 
 #ifdef  __cplusplus
 extern "C" {            			/* Use "C" linkage when in C++ mode */
 #endif
 
-extern u8  	(X86APIP sys_rdb)(u32 addr);
-extern u16 	(X86APIP sys_rdw)(u32 addr);
-extern u32 	(X86APIP sys_rdl)(u32 addr);
-extern void (X86APIP sys_wrb)(u32 addr,u8 val);
-extern void (X86APIP sys_wrw)(u32 addr,u16 val);
-extern void (X86APIP sys_wrl)(u32 addr,u32 val);
+void 	x86emu_intr_raise (u8 type);
+void    fetch_decode_modrm (int *mod,int *regh,int *regl);
+u8      fetch_byte_imm (void);
+u16     fetch_word_imm (void);
+u32     fetch_long_imm (void);
+u8      fetch_data_byte (uint offset);
+u8      fetch_data_byte_abs (uint segment, uint offset);
+u16     fetch_data_word (uint offset);
+u16     fetch_data_word_abs (uint segment, uint offset);
+u32     fetch_data_long (uint offset);
+u32     fetch_data_long_abs (uint segment, uint offset);
+void    store_data_byte (uint offset, u8 val);
+void    store_data_byte_abs (uint segment, uint offset, u8 val);
+void    store_data_word (uint offset, u16 val);
+void    store_data_word_abs (uint segment, uint offset, u16 val);
+void    store_data_long (uint offset, u32 val);
+void    store_data_long_abs (uint segment, uint offset, u32 val);
+u8* 	decode_rm_byte_register(int reg);
+u16* 	decode_rm_word_register(int reg);
+u32* 	decode_rm_long_register(int reg);
+u16* 	decode_rm_seg_register(int reg);
+u32	decode_rm00_address(int rm);
+u32	decode_rm01_address(int rm);
+u32	decode_rm10_address(int rm);
+u32	decode_sib_address(int sib, int mod);
+u32     decode_rm_address(int mod, int rl);
 
-extern u8  	(X86APIP sys_inb)(X86EMU_pioAddr addr);
-extern u16 	(X86APIP sys_inw)(X86EMU_pioAddr addr);
-extern u32 	(X86APIP sys_inl)(X86EMU_pioAddr addr);
-extern void (X86APIP sys_outb)(X86EMU_pioAddr addr,u8 val);
-extern void (X86APIP sys_outw)(X86EMU_pioAddr addr,u16 val);
-extern void	(X86APIP sys_outl)(X86EMU_pioAddr addr,u32 val);
-
-extern void  	(* sys_check_ip)(void);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/
 #endif
 
-#endif /* __X86EMU_X86EMUI_H */
+#endif /* __X86EMU_DECODE_H */

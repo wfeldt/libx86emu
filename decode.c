@@ -194,6 +194,15 @@ void X86EMU_halt_sys(void)
 }
 
 /****************************************************************************
+REMARKS:
+Flag illegal Opcode.
+****************************************************************************/
+void X86EMU_illegal_op(void)
+{
+	M.x86.intr |= INTR_HALTED + INTR_ILLEGAL_OP;
+}
+
+/****************************************************************************
 PARAMETERS:
 mod		- Mod value from decoded byte
 regh	- Reg h value from decoded byte
@@ -1146,3 +1155,29 @@ u32 decode_rm10_address(
     return 0;
     /*NOTREACHED */
 }
+
+
+u32 decode_rm_address(int mod, int rl)
+{
+  switch(mod) {
+    case 0:
+      return decode_rm00_address(rl);
+      break;
+
+    case 1:
+      return decode_rm01_address(rl);
+      break;
+
+    case 2:
+      return decode_rm10_address(rl);
+      break;
+
+    default:
+      ILLEGAL_OP();
+      break;
+  }
+
+  return 0;
+}
+
+

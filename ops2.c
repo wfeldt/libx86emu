@@ -52,19 +52,77 @@ Handles illegal opcodes.
 static void x86emuOp2_illegal_op(
 	u8 op2)
 {
-	START_OF_INSTR();
-	DECODE_PRINTF("illegal extended x86 opcode\n");
-	TRACE_AND_STEP();
-#if 0
-	TRACE_REGS();
-	printk("%04x:%04x: %02X ILLEGAL EXTENDED X86 OPCODE!\n",
-		M.x86.R_CS, M.x86.R_IP-2,op2);
-#endif
-    HALT_SYS();
-    END_OF_INSTR();
+  START_OF_INSTR();
+  ILLEGAL_OP();
+  END_OF_INSTR();
 }
 
 #define xorl(a,b)   ((a) && !(b)) || (!(a) && (b))
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x01
+****************************************************************************/
+static void x86emuOp2_opc_01(u8 X86EMU_UNUSED(op2))
+{
+  int mod, rl, rh;
+  u32 base, addr;
+  u16 limit;
+
+  START_OF_INSTR();
+  FETCH_DECODE_MODRM(mod, rh, rl);
+  switch(rh) {
+    case 0:
+      DECODE_PRINTF("sgdt ");
+      break;
+
+    case 1:
+      DECODE_PRINTF("sidt ");
+      break;
+
+    case 2:
+      DECODE_PRINTF("lgdt ");
+      addr = decode_rm_address(mod, rl);
+      limit = fetch_data_word(addr);
+      base = fetch_data_long(addr + 2);
+      if(!SYSMODE_DATA32) base &= 0xffffff;
+      M.x86.gdt.limit = limit;
+      M.x86.gdt.base = base;
+      break;
+
+    case 3:
+      DECODE_PRINTF("lidt ");
+      addr = decode_rm_address(mod, rl);
+      limit = fetch_data_word(addr);
+      base = fetch_data_long(addr + 2);
+      if(!SYSMODE_DATA32) base &= 0xffffff;
+      M.x86.idt.limit = limit;
+      M.x86.idt.base = base;
+      break;
+
+    case 4:
+      ILLEGAL_OP();
+      break;
+
+    case 5:
+      DECODE_PRINTF("smsw ");
+      break;
+
+    case 6:
+      DECODE_PRINTF("lmsw ");
+      break;
+
+    case 7:
+      DECODE_PRINTF("invlpg ");
+      break;
+  }
+
+  DECODE_PRINTF("\n");
+
+  DECODE_CLEAR_SEGOVR();
+  END_OF_INSTR();
+}
+
 
 /****************************************************************************
 REMARKS:
@@ -2532,7 +2590,7 @@ static void x86emuOp2_movsx_word_R_RM(u8 X86EMU_UNUSED(op2))
 void (*x86emu_optab2[256])(u8) =
 {
 /*  0x00 */ x86emuOp2_illegal_op,  /* Group F (ring 0 PM)      */
-/*  0x01 */ x86emuOp2_illegal_op,  /* Group G (ring 0 PM)      */
+/*  0x01 */ x86emuOp2_opc_01,      /* Group G (ring 0 PM)      */
 /*  0x02 */ x86emuOp2_illegal_op,  /* lar (ring 0 PM)          */
 /*  0x03 */ x86emuOp2_illegal_op,  /* lsl (ring 0 PM)          */
 /*  0x04 */ x86emuOp2_illegal_op,

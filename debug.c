@@ -191,18 +191,20 @@ void x86emu_end_instr (void)
 
 static void print_encoded_bytes (u16 s, u16 o)
 {
-	int i;
+	int i, len;
 	char buf1[64];
 
-	for (i = 0, *buf1 = 0; i < M.x86.enc_pos; i++) {
+	len = (M.x86.intr & INTR_ILLEGAL_OP) ? 15 : M.x86.enc_pos;
+
+	for (i = 0, *buf1 = 0; i < len; i++) {
 		sprintf(buf1 + 2 * i, "%02x", fetch_data_byte_abs(s, o + i));
 	}
-	printk("%-20s", buf1);
+	printk("%-20s  ", buf1);
 }
 
 static void print_decoded_instruction (void)
 {
-	printk("%s", M.x86.decoded_buf);
+	printk("%s", (M.x86.intr & INTR_ILLEGAL_OP) ? "illegal opcode\n" : M.x86.decoded_buf);
 }
 
 void x86emu_print_int_vect (u16 iv)

@@ -38,8 +38,8 @@
 *
 ****************************************************************************/
 
-#ifndef __X86EMU_X86EMU_H
-#define __X86EMU_X86EMU_H
+#ifndef __X86EMU_LIBX86_H
+#define __X86EMU_LIBX86_H
 
 #ifdef  __cplusplus
 extern "C" {            			/* Use "C" linkage when in C++ mode */
@@ -112,21 +112,19 @@ typedef struct {
 #endif /* BIG_ENDIAN */
 
 typedef union {
-	I32_reg_t   I32_reg;
-	I16_reg_t   I16_reg;
-	I8_reg_t    I8_reg;
-	} i386_general_register;
+  I32_reg_t   I32_reg;
+  I16_reg_t   I16_reg;
+  I8_reg_t    I8_reg;
+} i386_general_register;
 
 struct i386_general_regs {
-	i386_general_register A, B, C, D;
-	};
-
-typedef struct i386_general_regs Gen_reg_t;
+  i386_general_register A, B, C, D;
+};
 
 struct i386_special_regs {
-	i386_general_register SP, BP, SI, DI, IP;
-	u32 FLAGS;
-	};
+  i386_general_register SP, BP, SI, DI, IP;
+  u32 FLAGS;
+};
 
 
 typedef struct {
@@ -136,58 +134,117 @@ typedef struct {
 } sel_t;
 
 /*  
- * Segment registers here represent the 16 bit quantities
- * CS, DS, ES, SS.
+ * segment registers here represent 16 bit selectors & base/limit cache
+ * ldt & tr are quite similar to segment selectors
  */
 struct i386_segment_regs {
   sel_t CS, DS, SS, ES, FS, GS;
+  sel_t LDT, TR;
 };
 
 /* 8 bit registers */
-#define R_AH  gen.A.I8_reg.h_reg
-#define R_AL  gen.A.I8_reg.l_reg
-#define R_BH  gen.B.I8_reg.h_reg
-#define R_BL  gen.B.I8_reg.l_reg
-#define R_CH  gen.C.I8_reg.h_reg
-#define R_CL  gen.C.I8_reg.l_reg
-#define R_DH  gen.D.I8_reg.h_reg
-#define R_DL  gen.D.I8_reg.l_reg
+#define R_AH		gen.A.I8_reg.h_reg
+#define R_AL		gen.A.I8_reg.l_reg
+#define R_BH		gen.B.I8_reg.h_reg
+#define R_BL		gen.B.I8_reg.l_reg
+#define R_CH		gen.C.I8_reg.h_reg
+#define R_CL		gen.C.I8_reg.l_reg
+#define R_DH		gen.D.I8_reg.h_reg
+#define R_DL		gen.D.I8_reg.l_reg
 
 /* 16 bit registers */
-#define R_AX  gen.A.I16_reg.x_reg
-#define R_BX  gen.B.I16_reg.x_reg
-#define R_CX  gen.C.I16_reg.x_reg
-#define R_DX  gen.D.I16_reg.x_reg
+#define R_AX		gen.A.I16_reg.x_reg
+#define R_BX		gen.B.I16_reg.x_reg
+#define R_CX		gen.C.I16_reg.x_reg
+#define R_DX		gen.D.I16_reg.x_reg
 
 /* 32 bit extended registers */
-#define R_EAX  gen.A.I32_reg.e_reg
-#define R_EBX  gen.B.I32_reg.e_reg
-#define R_ECX  gen.C.I32_reg.e_reg
-#define R_EDX  gen.D.I32_reg.e_reg
+#define R_EAX		gen.A.I32_reg.e_reg
+#define R_EBX		gen.B.I32_reg.e_reg
+#define R_ECX		gen.C.I32_reg.e_reg
+#define R_EDX		gen.D.I32_reg.e_reg
 
 /* special registers */
-#define R_SP  spc.SP.I16_reg.x_reg
-#define R_BP  spc.BP.I16_reg.x_reg
-#define R_SI  spc.SI.I16_reg.x_reg
-#define R_DI  spc.DI.I16_reg.x_reg
-#define R_IP  spc.IP.I16_reg.x_reg
-#define R_FLG spc.FLAGS
+#define R_SP		spc.SP.I16_reg.x_reg
+#define R_BP		spc.BP.I16_reg.x_reg
+#define R_SI		spc.SI.I16_reg.x_reg
+#define R_DI		spc.DI.I16_reg.x_reg
+#define R_IP		spc.IP.I16_reg.x_reg
+#define R_FLG		spc.FLAGS
 
 /* special registers */
-#define R_ESP  spc.SP.I32_reg.e_reg
-#define R_EBP  spc.BP.I32_reg.e_reg
-#define R_ESI  spc.SI.I32_reg.e_reg
-#define R_EDI  spc.DI.I32_reg.e_reg
-#define R_EIP  spc.IP.I32_reg.e_reg
-#define R_EFLG spc.FLAGS
+#define R_ESP		spc.SP.I32_reg.e_reg
+#define R_EBP		spc.BP.I32_reg.e_reg
+#define R_ESI		spc.SI.I32_reg.e_reg
+#define R_EDI		spc.DI.I32_reg.e_reg
+#define R_EIP		spc.IP.I32_reg.e_reg
+#define R_EFLG		spc.FLAGS
 
 /* segment registers */
-#define R_CS  seg.CS.sel
-#define R_DS  seg.DS.sel
-#define R_SS  seg.SS.sel
-#define R_ES  seg.ES.sel
-#define R_FS  seg.FS.sel
-#define R_GS  seg.GS.sel
+#define R_CS		seg.CS.sel
+#define R_CS_BASE	seg.CS.base
+#define R_CS_LIMIT	seg.CS.limit
+#define R_CS_ACC	seg.CS.acc
+#define R_DS		seg.DS.sel
+#define R_DS_BASE	seg.DS.base
+#define R_DS_LIMIT	seg.DS.limit
+#define R_DS_ACC	seg.DS.acc
+#define R_SS		seg.SS.sel
+#define R_SS_BASE	seg.SS.base
+#define R_SS_LIMIT	seg.SS.limit
+#define R_SS_ACC	seg.SS.acc
+#define R_ES		seg.ES.sel
+#define R_ES_BASE	seg.ES.base
+#define R_ES_LIMIT	seg.ES.limit
+#define R_ES_ACC	seg.ES.acc
+#define R_FS		seg.FS.sel
+#define R_FS_BASE	seg.FS.base
+#define R_FS_LIMIT	seg.FS.limit
+#define R_FS_ACC	seg.FS.acc
+#define R_GS		seg.GS.sel
+#define R_GS_BASE	seg.GS.base
+#define R_GS_LIMIT	seg.GS.limit
+#define R_GS_ACC	seg.GS.acc
+
+/* other registers: tr, ldt, gdt, idt */
+#define R_TR		seg.TR.sel
+#define R_TR_BASE	seg.TR.base
+#define R_TR_LIMIT	seg.TR.limit
+#define R_TR_ACC	seg.TR.acc
+#define R_LDT		seg.LDT.sel
+#define R_LDT_BASE	seg.LDT.base
+#define R_LDT_LIMIT	seg.LDT.limit
+#define R_LDT_ACC	seg.LDT.acc
+#define R_GDT_BASE	gdt.base
+#define R_GDT_LIMIT	gdt.limit
+#define R_IDT_BASE	idt.base
+#define R_IDT_LIMIT	idt.limit
+
+/* machine status & debug registers: CRx, DRx, TRx */
+#define R_CR0		cr[0]
+#define R_CR1		cr[1]
+#define R_CR2		cr[2]
+#define R_CR3		cr[3]
+#define R_CR4		cr[4]
+#define R_CR5		cr[5]
+#define R_CR6		cr[6]
+#define R_CR7		cr[7]
+#define R_DR0		dr[0]
+#define R_DR1		dr[1]
+#define R_DR2		dr[2]
+#define R_DR3		dr[3]
+#define R_DR4		dr[4]
+#define R_DR5		dr[5]
+#define R_DR6		dr[6]
+#define R_DR7		dr[7]
+#define R_TR0		tr[0]
+#define R_TR1		tr[1]
+#define R_TR2		tr[2]
+#define R_TR3		tr[3]
+#define R_TR4		tr[4]
+#define R_TR5		tr[5]
+#define R_TR6		tr[6]
+#define R_TR7		tr[7]
 
 /* flag conditions   */
 #define FB_CF 0x0001            /* CARRY flag  */
@@ -272,14 +329,26 @@ struct i386_segment_regs {
 						 SYSMODE_PREFIX_DATA    | \
 						 SYSMODE_PREFIX_ADDR)
 
+#define  SYSMODE_DATA32		(M.x86.mode & SYSMODE_PREFIX_DATA)
+
 #define  INTR_SYNCH           0x1
 #define  INTR_ASYNCH          0x2
 #define  INTR_HALTED          0x4
+#define  INTR_ILLEGAL_OP      0x8
 
 typedef struct {
     struct i386_general_regs    gen;
     struct i386_special_regs    spc;
     struct i386_segment_regs    seg;
+    u32 cr[8];
+    u32 dr[8];
+    u32 tr[8];
+    struct {
+      u32 base, limit;
+    } gdt;
+    struct {
+      u32 base, limit;
+    } idt;
     /*
      * MODE contains information on:
      *  REPE prefix             2 bits  repe,repne
@@ -294,19 +363,17 @@ typedef struct {
      */
     u32                         mode;
     volatile int                intr;   /* mask of pending interrupts */
-	int                         debug;
-#ifdef DEBUG
-	int                         check;
+    int                         debug;
+    int                         check;
     u16                         saved_ip;
     u16                         saved_cs;
     int                         enc_pos;
     int                         enc_str_pos;
     char                        decode_buf[32]; /* encoded byte stream  */
     char                        decoded_buf[256]; /* disassembled strings */
-#endif
     u8                          intno;
     u8                          __pad[3];
-	} X86EMU_regs;
+} X86EMU_regs;
 
 /****************************************************************************
 REMARKS:
@@ -361,7 +428,7 @@ need to override the programmed I/O functions using the X86EMU_setupPioFuncs
 function.
 
 HEADER:
-x86emu.h
+libx86.h
 
 MEMBERS:
 inb		- Function to read a byte from an I/O port
@@ -392,7 +459,7 @@ etc), you will need to override this using the X86EMU_setupMemFuncs
 function.
 
 HEADER:
-x86emu.h
+libx86.h
 
 MEMBERS:
 rdb		- Function to read a byte from an address
@@ -438,6 +505,7 @@ extern X86EMU_intrFuncs _X86EMU_intrTab[256];
 /*-------------------------- Function Prototypes --------------------------*/
 
 #define	HALT_SYS()	X86EMU_halt_sys()
+#define	ILLEGAL_OP()	X86EMU_illegal_op()
 
 /* checks to be enabled for "runtime" */
 
@@ -481,9 +549,10 @@ int	X86EMU_trace_off(void);
 
 void	X86EMU_exec(void);
 void	X86EMU_halt_sys(void);
+void	X86EMU_illegal_op(void);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/
 #endif
 
-#endif /* __X86EMU_X86EMU_H */
+#endif /* __X86EMU_LIBX86_H */
