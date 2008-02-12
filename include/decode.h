@@ -49,6 +49,14 @@
 #define DECODE_RM_LONG_REGISTER(r)    	decode_rm_long_register(r)
 #define DECODE_CLEAR_SEGOVR()         	M.x86.mode &= ~SYSMODE_CLRMASK
 
+#define OP_DECODE(a) \
+  memcpy(M.x86.disasm_ptr, a, sizeof a - 1), \
+  M.x86.disasm_ptr += sizeof a - 1
+
+#define SEGPREF_DECODE \
+  memcpy(M.x86.disasm_ptr, M.x86.decode_seg, 4), \
+  M.x86.disasm_ptr += (M.x86.mode & SYSMODE_SEGMASK) ? 4 : 1
+
 /*-------------------------- Function Prototypes --------------------------*/
 
 #ifdef  __cplusplus
@@ -81,6 +89,14 @@ u32	decode_rm01_address(int rm);
 u32	decode_rm10_address(int rm);
 u32	decode_sib_address(int sib, int mod);
 u32     decode_rm_address(int mod, int rl);
+
+void decode_hex2(u32 ofs);
+void decode_hex4(u32 ofs);
+void decode_hex8(u32 ofs);
+void decode_hex2s(s32 ofs);
+void decode_hex4s(s32 ofs);
+void decode_hex8s(s32 ofs);
+
 
 
 #ifdef  __cplusplus

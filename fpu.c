@@ -50,8 +50,6 @@ void x86emuOp_esc_coprocess_d8(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
-
 static char *x86emu_fpu_op_d9_tab[] = {
     "fld dword ptr ", "esc_d9 ", "fst dword ptr ", "fstp dword ptr ",
     "fldenv ", "fldcw ", "fstenv ", "fstcw ",
@@ -89,8 +87,6 @@ static char *x86emu_fpu_op_d9_tab1[] = {
     "frndint", "fscale", "esc_d9", "esc_d9",
 };
 
-#endif /* DEBUG */
-
 /* opcode=0xd9 */
 void x86emuOp_esc_coprocess_d9(u8 X86EMU_UNUSED(op1))
 {
@@ -100,13 +96,13 @@ void x86emuOp_esc_coprocess_d9(u8 X86EMU_UNUSED(op1))
 
     START_OF_INSTR();
     FETCH_DECODE_MODRM(mod, rh, rl);
-#ifdef DEBUG
+
     if (mod != 3) {
         DECODE_PRINTINSTR32(x86emu_fpu_op_d9_tab, mod, rh, rl);
     } else {
         DECODE_PRINTF(x86emu_fpu_op_d9_tab1[(rh << 3) + rl]);
     }
-#endif
+
     switch (mod) {
       case 0:
         destoffset = decode_rm00_address(rl);
@@ -297,8 +293,6 @@ void x86emuOp_esc_coprocess_d9(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
-
 char *x86emu_fpu_op_da_tab[] = {
     "fiadd dword ptr ", "fimul dword ptr ", "ficom dword ptr ",
     "ficomp dword ptr ",
@@ -318,8 +312,6 @@ char *x86emu_fpu_op_da_tab[] = {
     "esc_da ", "esc_da ", "esc_da ", "esc_da ",
     "esc_da     ", "esc_da ", "esc_da   ", "esc_da ",
 };
-
-#endif /* DEBUG */
 
 /* opcode=0xda */
 void x86emuOp_esc_coprocess_da(u8 X86EMU_UNUSED(op1))
@@ -390,8 +382,6 @@ void x86emuOp_esc_coprocess_da(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
-
 char *x86emu_fpu_op_db_tab[] = {
     "fild dword ptr ", "esc_db 19", "fist dword ptr ", "fistp dword ptr ",
     "esc_db 1c", "fld tbyte ptr ", "esc_db 1e", "fstp tbyte ptr ",
@@ -403,8 +393,6 @@ char *x86emu_fpu_op_db_tab[] = {
     "esc_db 1c", "fld tbyte ptr ", "esc_db 1e", "fstp tbyte ptr ",
 };
 
-#endif /* DEBUG */
-
 /* opcode=0xdb */
 void x86emuOp_esc_coprocess_db(u8 X86EMU_UNUSED(op1))
 {
@@ -413,7 +401,7 @@ void x86emuOp_esc_coprocess_db(u8 X86EMU_UNUSED(op1))
 
     START_OF_INSTR();
     FETCH_DECODE_MODRM(mod, rh, rl);
-#ifdef DEBUG
+
     if (mod != 3) {
         DECODE_PRINTINSTR32(x86emu_fpu_op_db_tab, mod, rh, rl);
     } else if (rh == 4) {       /* === 11 10 0 nnn */
@@ -434,7 +422,7 @@ void x86emuOp_esc_coprocess_db(u8 X86EMU_UNUSED(op1))
     } else {
         DECODE_PRINTF2("esc_db %0x\n", (mod << 6) + (rh << 3) + (rl));
     }
-#endif /* DEBUG */
+
     switch (mod) {
       case 0:
         destoffset = decode_rm00_address(rl);
@@ -512,7 +500,6 @@ void x86emuOp_esc_coprocess_db(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
 char *x86emu_fpu_op_dc_tab[] = {
     "fadd qword ptr ", "fmul qword ptr ", "fcom qword ptr ",
     "fcomp qword ptr ",
@@ -532,7 +519,6 @@ char *x86emu_fpu_op_dc_tab[] = {
     "fadd ", "fmul ", "fcom ", "fcomp ",
     "fsubr ", "fsub ", "fdivr ", "fdiv ",
 };
-#endif /* DEBUG */
 
 /* opcode=0xdc */
 void x86emuOp_esc_coprocess_dc(u8 X86EMU_UNUSED(op1))
@@ -629,8 +615,6 @@ void x86emuOp_esc_coprocess_dc(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
-
 static char *x86emu_fpu_op_dd_tab[] = {
     "fld qword ptr ", "esc_dd 29,", "fst qword ptr ", "fstp qword ptr ",
     "frstor ", "esc_dd 2d,", "fsave ", "fstsw ",
@@ -644,8 +628,6 @@ static char *x86emu_fpu_op_dd_tab[] = {
     "ffree ", "fxch ", "fst ", "fstp ",
     "esc_dd 2c,", "esc_dd 2d,", "esc_dd 2e,", "esc_dd 2f,",
 };
-
-#endif /* DEBUG */
 
 /* opcode=0xdd */
 void x86emuOp_esc_coprocess_dd(u8 X86EMU_UNUSED(op1))
@@ -732,8 +714,6 @@ void x86emuOp_esc_coprocess_dd(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
-
 static char *x86emu_fpu_op_de_tab[] =
 {
     "fiadd word ptr ", "fimul word ptr ", "ficom word ptr ",
@@ -754,8 +734,6 @@ static char *x86emu_fpu_op_de_tab[] =
     "faddp ", "fmulp ", "fcomp ", "fcompp ",
     "fsubrp ", "fsubp ", "fdivrp ", "fdivp ",
 };
-
-#endif /* DEBUG */
 
 /* opcode=0xde */
 void x86emuOp_esc_coprocess_de(u8 X86EMU_UNUSED(op1))
@@ -854,8 +832,6 @@ void x86emuOp_esc_coprocess_de(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR_NO_TRACE();
 }
 
-#ifdef DEBUG
-
 static char *x86emu_fpu_op_df_tab[] = {
     /* mod == 00 */
     "fild word ptr ", "esc_df 39\n", "fist word ptr ", "fistp word ptr ",
@@ -876,8 +852,6 @@ static char *x86emu_fpu_op_df_tab[] = {
     "ffree ", "fxch ", "fst ", "fstp ",
     "esc_df 3c,", "esc_df 3d,", "esc_df 3e,", "esc_df 3f,"
 };
-
-#endif /* DEBUG */
 
 /* opcode=0xdf */
 void x86emuOp_esc_coprocess_df(u8 X86EMU_UNUSED(op1))

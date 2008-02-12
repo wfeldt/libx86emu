@@ -1,5 +1,5 @@
 CC	= gcc
-CFLAGS	= -g -O2 -fPIC -Wall -DDEBUG
+CFLAGS	= -g -O2 -fPIC -Wall
 LIBDIR	= /usr/lib
 LIBX86	= libx86
 VERSION	= 1

@@ -2593,8 +2593,8 @@ Fetches a word from emulator memory using an absolute address.
 ****************************************************************************/
 u16 mem_access_word(int addr)
 {
-DB(	if (CHECK_MEM_ACCESS())
-	  x86emu_check_mem_access(addr);)
+	if (CHECK_MEM_ACCESS())
+	  x86emu_check_mem_access(addr);
 	return (*sys_rdw)(addr);
 }
 
@@ -2606,8 +2606,8 @@ NOTE: Do not inline this, as (*sys_wrX) is already inline!
 ****************************************************************************/
 void push_word(u16 w)
 {
-DB(	if (CHECK_SP_ACCESS())
-	  x86emu_check_sp_access();)
+	if (CHECK_SP_ACCESS())
+	  x86emu_check_sp_access();
 	M.x86.R_SP -= 2;
 	(*sys_wrw)(((u32)M.x86.R_SS << 4)  + M.x86.R_SP, w);
 }
@@ -2620,8 +2620,8 @@ NOTE: Do not inline this, as (*sys_wrX) is already inline!
 ****************************************************************************/
 void push_long(u32 w)
 {
-DB(	if (CHECK_SP_ACCESS())
-	  x86emu_check_sp_access();)
+	if (CHECK_SP_ACCESS())
+	  x86emu_check_sp_access();
 	M.x86.R_SP -= 4;
 	(*sys_wrl)(((u32)M.x86.R_SS << 4)  + M.x86.R_SP, w);
 }
@@ -2636,8 +2636,8 @@ u16 pop_word(void)
 {
 	register u16 res;
 
-DB(	if (CHECK_SP_ACCESS())
-	  x86emu_check_sp_access();)
+	if (CHECK_SP_ACCESS())
+	  x86emu_check_sp_access();
 	res = (*sys_rdw)(((u32)M.x86.R_SS << 4)  + M.x86.R_SP);
 	M.x86.R_SP += 2;
 	return res;
@@ -2653,8 +2653,8 @@ u32 pop_long(void)
 {
     register u32 res;
 
-DB(	if (CHECK_SP_ACCESS())
-	  x86emu_check_sp_access();)
+	if (CHECK_SP_ACCESS())
+	  x86emu_check_sp_access();
 	res = (*sys_rdl)(((u32)M.x86.R_SS << 4)  + M.x86.R_SP);
 	M.x86.R_SP += 4;
     return res;

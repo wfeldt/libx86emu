@@ -1818,7 +1818,6 @@ static void x86emuOp2_btX_I(u8 X86EMU_UNUSED(op2))
 	break;
     default:
 	DECODE_PRINTF("illegal extended x86 opcode\n");
-	TRACE_REGS();
 	printk("%04x:%04x: %02X%02X ILLEGAL EXTENDED X86 OPCODE EXTENSION!\n",
 		M.x86.R_CS, M.x86.R_IP-3,op2, (mod<<6)|(rh<<3)|rl);
 	HALT_SYS();
