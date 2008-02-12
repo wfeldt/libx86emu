@@ -492,7 +492,13 @@ Handles opcode 0x06
 static void x86emuOp_push_ES(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("push es");
-  push_word(M.x86.R_ES);
+
+  if(SYSMODE_DATA32) {
+    push_long(M.x86.R_ES);
+  }
+  else {
+    push_word(M.x86.R_ES);
+  }
 }
 
 /****************************************************************************
@@ -502,7 +508,7 @@ Handles opcode 0x07
 static void x86emuOp_pop_ES(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("pop es");
-  decode_set_seg_register(M.x86.seg + R_ES_INDEX, pop_word());
+  decode_set_seg_register(M.x86.seg + R_ES_INDEX, SYSMODE_DATA32 ? pop_long() : pop_word());
 }
 
 /****************************************************************************
@@ -904,7 +910,12 @@ Handles opcode 0x0e
 static void x86emuOp_push_CS(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("push cs");
-  push_word(M.x86.R_CS);
+  if(SYSMODE_DATA32) {
+    push_long(M.x86.R_CS);
+  }
+  else {
+    push_word(M.x86.R_CS);
+  }
 }
 
 /****************************************************************************
@@ -1317,7 +1328,13 @@ Handles opcode 0x16
 static void x86emuOp_push_SS(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("push ss");
-  push_word(M.x86.R_SS);
+
+  if(SYSMODE_DATA32) {
+    push_long(M.x86.R_SS);
+  }
+  else {
+    push_word(M.x86.R_SS);
+  }
 }
 
 /****************************************************************************
@@ -1327,7 +1344,7 @@ Handles opcode 0x17
 static void x86emuOp_pop_SS(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("pop ss");
-  decode_set_seg_register(M.x86.seg + R_SS_INDEX, pop_word());
+  decode_set_seg_register(M.x86.seg + R_SS_INDEX, SYSMODE_DATA32 ? pop_long() : pop_word());
 }
 
 /****************************************************************************
@@ -1729,7 +1746,13 @@ Handles opcode 0x1e
 static void x86emuOp_push_DS(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("push ds");
-  push_word(M.x86.R_DS);
+
+  if(SYSMODE_DATA32) {
+    push_long(M.x86.R_DS);
+  }
+  else {
+    push_word(M.x86.R_DS);
+  }
 }
 
 /****************************************************************************
@@ -1739,7 +1762,7 @@ Handles opcode 0x1f
 static void x86emuOp_pop_DS(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("pop ds");
-  decode_set_seg_register(M.x86.seg + R_DS_INDEX, pop_word());
+  decode_set_seg_register(M.x86.seg + R_DS_INDEX, SYSMODE_DATA32 ? pop_long() : pop_word());
 }
 
 /****************************************************************************

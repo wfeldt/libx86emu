@@ -333,7 +333,13 @@ Handles opcode 0x0f,0xa0
 static void x86emuOp2_push_FS(u8 X86EMU_UNUSED(op2))
 {
   OP_DECODE("push fs");
-  push_word(M.x86.R_FS);
+
+  if(SYSMODE_DATA32) {
+    push_long(M.x86.R_FS);
+  }
+  else {
+    push_word(M.x86.R_FS);
+  }
 }
 
 /****************************************************************************
@@ -343,7 +349,7 @@ Handles opcode 0x0f,0xa1
 static void x86emuOp2_pop_FS(u8 X86EMU_UNUSED(op2))
 {
   OP_DECODE("pop fs");
-  decode_set_seg_register(M.x86.seg + R_FS_INDEX, pop_word());
+  decode_set_seg_register(M.x86.seg + R_FS_INDEX, SYSMODE_DATA32 ? pop_long() : pop_word());
 }
 
 /****************************************************************************
@@ -731,7 +737,13 @@ Handles opcode 0x0f,0xa8
 static void x86emuOp2_push_GS(u8 X86EMU_UNUSED(op2))
 {
   OP_DECODE("push gs");
-  push_word(M.x86.R_GS);
+
+  if(SYSMODE_DATA32) {
+    push_long(M.x86.R_GS);
+  }
+  else {
+    push_word(M.x86.R_GS);
+  }
 }
 
 /****************************************************************************
@@ -741,7 +753,7 @@ Handles opcode 0x0f,0xa9
 static void x86emuOp2_pop_GS(u8 X86EMU_UNUSED(op2))
 {
   OP_DECODE("pop gs");
-  decode_set_seg_register(M.x86.seg + R_GS_INDEX, pop_word());
+  decode_set_seg_register(M.x86.seg + R_GS_INDEX, SYSMODE_DATA32 ? pop_long() : pop_word());
 }
 
 /****************************************************************************
