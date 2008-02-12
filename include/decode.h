@@ -47,7 +47,7 @@
 #define DECODE_RM_BYTE_REGISTER(r)    	decode_rm_byte_register(r)
 #define DECODE_RM_WORD_REGISTER(r)    	decode_rm_word_register(r)
 #define DECODE_RM_LONG_REGISTER(r)    	decode_rm_long_register(r)
-#define DECODE_CLEAR_SEGOVR()         	M.x86.mode &= ~SYSMODE_CLRMASK
+#define DECODE_CLEAR_SEGOVR()
 
 #define OP_DECODE(a) \
   memcpy(M.x86.disasm_ptr, a, sizeof a - 1), \
@@ -55,7 +55,7 @@
 
 #define SEGPREF_DECODE \
   memcpy(M.x86.disasm_ptr, M.x86.decode_seg, 4), \
-  M.x86.disasm_ptr += (M.x86.mode & SYSMODE_SEGMASK) ? 4 : 1
+  M.x86.disasm_ptr += M.x86.default_seg ? 4 : 1
 
 /*-------------------------- Function Prototypes --------------------------*/
 
@@ -84,6 +84,7 @@ u8* 	decode_rm_byte_register(int reg);
 u16* 	decode_rm_word_register(int reg);
 u32* 	decode_rm_long_register(int reg);
 u16* 	decode_rm_seg_register(int reg);
+sel_t *decode_rm_seg_register2(int reg);
 u32	decode_rm00_address(int rm);
 u32	decode_rm01_address(int rm);
 u32	decode_rm10_address(int rm);

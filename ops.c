@@ -2169,23 +2169,6 @@ static void x86emuOp_and_word_AX_IMM(u8 X86EMU_UNUSED(op1))
 
 /****************************************************************************
 REMARKS:
-Handles opcode 0x26
-****************************************************************************/
-static void x86emuOp_segovr_ES(u8 X86EMU_UNUSED(op1))
-{
-    START_OF_INSTR();
-    DECODE_PRINTF("es:\n");
-    TRACE_AND_STEP();
-    M.x86.mode |= SYSMODE_SEGOVR_ES;
-    /*
-     * note the lack of DECODE_CLEAR_SEGOVR(r) since, here is one of 4
-     * opcode subroutines we do not want to do this.
-     */
-    END_OF_INSTR();
-}
-
-/****************************************************************************
-REMARKS:
 Handles opcode 0x27
 ****************************************************************************/
 static void x86emuOp_daa(u8 X86EMU_UNUSED(op1))
@@ -2587,20 +2570,6 @@ static void x86emuOp_sub_word_AX_IMM(u8 X86EMU_UNUSED(op1))
         M.x86.R_AX = sub_word(M.x86.R_AX, (u16)srcval);
     }
     DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
-}
-
-/****************************************************************************
-REMARKS:
-Handles opcode 0x2e
-****************************************************************************/
-static void x86emuOp_segovr_CS(u8 X86EMU_UNUSED(op1))
-{
-    START_OF_INSTR();
-    DECODE_PRINTF("cs:\n");
-    TRACE_AND_STEP();
-    M.x86.mode |= SYSMODE_SEGOVR_CS;
-    /* note no DECODE_CLEAR_SEGOVR here. */
     END_OF_INSTR();
 }
 
@@ -3012,20 +2981,6 @@ static void x86emuOp_xor_word_AX_IMM(u8 X86EMU_UNUSED(op1))
 
 /****************************************************************************
 REMARKS:
-Handles opcode 0x36
-****************************************************************************/
-static void x86emuOp_segovr_SS(u8 X86EMU_UNUSED(op1))
-{
-    START_OF_INSTR();
-    DECODE_PRINTF("ss:\n");
-    TRACE_AND_STEP();
-    M.x86.mode |= SYSMODE_SEGOVR_SS;
-    /* no DECODE_CLEAR_SEGOVR ! */
-    END_OF_INSTR();
-}
-
-/****************************************************************************
-REMARKS:
 Handles opcode 0x37
 ****************************************************************************/
 static void x86emuOp_aaa(u8 X86EMU_UNUSED(op1))
@@ -3418,20 +3373,6 @@ static void x86emuOp_cmp_word_AX_IMM(u8 X86EMU_UNUSED(op1))
         cmp_word(M.x86.R_AX, (u16)srcval);
     }
     DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
-}
-
-/****************************************************************************
-REMARKS:
-Handles opcode 0x3e
-****************************************************************************/
-static void x86emuOp_segovr_DS(u8 X86EMU_UNUSED(op1))
-{
-    START_OF_INSTR();
-    DECODE_PRINTF("ds:\n");
-    TRACE_AND_STEP();
-    M.x86.mode |= SYSMODE_SEGOVR_DS;
-    /* NO DECODE_CLEAR_SEGOVR! */
     END_OF_INSTR();
 }
 
@@ -4235,40 +4176,6 @@ static void x86emuOp_pop_all(u8 X86EMU_UNUSED(op1))
 
 /*opcode 0x62   ILLEGAL OP, calls x86emuOp_illegal_op() */
 /*opcode 0x63   ILLEGAL OP, calls x86emuOp_illegal_op() */
-
-/****************************************************************************
-REMARKS:
-Handles opcode 0x64
-****************************************************************************/
-static void x86emuOp_segovr_FS(u8 X86EMU_UNUSED(op1))
-{
-    START_OF_INSTR();
-    DECODE_PRINTF("fs:\n");
-    TRACE_AND_STEP();
-    M.x86.mode |= SYSMODE_SEGOVR_FS;
-    /*
-     * note the lack of DECODE_CLEAR_SEGOVR(r) since, here is one of 4
-     * opcode subroutines we do not want to do this.
-     */
-    END_OF_INSTR();
-}
-
-/****************************************************************************
-REMARKS:
-Handles opcode 0x65
-****************************************************************************/
-static void x86emuOp_segovr_GS(u8 X86EMU_UNUSED(op1))
-{
-    START_OF_INSTR();
-    DECODE_PRINTF("gs:\n");
-    TRACE_AND_STEP();
-    M.x86.mode |= SYSMODE_SEGOVR_GS;
-    /*
-     * note the lack of DECODE_CLEAR_SEGOVR(r) since, here is one of 4
-     * opcode subroutines we do not want to do this.
-     */
-    END_OF_INSTR();
-}
 
 /****************************************************************************
 REMARKS:
@@ -6508,33 +6415,28 @@ static void x86emuOp_mov_word_RM_SR(u8 X86EMU_UNUSED(op1))
 
   fetch_decode_modrm(&mod, &rh, &rl);
 
-  switch(mod) {
-    case 0:
-    case 1:
-    case 2:
-      destofs = decode_rm_address(mod, rl);
+  if(mod == 3) {	/* register */
+    if(SYSMODE_DATA32) {
+      reg32 = decode_rm_long_register(rl);
       OP_DECODE(",");
-      val = *decode_rm_seg_register(rh);
-      if(SYSMODE_DATA32) {
-        store_data_long(destofs, val);
-      }
-      else {
-        store_data_word(destofs, val);
-      }
-      break;
-
-    case 3:	/* register to register */
-      if(SYSMODE_DATA32) {
-        reg32 = decode_rm_long_register(rl);
-        OP_DECODE(",");
-        *reg32 = (u32) *decode_rm_seg_register(rh);
-      }
-      else {
-        reg16 = decode_rm_word_register(rl);
-        OP_DECODE(",");
-        *reg16 = *decode_rm_seg_register(rh);
-      }
-      break;
+      *reg32 = decode_rm_seg_register2(rh)->sel;
+    }
+    else {
+      reg16 = decode_rm_word_register(rl);
+      OP_DECODE(",");
+      *reg16 = decode_rm_seg_register2(rh)->sel;
+    }
+  }
+  else {		/* memory */
+    destofs = decode_rm_address(mod, rl);
+    OP_DECODE(",");
+    val = decode_rm_seg_register2(rh)->sel;
+    if(SYSMODE_DATA32) {
+      store_data_long(destofs, val);
+    }
+    else {
+      store_data_word(destofs, val);
+    }
   }
 }
 
@@ -11354,7 +11256,7 @@ void (*x86emu_optab[256])(u8) =
 /*  0x23 */ x86emuOp_and_word_R_RM,
 /*  0x24 */ x86emuOp_and_byte_AL_IMM,
 /*  0x25 */ x86emuOp_and_word_AX_IMM,
-/*  0x26 */ x86emuOp_segovr_ES,
+/*  0x26 */ x86emuOp_illegal_op,	/* ES: */
 /*  0x27 */ x86emuOp_daa,
 
 /*  0x28 */ x86emuOp_sub_byte_RM_R,
@@ -11363,7 +11265,7 @@ void (*x86emu_optab[256])(u8) =
 /*  0x2b */ x86emuOp_sub_word_R_RM,
 /*  0x2c */ x86emuOp_sub_byte_AL_IMM,
 /*  0x2d */ x86emuOp_sub_word_AX_IMM,
-/*  0x2e */ x86emuOp_segovr_CS,
+/*  0x2e */ x86emuOp_illegal_op,	/* CS: */
 /*  0x2f */ x86emuOp_das,
 
 /*  0x30 */ x86emuOp_xor_byte_RM_R,
@@ -11372,7 +11274,7 @@ void (*x86emu_optab[256])(u8) =
 /*  0x33 */ x86emuOp_xor_word_R_RM,
 /*  0x34 */ x86emuOp_xor_byte_AL_IMM,
 /*  0x35 */ x86emuOp_xor_word_AX_IMM,
-/*  0x36 */ x86emuOp_segovr_SS,
+/*  0x36 */ x86emuOp_illegal_op,	/* SS: */
 /*  0x37 */ x86emuOp_aaa,
 
 /*  0x38 */ x86emuOp_cmp_byte_RM_R,
@@ -11381,7 +11283,7 @@ void (*x86emu_optab[256])(u8) =
 /*  0x3b */ x86emuOp_cmp_word_R_RM,
 /*  0x3c */ x86emuOp_cmp_byte_AL_IMM,
 /*  0x3d */ x86emuOp_cmp_word_AX_IMM,
-/*  0x3e */ x86emuOp_segovr_DS,
+/*  0x3e */ x86emuOp_illegal_op,	/* DS: */
 /*  0x3f */ x86emuOp_aas,
 
 /*  0x40 */ x86emuOp_inc_AX,
@@ -11424,8 +11326,8 @@ void (*x86emu_optab[256])(u8) =
 /*  0x61 */ x86emuOp_pop_all,
 /*  0x62 */ x86emuOp_illegal_op,   /* bound */
 /*  0x63 */ x86emuOp_illegal_op,   /* arpl */
-/*  0x64 */ x86emuOp_segovr_FS,
-/*  0x65 */ x86emuOp_segovr_GS,
+/*  0x64 */ x86emuOp_illegal_op,	/* FS: */
+/*  0x65 */ x86emuOp_illegal_op,	/* GS: */
 /*  0x66 */ x86emuOp_prefix_data,
 /*  0x67 */ x86emuOp_prefix_addr,
 

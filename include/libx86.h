@@ -127,20 +127,15 @@ struct i386_special_regs {
 };
 
 
+/*  
+ * segment registers here represent 16 bit selectors & base/limit cache
+ * ldt & tr are quite similar to segment selectors
+ */
 typedef struct {
   u32 base, limit;
   u16 sel;
   u16 acc;
 } sel_t;
-
-/*  
- * segment registers here represent 16 bit selectors & base/limit cache
- * ldt & tr are quite similar to segment selectors
- */
-struct i386_segment_regs {
-  sel_t CS, DS, SS, ES, FS, GS;
-  sel_t LDT, TR;
-};
 
 /* 8 bit registers */
 #define R_AH		gen.A.I8_reg.h_reg
@@ -181,70 +176,81 @@ struct i386_segment_regs {
 #define R_EFLG		spc.FLAGS
 
 /* segment registers */
-#define R_CS		seg.CS.sel
-#define R_CS_BASE	seg.CS.base
-#define R_CS_LIMIT	seg.CS.limit
-#define R_CS_ACC	seg.CS.acc
-#define R_DS		seg.DS.sel
-#define R_DS_BASE	seg.DS.base
-#define R_DS_LIMIT	seg.DS.limit
-#define R_DS_ACC	seg.DS.acc
-#define R_SS		seg.SS.sel
-#define R_SS_BASE	seg.SS.base
-#define R_SS_LIMIT	seg.SS.limit
-#define R_SS_ACC	seg.SS.acc
-#define R_ES		seg.ES.sel
-#define R_ES_BASE	seg.ES.base
-#define R_ES_LIMIT	seg.ES.limit
-#define R_ES_ACC	seg.ES.acc
-#define R_FS		seg.FS.sel
-#define R_FS_BASE	seg.FS.base
-#define R_FS_LIMIT	seg.FS.limit
-#define R_FS_ACC	seg.FS.acc
-#define R_GS		seg.GS.sel
-#define R_GS_BASE	seg.GS.base
-#define R_GS_LIMIT	seg.GS.limit
-#define R_GS_ACC	seg.GS.acc
+#define R_ES_INDEX	0
+#define R_CS_INDEX	1
+#define R_SS_INDEX	2
+#define R_DS_INDEX	3
+#define R_FS_INDEX	4
+#define R_GS_INDEX	5
+
+#define R_ES		seg[0].sel
+#define R_ES_BASE	seg[0].base
+#define R_ES_LIMIT	seg[0].limit
+#define R_ES_ACC	seg[0].acc
+#define R_CS		seg[1].sel
+#define R_CS_BASE	seg[1].base
+#define R_CS_LIMIT	seg[1].limit
+#define R_CS_ACC	seg[1].acc
+#define R_SS		seg[2].sel
+#define R_SS_BASE	seg[2].base
+#define R_SS_LIMIT	seg[2].limit
+#define R_SS_ACC	seg[2].acc
+#define R_DS		seg[3].sel
+#define R_DS_BASE	seg[3].base
+#define R_DS_LIMIT	seg[3].limit
+#define R_DS_ACC	seg[3].acc
+#define R_FS		seg[4].sel
+#define R_FS_BASE	seg[4].base
+#define R_FS_LIMIT	seg[4].limit
+#define R_FS_ACC	seg[4].acc
+#define R_GS		seg[5].sel
+#define R_GS_BASE	seg[5].base
+#define R_GS_LIMIT	seg[5].limit
+#define R_GS_ACC	seg[5].acc
+#define R_NOSEG		seg[6].sel
+#define R_NOSEG_BASE	seg[6].base
+#define R_NOSEG_LIMIT	seg[6].limit
+#define R_NOSEG_ACC	seg[6].acc
 
 /* other registers: tr, ldt, gdt, idt */
-#define R_TR		seg.TR.sel
-#define R_TR_BASE	seg.TR.base
-#define R_TR_LIMIT	seg.TR.limit
-#define R_TR_ACC	seg.TR.acc
-#define R_LDT		seg.LDT.sel
-#define R_LDT_BASE	seg.LDT.base
-#define R_LDT_LIMIT	seg.LDT.limit
-#define R_LDT_ACC	seg.LDT.acc
+#define R_TR		tr.sel
+#define R_TR_BASE	tr.base
+#define R_TR_LIMIT	tr.limit
+#define R_TR_ACC	tr.acc
+#define R_LDT		ldt.sel
+#define R_LDT_BASE	ldt.base
+#define R_LDT_LIMIT	ldt.limit
+#define R_LDT_ACC	ldt.acc
 #define R_GDT_BASE	gdt.base
 #define R_GDT_LIMIT	gdt.limit
 #define R_IDT_BASE	idt.base
 #define R_IDT_LIMIT	idt.limit
 
 /* machine status & debug registers: CRx, DRx, TRx */
-#define R_CR0		cr[0]
-#define R_CR1		cr[1]
-#define R_CR2		cr[2]
-#define R_CR3		cr[3]
-#define R_CR4		cr[4]
-#define R_CR5		cr[5]
-#define R_CR6		cr[6]
-#define R_CR7		cr[7]
-#define R_DR0		dr[0]
-#define R_DR1		dr[1]
-#define R_DR2		dr[2]
-#define R_DR3		dr[3]
-#define R_DR4		dr[4]
-#define R_DR5		dr[5]
-#define R_DR6		dr[6]
-#define R_DR7		dr[7]
-#define R_TR0		tr[0]
-#define R_TR1		tr[1]
-#define R_TR2		tr[2]
-#define R_TR3		tr[3]
-#define R_TR4		tr[4]
-#define R_TR5		tr[5]
-#define R_TR6		tr[6]
-#define R_TR7		tr[7]
+#define R_CR0		crx[0]
+#define R_CR1		crx[1]
+#define R_CR2		crx[2]
+#define R_CR3		crx[3]
+#define R_CR4		crx[4]
+#define R_CR5		crx[5]
+#define R_CR6		crx[6]
+#define R_CR7		crx[7]
+#define R_DR0		drx[0]
+#define R_DR1		drx[1]
+#define R_DR2		drx[2]
+#define R_DR3		drx[3]
+#define R_DR4		drx[4]
+#define R_DR5		drx[5]
+#define R_DR6		drx[6]
+#define R_DR7		drx[7]
+#define R_TR0		trx[0]
+#define R_TR1		trx[1]
+#define R_TR2		trx[2]
+#define R_TR3		trx[3]
+#define R_TR4		trx[4]
+#define R_TR5		trx[5]
+#define R_TR6		trx[6]
+#define R_TR7		trx[7]
 
 /* flag conditions   */
 #define FB_CF 0x0001            /* CARRY flag  */
@@ -298,12 +304,6 @@ struct i386_segment_regs {
  * Segment usage control.
  */
 #define SYSMODE_SEG_DS_SS       0x00000001
-#define SYSMODE_SEGOVR_CS       0x00000002
-#define SYSMODE_SEGOVR_DS       0x00000004
-#define SYSMODE_SEGOVR_ES       0x00000008
-#define SYSMODE_SEGOVR_FS       0x00000010
-#define SYSMODE_SEGOVR_GS       0x00000020
-#define SYSMODE_SEGOVR_SS       0x00000040
 #define SYSMODE_PREFIX_REPE     0x00000080
 #define SYSMODE_PREFIX_REPNE    0x00000100
 #define SYSMODE_PREFIX_DATA     0x00000200
@@ -311,23 +311,6 @@ struct i386_segment_regs {
 #define SYSMODE_INTR_PENDING    0x10000000
 #define SYSMODE_EXTRN_INTR      0x20000000
 #define SYSMODE_HALTED          0x40000000
-
-#define SYSMODE_SEGMASK (SYSMODE_SEG_DS_SS      | \
-						 SYSMODE_SEGOVR_CS      | \
-						 SYSMODE_SEGOVR_DS      | \
-						 SYSMODE_SEGOVR_ES      | \
-						 SYSMODE_SEGOVR_FS      | \
-						 SYSMODE_SEGOVR_GS      | \
-						 SYSMODE_SEGOVR_SS)
-#define SYSMODE_CLRMASK (SYSMODE_SEG_DS_SS      | \
-						 SYSMODE_SEGOVR_CS      | \
-						 SYSMODE_SEGOVR_DS      | \
-						 SYSMODE_SEGOVR_ES      | \
-						 SYSMODE_SEGOVR_FS      | \
-						 SYSMODE_SEGOVR_GS      | \
-						 SYSMODE_SEGOVR_SS      | \
-						 SYSMODE_PREFIX_DATA    | \
-						 SYSMODE_PREFIX_ADDR)
 
 #define  SYSMODE_DATA32		(M.x86.mode & SYSMODE_PREFIX_DATA)
 
@@ -339,10 +322,12 @@ struct i386_segment_regs {
 typedef struct {
     struct i386_general_regs    gen;
     struct i386_special_regs    spc;
-    struct i386_segment_regs    seg;
-    u32 cr[8];
-    u32 dr[8];
-    u32 tr[8];
+    sel_t seg[8];
+    sel_t ldt;
+    sel_t tr;
+    u32 crx[8];
+    u32 drx[8];
+    u32 trx[8];
     struct {
       u32 base, limit;
     } gdt;
@@ -362,6 +347,7 @@ typedef struct {
      *  Halted                  1 bits
      */
     u32                         mode;
+    sel_t                       *default_seg;
     volatile int                intr;   /* mask of pending interrupts */
     int                         debug;
     int                         check;

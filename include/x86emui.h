@@ -47,12 +47,6 @@
  * dramatically in this case).
  */
 
-#if	defined(__cplusplus) && !defined(_NO_INLINE)
-#define	_INLINE	inline
-#else
-#define	_INLINE static
-#endif
-
 /* Get rid of unused parameters in C++ compilation mode */
 
 #ifdef __cplusplus

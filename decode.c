@@ -112,6 +112,7 @@ void X86EMU_exec(void)
     M.x86.enc_pos = 0;
 
     M.x86.mode = 0;
+    M.x86.default_seg = NULL;
 
     X86EMU_trace_regs();
 
@@ -143,32 +144,32 @@ void X86EMU_exec(void)
         case 0x26:
           DECODE_PRINTF("es: ");
           memcpy(M.x86.decode_seg, "es:[", 4);
-          M.x86.mode |= SYSMODE_SEGOVR_ES;
+          M.x86.default_seg = M.x86.seg + R_ES_INDEX;
           break;
         case 0x2e:
           DECODE_PRINTF("cs: ");
           memcpy(M.x86.decode_seg, "cs:[", 4);
-          M.x86.mode |= SYSMODE_SEGOVR_CS;
+          M.x86.default_seg = M.x86.seg + R_CS_INDEX;
           break;
         case 0x36:
           DECODE_PRINTF("ss: ");
           memcpy(M.x86.decode_seg, "ss:[", 4);
-          M.x86.mode |= SYSMODE_SEGOVR_SS;
+          M.x86.default_seg = M.x86.seg + R_SS_INDEX;
           break;
         case 0x3e:
           DECODE_PRINTF("ds: ");
           memcpy(M.x86.decode_seg, "ds:[", 4);
-          M.x86.mode |= SYSMODE_SEGOVR_DS;
+          M.x86.default_seg = M.x86.seg + R_DS_INDEX;
           break;
         case 0x64:
           DECODE_PRINTF("fs: ");
           memcpy(M.x86.decode_seg, "fs:[", 4);
-          M.x86.mode |= SYSMODE_SEGOVR_FS;
+          M.x86.default_seg = M.x86.seg + R_FS_INDEX;
           break;
         case 0x65:
           DECODE_PRINTF("gs: ");
           memcpy(M.x86.decode_seg, "gs:[", 4);
-          M.x86.mode |= SYSMODE_SEGOVR_GS;
+          M.x86.default_seg = M.x86.seg + R_GS_INDEX;
           break;
         case 0x66:
           // DECODE_PRINTF("data32 ");
@@ -337,38 +338,15 @@ cpu-state-varible M.x86.mode. There are several potential states:
 
 Each of the above 7 items are handled with a bit in the mode field.
 ****************************************************************************/
-_INLINE u32 get_data_segment(void)
+static u32 get_data_segment(void)
 {
-#define	GET_SEGMENT(segment)
-	switch (M.x86.mode & SYSMODE_SEGMASK) {
-	  case 0:					/* default case: use ds register */
-	  case SYSMODE_SEGOVR_DS:
-	  case SYSMODE_SEGOVR_DS | SYSMODE_SEG_DS_SS:
-		return  M.x86.R_DS;
-	  case SYSMODE_SEG_DS_SS:	/* non-overridden, use ss register */
-		return  M.x86.R_SS;
-	  case SYSMODE_SEGOVR_CS:
-	  case SYSMODE_SEGOVR_CS | SYSMODE_SEG_DS_SS:
-		return  M.x86.R_CS;
-	  case SYSMODE_SEGOVR_ES:
-	  case SYSMODE_SEGOVR_ES | SYSMODE_SEG_DS_SS:
-		return  M.x86.R_ES;
-	  case SYSMODE_SEGOVR_FS:
-	  case SYSMODE_SEGOVR_FS | SYSMODE_SEG_DS_SS:
-		return  M.x86.R_FS;
-	  case SYSMODE_SEGOVR_GS:
-	  case SYSMODE_SEGOVR_GS | SYSMODE_SEG_DS_SS:
-		return  M.x86.R_GS;
-	  case SYSMODE_SEGOVR_SS:
-	  case SYSMODE_SEGOVR_SS | SYSMODE_SEG_DS_SS:
-		return  M.x86.R_SS;
-	  default:
+  sel_t *seg;
 
-		printk("error: should not happen:  multiple overrides.\n");
+  if(!(seg = M.x86.default_seg)) {
+    seg = M.x86.seg + (M.x86.mode & SYSMODE_SEG_DS_SS ? R_SS_INDEX : R_DS_INDEX);
+  }
 
-		HALT_SYS();
-		return 0;
-	}
+  return seg->sel;
 }
 
 /****************************************************************************
@@ -813,6 +791,43 @@ u16* decode_rm_seg_register(int reg)
   }
 
   return NULL;                /* NOT REACHED OR REACHED ON ERROR */
+}
+
+
+sel_t *decode_rm_seg_register2(int reg)
+{
+  switch(reg) {
+    case 0:
+      OP_DECODE("es");
+      break;
+
+    case 1:
+      OP_DECODE("cs");
+      break;
+
+    case 2:
+      OP_DECODE("ss");
+      break;
+
+    case 3:
+      OP_DECODE("ds");
+      break;
+
+    case 4:
+      OP_DECODE("fs");
+      break;
+
+    case 5:
+      OP_DECODE("gs");
+      break;
+
+    default:
+      ILLEGAL_OP();
+      reg = 6;
+      break;
+  }
+
+  return M.x86.seg + reg;
 }
 
 
