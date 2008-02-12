@@ -757,44 +757,7 @@ Return a pointer to the register given by the R/RM field of the
 modrm byte, for word operands, modified from above for the weirdo
 special case of segreg operands.  Also enables the decoding of instructions.
 ****************************************************************************/
-u16* decode_rm_seg_register(int reg)
-{
-  switch(reg) {
-    case 0:
-      OP_DECODE("es");
-      return &M.x86.R_ES;
-
-    case 1:
-      OP_DECODE("cs");
-      return &M.x86.R_CS;
-
-    case 2:
-      OP_DECODE("ss");
-      return &M.x86.R_SS;
-
-    case 3:
-      OP_DECODE("ds");
-      return &M.x86.R_DS;
-
-    case 4:
-      OP_DECODE("fs");
-      return &M.x86.R_FS;
-
-    case 5:
-      OP_DECODE("gs");
-      return &M.x86.R_GS;
-
-    case 6:
-    case 7:
-      ILLEGAL_OP();
-      break;
-  }
-
-  return NULL;                /* NOT REACHED OR REACHED ON ERROR */
-}
-
-
-sel_t *decode_rm_seg_register2(int reg)
+sel_t *decode_rm_seg_register(int reg)
 {
   switch(reg) {
     case 0:

@@ -6403,18 +6403,18 @@ static void x86emuOp_mov_word_RM_SR(u8 X86EMU_UNUSED(op1))
     if(SYSMODE_DATA32) {
       reg32 = decode_rm_long_register(rl);
       OP_DECODE(",");
-      *reg32 = decode_rm_seg_register2(rh)->sel;
+      *reg32 = decode_rm_seg_register(rh)->sel;
     }
     else {
       reg16 = decode_rm_word_register(rl);
       OP_DECODE(",");
-      *reg16 = decode_rm_seg_register2(rh)->sel;
+      *reg16 = decode_rm_seg_register(rh)->sel;
     }
   }
   else {		/* memory */
     addr = decode_rm_address(mod, rl);
     OP_DECODE(",");
-    val = decode_rm_seg_register2(rh)->sel;
+    val = decode_rm_seg_register(rh)->sel;
     store_data_word(addr, val);
   }
 }
@@ -6483,7 +6483,7 @@ static void x86emuOp_mov_word_SR_RM(u8 X86EMU_UNUSED(op1))
 
   OP_DECODE("mov ");
   fetch_decode_modrm(&mod, &rh, &rl);
-  seg = decode_rm_seg_register2(rh);
+  seg = decode_rm_seg_register(rh);
   OP_DECODE(",");
 
   if(mod == 3) {	/* register */
