@@ -39,8 +39,6 @@
 #ifndef __X86EMU_PRIM_OPS_H
 #define __X86EMU_PRIM_OPS_H
 
-#include "prim_asm.h"
-
 #ifdef  __cplusplus
 extern "C" {            			/* Use "C" linkage when in C++ mode */
 #endif
