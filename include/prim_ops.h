@@ -47,8 +47,8 @@ extern "C" {            			/* Use "C" linkage when in C++ mode */
 
 u16     aaa_word (u16 d);
 u16     aas_word (u16 d);
-u16     aad_word (u16 d);
-u16     aam_word (u8 d);
+u16     aad_word (u16 d, u8 base);
+u16     aam_word (u8 d, u8 base);
 u8      adc_byte (u8 d, u8 s);
 u16     adc_word (u16 d, u16 s);
 u32     adc_long (u32 d, u32 s);

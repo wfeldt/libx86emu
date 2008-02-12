@@ -332,12 +332,8 @@ Handles opcode 0x0f,0xa0
 ****************************************************************************/
 static void x86emuOp2_push_FS(u8 X86EMU_UNUSED(op2))
 {
-    START_OF_INSTR();
-    DECODE_PRINTF("push fs\n");
-    TRACE_AND_STEP();
-    push_word(M.x86.R_FS);
-    DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
+  OP_DECODE("push fs\n");
+  push_word(M.x86.R_FS);
 }
 
 /****************************************************************************
@@ -346,12 +342,8 @@ Handles opcode 0x0f,0xa1
 ****************************************************************************/
 static void x86emuOp2_pop_FS(u8 X86EMU_UNUSED(op2))
 {
-    START_OF_INSTR();
-    DECODE_PRINTF("pop fs\n");
-    TRACE_AND_STEP();
-    M.x86.R_FS = pop_word();
-    DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
+  OP_DECODE("pop fs\n");
+  decode_set_seg_register(M.x86.seg + R_FS_INDEX, pop_word());
 }
 
 /****************************************************************************
@@ -738,12 +730,8 @@ Handles opcode 0x0f,0xa8
 ****************************************************************************/
 static void x86emuOp2_push_GS(u8 X86EMU_UNUSED(op2))
 {
-    START_OF_INSTR();
-    DECODE_PRINTF("push gs\n");
-    TRACE_AND_STEP();
-    push_word(M.x86.R_GS);
-    DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
+  OP_DECODE("push gs\n");
+  push_word(M.x86.R_GS);
 }
 
 /****************************************************************************
@@ -752,12 +740,8 @@ Handles opcode 0x0f,0xa9
 ****************************************************************************/
 static void x86emuOp2_pop_GS(u8 X86EMU_UNUSED(op2))
 {
-    START_OF_INSTR();
-    DECODE_PRINTF("pop gs\n");
-    TRACE_AND_STEP();
-    M.x86.R_GS = pop_word();
-    DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
+  OP_DECODE("pop gs\n");
+  decode_set_seg_register(M.x86.seg + R_GS_INDEX, pop_word());
 }
 
 /****************************************************************************

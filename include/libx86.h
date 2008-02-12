@@ -313,6 +313,7 @@ typedef struct {
 #define SYSMODE_HALTED          0x40000000
 
 #define  SYSMODE_DATA32		(M.x86.mode & SYSMODE_PREFIX_DATA)
+#define  SYSMODE_ADDR32		(M.x86.mode & SYSMODE_PREFIX_ADDR)
 
 #define  INTR_SYNCH           0x1
 #define  INTR_ASYNCH          0x2

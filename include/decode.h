@@ -98,6 +98,7 @@ void decode_hex2s(s32 ofs);
 void decode_hex4s(s32 ofs);
 void decode_hex8s(s32 ofs);
 
+void decode_set_seg_register(sel_t *sel, u16 val);
 
 
 #ifdef  __cplusplus

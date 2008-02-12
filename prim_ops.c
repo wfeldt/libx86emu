@@ -175,14 +175,14 @@ u16 aas_word(u16 d)
 REMARKS:
 Implements the AAD instruction and side effects.
 ****************************************************************************/
-u16 aad_word(u16 d)
+u16 aad_word(u16 d, u8 base)
 {
 	u16 l;
 	u8 hb, lb;
 
 	hb = (u8)((d >> 8) & 0xff);
 	lb = (u8)((d & 0xff));
-	l = (u16)((lb + 10 * hb) & 0xFF);
+	l = (u16)((lb + base * hb) & 0xFF);
 
 	CLEAR_FLAG(F_CF);
 	CLEAR_FLAG(F_AF);
@@ -197,12 +197,12 @@ u16 aad_word(u16 d)
 REMARKS:
 Implements the AAM instruction and side effects.
 ****************************************************************************/
-u16 aam_word(u8 d)
+u16 aam_word(u8 d, u8 base)
 {
     u16 h, l;
 
-	h = (u16)(d / 10);
-	l = (u16)(d % 10);
+	h = (u16)(d / base);
+	l = (u16)(d % base);
 	l |= (u16)(h << 8);
 
 	CLEAR_FLAG(F_CF);

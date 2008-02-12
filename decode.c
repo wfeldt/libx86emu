@@ -1632,3 +1632,10 @@ void x86emu_dump_regs (void)
 	printk("\n");
 }
 
+
+void decode_set_seg_register(sel_t *seg, u16 val)
+{
+  seg->sel = val;
+  seg->base = val << 4;
+}
+
