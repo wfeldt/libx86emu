@@ -1509,11 +1509,11 @@ void X86EMU_reset(X86EMU_sysEnv *emu)
 
 void X86EMU_trace_code (void)
 {
-	if (DEBUG_DECODE()) {
-		printk("  %04x:%08x ",M.x86.saved_cs, M.x86.saved_eip);
-		print_encoded_bytes(M.x86.saved_cs, M.x86.saved_eip);
-		print_decoded_instruction();
-	}
+  if(DEBUG_DECODE()) {
+    printk(MODE_CODE32 ? "  %04x:%08x " : "  %04x:%04x ", M.x86.saved_cs, M.x86.saved_eip);
+    print_encoded_bytes(M.x86.saved_cs, M.x86.saved_eip);
+    print_decoded_instruction();
+  }
 }
 
 void X86EMU_trace_regs (void)
