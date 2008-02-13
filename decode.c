@@ -108,8 +108,10 @@ void X86EMU_exec(void)
   for(;;) {
     M.x86.disasm_ptr = M.x86.disasm_buf;
     *M.x86.disasm_ptr = 0;	// for now
+
     *M.x86.decoded_buf = 0;	// dto.
-    M.x86.enc_pos = 0;
+
+    M.x86.instr_len = 0;
 
     M.x86.mode = 0;
     if(ACC_D(M.x86.R_CS_ACC)) {
@@ -142,12 +144,8 @@ void X86EMU_exec(void)
 
     memcpy(M.x86.decode_seg, "[", 1);
 
-    INC_DECODED_INST_LEN(1);
-
     /* handle prefixes here */
-    while(is_prefix[op1 = (*sys_rdb)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP++))]) {
-      INC_DECODED_INST_LEN(1);
-
+    while(is_prefix[op1 = fetch_byte_imm()]) {
       switch(op1) {
         case 0x26:
           memcpy(M.x86.decode_seg, "es:[", 4);
@@ -229,22 +227,16 @@ regl	- Reg l value from decoded byte
 REMARKS:
 Raise the specified interrupt to be handled before the execution of the
 next instruction.
-
-NOTE: Do not inline this function, as (*sys_rdb) is already inline!
 ****************************************************************************/
-void fetch_decode_modrm(
-	int *mod,
-	int *regh,
-	int *regl)
+void fetch_decode_modrm(int *mod, int *regh, int *regl)
 {
-	int fetched;
+  u8 fetched;
 
-// if (CHECK_IP_FETCH()) x86emu_check_ip_access();
-	fetched = (*sys_rdb)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP++));
-	INC_DECODED_INST_LEN(1);
-	*mod  = (fetched >> 6) & 0x03;
-	*regh = (fetched >> 3) & 0x07;
-    *regl = (fetched >> 0) & 0x07;
+  fetched = fetch_byte_imm();
+
+  *mod  = (fetched >> 6) & 0x03;
+  *regh = (fetched >> 3) & 0x07;
+  *regl = (fetched >> 0) & 0x07;
 }
 
 /****************************************************************************
@@ -259,12 +251,19 @@ NOTE: Do not inline this function, as (*sys_rdb) is already inline!
 ****************************************************************************/
 u8 fetch_byte_imm(void)
 {
-	u8 fetched;
+  u8 fetched;
 
 // if (CHECK_IP_FETCH()) x86emu_check_ip_access();
-	fetched = (*sys_rdb)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP++));
-	INC_DECODED_INST_LEN(1);
-	return fetched;
+
+  fetched = (*sys_rdb)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP));
+
+  M.x86.R_IP += 1;
+
+  if(M.x86.instr_len < sizeof M.x86.instr_buf) {
+    M.x86.instr_buf[M.x86.instr_len++] = fetched;
+  }
+
+  return fetched;
 }
 
 /****************************************************************************
@@ -279,13 +278,19 @@ NOTE: Do not inline this function, as (*sys_rdw) is already inline!
 ****************************************************************************/
 u16 fetch_word_imm(void)
 {
-	u16	fetched;
+  u16 fetched;
 
 // if (CHECK_IP_FETCH()) x86emu_check_ip_access();
-	fetched = (*sys_rdw)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP));
-	M.x86.R_IP += 2;
-	INC_DECODED_INST_LEN(2);
-	return fetched;
+  fetched = (*sys_rdw)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP));
+
+  M.x86.R_IP += 2;
+
+  if(M.x86.instr_len + 1 < sizeof M.x86.instr_buf) {
+    M.x86.instr_buf[M.x86.instr_len++] = fetched;
+    M.x86.instr_buf[M.x86.instr_len++] = fetched >> 8;
+  }
+
+  return fetched;
 }
 
 /****************************************************************************
@@ -300,13 +305,21 @@ NOTE: Do not inline this function, as (*sys_rdw) is already inline!
 ****************************************************************************/
 u32 fetch_long_imm(void)
 {
-	u32 fetched;
+  u32 fetched;
 
 // if (CHECK_IP_FETCH()) x86emu_check_ip_access();
-	fetched = (*sys_rdl)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP));
-	M.x86.R_IP += 4;
-	INC_DECODED_INST_LEN(4);
-	return fetched;
+  fetched = (*sys_rdl)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP));
+
+  M.x86.R_IP += 4;
+
+  if(M.x86.instr_len + 3 < sizeof M.x86.instr_buf) {
+    M.x86.instr_buf[M.x86.instr_len++] = fetched;
+    M.x86.instr_buf[M.x86.instr_len++] = fetched >> 8;
+    M.x86.instr_buf[M.x86.instr_len++] = fetched >> 16;
+    M.x86.instr_buf[M.x86.instr_len++] = fetched >> 24;
+  }
+
+  return fetched;
 }
 
 /****************************************************************************
@@ -1519,11 +1532,6 @@ void x86emu_check_data_access (uint dummy1, uint dummy2)
 	/*  check bounds, etc */
 }
 
-void x86emu_inc_decoded_inst_len (int x)
-{
-	M.x86.enc_pos += x;
-}
-
 void x86emu_decode_printf (char *x)
 {
 	sprintf(M.x86.decoded_buf+M.x86.enc_str_pos,"%s",x);
@@ -1541,20 +1549,17 @@ void x86emu_decode_printf2 (char *x, int y)
 void x86emu_end_instr (void)
 {
 	M.x86.enc_str_pos = 0;
-	// M.x86.enc_pos = 0;
 }
 
 void print_encoded_bytes (u16 s, u32 o)
 {
-	int i, len;
-	char buf1[64];
+  unsigned u;
+  char buf1[256];
 
-	len = (M.x86.intr & INTR_ILLEGAL_OP) ? 15 : M.x86.enc_pos;
-
-	for (i = 0, *buf1 = 0; i < len; i++) {
-		sprintf(buf1 + 2 * i, "%02x", fetch_data_byte_abs(s, o + i));
-	}
-	printk("%-20s  ", buf1);
+  for(u = 0, *buf1 = 0; u < M.x86.instr_len; u++) {
+    sprintf(buf1 + 2 * u, "%02x", M.x86.instr_buf[u]);
+  }
+  printk("%-20s  ", buf1);
 }
 
 void print_decoded_instruction (void)

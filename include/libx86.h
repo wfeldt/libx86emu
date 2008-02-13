@@ -373,11 +373,12 @@ typedef struct {
     int                         check;
     u32                         saved_eip;
     u16                         saved_cs;
-    int                         enc_pos;
     int                         enc_str_pos;
-    char                        decode_buf[32]; /* encoded byte stream  */
-    char                        decoded_buf[256]; /* disassembled strings */
+    char                        decode_buf[32];		/* encoded byte stream  */
+    char                        decoded_buf[256];	/* disassembled strings */
     char			disasm_buf[256];
+    unsigned char               instr_buf[32];		/* instruction bytes */
+    unsigned                    instr_len;		/* bytes in instr_buf */
     char			*disasm_ptr;
     char			decode_seg[4];
     u8                          intno;

@@ -924,8 +924,7 @@ Handles opcode 0x0f. Escape for two-byte opcode (286 or better)
 ****************************************************************************/
 static void x86emuOp_two_byte(u8 X86EMU_UNUSED(op1))
 {
-    u8 op2 = (*sys_rdb)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP++));
-    INC_DECODED_INST_LEN(1);
+    u8 op2 = fetch_byte_imm();
     (*x86emu_optab2[op2])(op2);
 }
 

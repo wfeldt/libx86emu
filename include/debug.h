@@ -58,16 +58,6 @@
 # define DECODE_PRINTF2(x,y) \
   if (DEBUG_DECODE()) x86emu_decode_printf2(x,y) 
 
-/*
- * The following allow us to look at the bytes of an instruction.  The
- * first INCR_INSTRN_LEN, is called everytime bytes are consumed in
- * the decoding process.  The SAVE_IP_CS is called initially when the
- * major opcode of the instruction is accessed.
- */
-#define INC_DECODED_INST_LEN(x)                    	\
-	if (DEBUG_DECODE())  	                       	\
-		x86emu_inc_decoded_inst_len(x)
-
 #define TRACE_AND_STEP()
 
 # define START_OF_INSTR()
