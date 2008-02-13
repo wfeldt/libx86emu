@@ -493,7 +493,7 @@ static void x86emuOp_push_ES(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("push es");
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     push_long(M.x86.R_ES);
   }
   else {
@@ -508,7 +508,7 @@ Handles opcode 0x07
 static void x86emuOp_pop_ES(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("pop es");
-  decode_set_seg_register(M.x86.seg + R_ES_INDEX, SYSMODE_DATA32 ? pop_long() : pop_word());
+  decode_set_seg_register(M.x86.seg + R_ES_INDEX, MODE_DATA32 ? pop_long() : pop_word());
 }
 
 /****************************************************************************
@@ -910,7 +910,7 @@ Handles opcode 0x0e
 static void x86emuOp_push_CS(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("push cs");
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     push_long(M.x86.R_CS);
   }
   else {
@@ -1329,7 +1329,7 @@ static void x86emuOp_push_SS(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("push ss");
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     push_long(M.x86.R_SS);
   }
   else {
@@ -1344,7 +1344,7 @@ Handles opcode 0x17
 static void x86emuOp_pop_SS(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("pop ss");
-  decode_set_seg_register(M.x86.seg + R_SS_INDEX, SYSMODE_DATA32 ? pop_long() : pop_word());
+  decode_set_seg_register(M.x86.seg + R_SS_INDEX, MODE_DATA32 ? pop_long() : pop_word());
 }
 
 /****************************************************************************
@@ -1747,7 +1747,7 @@ static void x86emuOp_push_DS(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("push ds");
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     push_long(M.x86.R_DS);
   }
   else {
@@ -1762,7 +1762,7 @@ Handles opcode 0x1f
 static void x86emuOp_pop_DS(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("pop ds");
-  decode_set_seg_register(M.x86.seg + R_DS_INDEX, SYSMODE_DATA32 ? pop_long() : pop_word());
+  decode_set_seg_register(M.x86.seg + R_DS_INDEX, MODE_DATA32 ? pop_long() : pop_word());
 }
 
 /****************************************************************************
@@ -4101,7 +4101,7 @@ static void x86emuOp_push_all(u8 X86EMU_UNUSED(op1))
 {
   u32 esp = M.x86.R_ESP;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("pushad");
 
     push_long(M.x86.R_EAX);
@@ -4133,7 +4133,7 @@ Handles opcode 0x61
 ****************************************************************************/
 static void x86emuOp_pop_all(u8 X86EMU_UNUSED(op1))
 {
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("popad");
 
     M.x86.R_EDI = pop_long();
@@ -6400,7 +6400,7 @@ static void x86emuOp_mov_word_RM_SR(u8 X86EMU_UNUSED(op1))
   fetch_decode_modrm(&mod, &rh, &rl);
 
   if(mod == 3) {	/* register */
-    if(SYSMODE_DATA32) {
+    if(MODE_DATA32) {
       reg32 = decode_rm_long_register(rl);
       OP_DECODE(",");
       *reg32 = decode_rm_seg_register(rh)->sel;
@@ -6868,12 +6868,12 @@ static void x86emuOp_call_far_IMM(u8 X86EMU_UNUSED(op1))
   u32 eip;
 
   OP_DECODE("call ");
-  eip = SYSMODE_DATA32 ? fetch_long_imm() : fetch_word_imm();
+  eip = MODE_DATA32 ? fetch_long_imm() : fetch_word_imm();
   cs = fetch_word_imm();
 
   decode_hex4(cs);
   OP_DECODE(":");
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     decode_hex8(eip);
 
     push_long(M.x86.R_CS);
@@ -6910,7 +6910,7 @@ static void x86emuOp_pushf_word(u8 X86EMU_UNUSED(op1))
   /* clear out *all* bits not representing flags, and turn on real bits */
   flags = (M.x86.R_EFLG & F_MSK) | F_ALWAYS_ON;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("pushfd");
 
     push_long(flags);
@@ -6928,7 +6928,7 @@ Handles opcode 0x9d
 ****************************************************************************/
 static void x86emuOp_popf_word(u8 X86EMU_UNUSED(op1))
 {
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("popfd");
 
     M.x86.R_EFLG = pop_long() | F_ALWAYS_ON;
@@ -7707,7 +7707,7 @@ static void x86emuOp_mov_word_AX_IMM(u8 X86EMU_UNUSED(op1))
 {
   u32 val;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("mov eax,");
     val = fetch_long_imm();
     decode_hex8(val);
@@ -7729,7 +7729,7 @@ static void x86emuOp_mov_word_CX_IMM(u8 X86EMU_UNUSED(op1))
 {
   u32 val;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("mov ecx,");
     val = fetch_long_imm();
     decode_hex8(val);
@@ -7751,7 +7751,7 @@ static void x86emuOp_mov_word_DX_IMM(u8 X86EMU_UNUSED(op1))
 {
   u32 val;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("mov edx,");
     val = fetch_long_imm();
     decode_hex8(val);
@@ -7773,7 +7773,7 @@ static void x86emuOp_mov_word_BX_IMM(u8 X86EMU_UNUSED(op1))
 {
   u32 val;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("mov ebx,");
     val = fetch_long_imm();
     decode_hex8(val);
@@ -7795,7 +7795,7 @@ static void x86emuOp_mov_word_SP_IMM(u8 X86EMU_UNUSED(op1))
 {
   u32 val;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("mov esp,");
     val = fetch_long_imm();
     decode_hex8(val);
@@ -7817,7 +7817,7 @@ static void x86emuOp_mov_word_BP_IMM(u8 X86EMU_UNUSED(op1))
 {
   u32 val;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("mov ebp,");
     val = fetch_long_imm();
     decode_hex8(val);
@@ -7839,7 +7839,7 @@ static void x86emuOp_mov_word_SI_IMM(u8 X86EMU_UNUSED(op1))
 {
   u32 val;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("mov esi,");
     val = fetch_long_imm();
     decode_hex8(val);
@@ -7861,7 +7861,7 @@ static void x86emuOp_mov_word_DI_IMM(u8 X86EMU_UNUSED(op1))
 {
   u32 val;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("mov edi,");
     val = fetch_long_imm();
     decode_hex8(val);
@@ -8177,9 +8177,9 @@ static void x86emuOp_ret_near_IMM(u8 X86EMU_UNUSED(op1))
   u32 imm;
 
   OP_DECODE("ret ");
-  imm = SYSMODE_DATA32 ? fetch_long_imm() : fetch_word_imm();
+  imm = MODE_DATA32 ? fetch_long_imm() : fetch_word_imm();
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     decode_hex8(imm);
 
     M.x86.R_EIP = pop_long();
@@ -8201,7 +8201,7 @@ static void x86emuOp_ret_near(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("ret");
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     M.x86.R_EIP = pop_long();
   }
   else {
@@ -8524,9 +8524,9 @@ static void x86emuOp_ret_far_IMM(u8 X86EMU_UNUSED(op1))
   u32 imm, eip;
 
   OP_DECODE("retf ");
-  imm = SYSMODE_DATA32 ? fetch_long_imm() : fetch_word_imm();
+  imm = MODE_DATA32 ? fetch_long_imm() : fetch_word_imm();
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     decode_hex8(imm);
 
     eip = pop_long();
@@ -8556,7 +8556,7 @@ static void x86emuOp_ret_far(u8 X86EMU_UNUSED(op1))
 
   OP_DECODE("retf");
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     eip = pop_long();
     cs = pop_long();
   }
@@ -8658,7 +8658,7 @@ static void x86emuOp_iret(u8 X86EMU_UNUSED(op1))
 
   OP_DECODE("iret");
 
-  if(SYSMODE_DATA32) {   
+  if(MODE_DATA32) {   
     eip = pop_long();
     cs = pop_long();
     M.x86.R_EFLG = pop_long() | F_ALWAYS_ON;
@@ -9202,7 +9202,7 @@ static void x86emuOp_xlat(u8 X86EMU_UNUSED(op1))
 
   OP_DECODE("xlat");
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     addr = M.x86.R_EBX + M.x86.R_AL;
   }
   else {
@@ -9325,7 +9325,7 @@ static void x86emuOp_in_word_AX_IMM(u8 X86EMU_UNUSED(op1))
   OP_DECODE("in ");
   port = fetch_byte_imm();
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("eax,");
     M.x86.R_EAX = (*sys_inl)(port);
   } else {
@@ -9364,7 +9364,7 @@ static void x86emuOp_out_word_IMM_AX(u8 X86EMU_UNUSED(op1))
   port = fetch_byte_imm();
   decode_hex2(port);
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE(",eax");
     (*sys_outl)(port, M.x86.R_EAX);
   }
@@ -9384,7 +9384,7 @@ static void x86emuOp_call_near_IMM(u8 X86EMU_UNUSED(op1))
   u32 eip;
 
   OP_DECODE("call ");
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     ofs = fetch_long_imm();
   }
   else {
@@ -9393,7 +9393,7 @@ static void x86emuOp_call_near_IMM(u8 X86EMU_UNUSED(op1))
 
   eip = M.x86.R_EIP + ofs;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     decode_hex8(eip);
 
     push_long(M.x86.R_EIP);
@@ -9419,7 +9419,7 @@ static void x86emuOp_jump_near_IMM(u8 X86EMU_UNUSED(op1))
 
   OP_DECODE("jmp ");
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     ofs = fetch_long_imm();
   }
   else {
@@ -9428,7 +9428,7 @@ static void x86emuOp_jump_near_IMM(u8 X86EMU_UNUSED(op1))
 
   eip = M.x86.R_EIP + ofs;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     decode_hex8(eip);
   }
   else {
@@ -9449,7 +9449,7 @@ static void x86emuOp_jump_far_IMM(u8 X86EMU_UNUSED(op1))
   u32 eip;
 
   OP_DECODE("jmp ");
-  eip = SYSMODE_DATA32 ? fetch_long_imm() : fetch_word_imm();
+  eip = MODE_DATA32 ? fetch_long_imm() : fetch_word_imm();
   cs = fetch_word_imm();
 
   decode_set_seg_register(M.x86.seg + R_CS_INDEX, cs);
@@ -9457,7 +9457,7 @@ static void x86emuOp_jump_far_IMM(u8 X86EMU_UNUSED(op1))
 
   decode_hex4(cs);
   OP_DECODE(":");
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     decode_hex8(eip);
   }
   else {
@@ -9479,7 +9479,7 @@ static void x86emuOp_jump_byte_IMM(u8 X86EMU_UNUSED(op1))
 
   eip = M.x86.R_EIP + ofs;
 
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     decode_hex8(eip);
   }
   else {
@@ -9506,7 +9506,7 @@ Handles opcode 0xed
 ****************************************************************************/
 static void x86emuOp_in_word_AX_DX(u8 X86EMU_UNUSED(op1))
 {
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     OP_DECODE("in eax,dx");
     M.x86.R_EAX = (*sys_inl)(M.x86.R_DX);
   }
@@ -9532,7 +9532,7 @@ Handles opcode 0xef
 ****************************************************************************/
 static void x86emuOp_out_word_DX_AX(u8 X86EMU_UNUSED(op1))
 {
-  if(SYSMODE_DATA32) {
+  if(MODE_DATA32) {
     DECODE_PRINTF("out dx,eax");
     (*sys_outl)(M.x86.R_DX, M.x86.R_EAX);
   }

@@ -137,6 +137,20 @@ typedef struct {
   u16 acc;
 } sel_t;
 
+#define ACC_G(a)	((a >> 11) & 1)		/* 0/1: granularity bytes/4k */
+#define ACC_D(a)	((a >> 10) & 1)		/* 0/1: default size 16/32 bit */
+#define ACC_P(a)	((a >> 7) & 1)		/* 0/1: present no/yes */
+#define ACC_DPL(a)	((a >> 5) & 3)		/* 0..3: dpl */
+#define ACC_S(a)	((a >> 4) & 1)		/* 0/1: system/normal  */
+#define ACC_E(a)	((a >> 3) & 1)		/* 0/1: type data/code (ACC_S = normal) */
+#define ACC_ED(a)	((a >> 2) & 1)		/* 0/1: expand up/down (ACC_E = data) */
+#define ACC_C(a)	((a >> 2) & 1)		/* 0/1: conforming no/yes (ACC_E = code) */
+#define ACC_W(a)	((a >> 1) & 1)		/* 0/1: writable no/yes (ACC_E = data) */
+#define ACC_R(a)	((a >> 1) & 1)		/* 0/1: readable no/yes (ACC_E = code) */
+#define ACC_A(a)	(a & 1)			/* 0/1: accessed no/yes */
+#define ACC_TYPE(a)	(a & 0xf)		/* 0..0xf: system descr type (ACC_S = system) */
+
+
 /* 8 bit registers */
 #define R_AH		gen.A.I8_reg.h_reg
 #define R_AL		gen.A.I8_reg.l_reg
@@ -304,16 +318,21 @@ typedef struct {
  * Segment usage control.
  */
 #define SYSMODE_SEG_DS_SS       0x00000001
-#define SYSMODE_PREFIX_REPE     0x00000080
-#define SYSMODE_PREFIX_REPNE    0x00000100
-#define SYSMODE_PREFIX_DATA     0x00000200
-#define SYSMODE_PREFIX_ADDR     0x00000400
+#define SYSMODE_PREFIX_REPE     0x00000002
+#define SYSMODE_PREFIX_REPNE    0x00000004
+#define _MODE_DATA32            0x00000008
+#define _MODE_ADDR32            0x00000010
+#define _MODE_STACK32           0x00000020
 #define SYSMODE_INTR_PENDING    0x10000000
 #define SYSMODE_EXTRN_INTR      0x20000000
 #define SYSMODE_HALTED          0x40000000
 
-#define  SYSMODE_DATA32		(M.x86.mode & SYSMODE_PREFIX_DATA)
-#define  SYSMODE_ADDR32		(M.x86.mode & SYSMODE_PREFIX_ADDR)
+#define SYSMODE_PREFIX_DATA     _MODE_DATA32
+#define SYSMODE_PREFIX_ADDR     _MODE_ADDR32
+
+#define MODE_DATA32		(M.x86.mode & SYSMODE_PREFIX_DATA)
+#define MODE_ADDR32		(M.x86.mode & SYSMODE_PREFIX_ADDR)
+#define MODE_STACK32		(M.x86.mode & _MODE_STACK32)
 
 #define  INTR_SYNCH           0x1
 #define  INTR_ASYNCH          0x2
@@ -352,7 +371,7 @@ typedef struct {
     volatile int                intr;   /* mask of pending interrupts */
     int                         debug;
     int                         check;
-    u16                         saved_ip;
+    u32                         saved_eip;
     u16                         saved_cs;
     int                         enc_pos;
     int                         enc_str_pos;
@@ -362,7 +381,6 @@ typedef struct {
     char			*disasm_ptr;
     char			decode_seg[4];
     u8                          intno;
-    u8                          __pad[3];
 } X86EMU_regs;
 
 /****************************************************************************

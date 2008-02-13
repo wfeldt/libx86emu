@@ -68,12 +68,6 @@
 	if (DEBUG_DECODE())  	                       	\
 		x86emu_inc_decoded_inst_len(x)
 
-#define SAVE_IP_CS(x,y)                               			\
-	if (DEBUG_DECODE() | DEBUG_IO_TRACE()) { \
-		M.x86.saved_cs = x;                          			\
-		M.x86.saved_ip = y;                          			\
-	}
-
 #define TRACE_AND_STEP()
 
 # define START_OF_INSTR()

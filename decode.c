@@ -40,7 +40,7 @@
 
 #include "include/x86emui.h"
 
-static void     print_encoded_bytes (u16 s, u16 o);
+static void     print_encoded_bytes (u16 s, u32 o);
 static void     print_decoded_instruction (void);
 
 
@@ -112,14 +112,22 @@ void X86EMU_exec(void)
     M.x86.enc_pos = 0;
 
     M.x86.mode = 0;
+    if(ACC_D(M.x86.R_CS_ACC)) {
+      M.x86.mode |= _MODE_DATA32 | _MODE_ADDR32;
+    }
+    if(ACC_D(M.x86.R_SS_ACC)) {
+      M.x86.mode |= _MODE_STACK32;
+    }
+
     M.x86.default_seg = NULL;
 
     X86EMU_trace_regs();
 
     if(CHECK_IP_FETCH()) x86emu_check_ip_access();
 
-    /* If debugging, save the IP and CS values. */
-    SAVE_IP_CS(M.x86.R_CS, M.x86.R_IP);
+    /* save EIP and CS values */
+    M.x86.saved_cs = M.x86.R_CS;
+    M.x86.saved_eip = M.x86.R_EIP;
 
     if(M.x86.intr) {
       if(M.x86.intr & INTR_HALTED) break;
@@ -142,52 +150,44 @@ void X86EMU_exec(void)
 
       switch(op1) {
         case 0x26:
-          DECODE_PRINTF("es: ");
           memcpy(M.x86.decode_seg, "es:[", 4);
           M.x86.default_seg = M.x86.seg + R_ES_INDEX;
           break;
         case 0x2e:
-          DECODE_PRINTF("cs: ");
           memcpy(M.x86.decode_seg, "cs:[", 4);
           M.x86.default_seg = M.x86.seg + R_CS_INDEX;
           break;
         case 0x36:
-          DECODE_PRINTF("ss: ");
           memcpy(M.x86.decode_seg, "ss:[", 4);
           M.x86.default_seg = M.x86.seg + R_SS_INDEX;
           break;
         case 0x3e:
-          DECODE_PRINTF("ds: ");
           memcpy(M.x86.decode_seg, "ds:[", 4);
           M.x86.default_seg = M.x86.seg + R_DS_INDEX;
           break;
         case 0x64:
-          DECODE_PRINTF("fs: ");
           memcpy(M.x86.decode_seg, "fs:[", 4);
           M.x86.default_seg = M.x86.seg + R_FS_INDEX;
           break;
         case 0x65:
-          DECODE_PRINTF("gs: ");
           memcpy(M.x86.decode_seg, "gs:[", 4);
           M.x86.default_seg = M.x86.seg + R_GS_INDEX;
           break;
         case 0x66:
-          // DECODE_PRINTF("data32 ");
-          M.x86.mode |= SYSMODE_PREFIX_DATA;
+          M.x86.mode ^= _MODE_DATA32;
           break;
         case 0x67:
-          // DECODE_PRINTF("addr32 ");
-          M.x86.mode |= SYSMODE_PREFIX_ADDR;
+          M.x86.mode ^= _MODE_ADDR32;
           break;
         case 0xf0:
-          DECODE_PRINTF("lock: ");
+          OP_DECODE("lock: ");
           break;
         case 0xf2:
-          DECODE_PRINTF("repne ");
+          OP_DECODE("repne ");
           M.x86.mode |= SYSMODE_PREFIX_REPNE;
           break;
         case 0xf3:
-          DECODE_PRINTF("repe ");
+          OP_DECODE("repe ");
           M.x86.mode |= SYSMODE_PREFIX_REPE;
           break;
       }
@@ -1486,8 +1486,8 @@ void X86EMU_reset(X86EMU_sysEnv *emu)
 void X86EMU_trace_code (void)
 {
 	if (DEBUG_DECODE()) {
-		printk("  %04x:%04x ",M.x86.saved_cs, M.x86.saved_ip);
-		print_encoded_bytes(M.x86.saved_cs, M.x86.saved_ip);
+		printk("  %04x:%08x ",M.x86.saved_cs, M.x86.saved_eip);
+		print_encoded_bytes(M.x86.saved_cs, M.x86.saved_eip);
 		print_decoded_instruction();
 	}
 }
@@ -1544,7 +1544,7 @@ void x86emu_end_instr (void)
 	// M.x86.enc_pos = 0;
 }
 
-void print_encoded_bytes (u16 s, u16 o)
+void print_encoded_bytes (u16 s, u32 o)
 {
 	int i, len;
 	char buf1[64];
@@ -1573,25 +1573,25 @@ void x86emu_dump_regs (void)
 	printk("ebx %08x, ", M.x86.R_EBX );
 	printk("ecx %08x, ", M.x86.R_ECX );
 	printk("edx %08x\n", M.x86.R_EDX );
-	printk("  ebp %08x, ", M.x86.R_EBP );
-	printk("esp %08x, ", M.x86.R_ESP );
-	printk("esi %08x, ", M.x86.R_ESI );
-	printk("edi %08x\n", M.x86.R_EDI );
+	printk("  esi %08x, ", M.x86.R_ESI );
+	printk("edi %08x, ", M.x86.R_EDI );
+	printk("ebp %08x, ", M.x86.R_EBP );
+	printk("esp %08x\n", M.x86.R_ESP );
 	printk("  cs %04x, ", M.x86.R_CS );
 	printk("ss %04x, ", M.x86.R_SS );
 	printk("ds %04x, ", M.x86.R_DS );
 	printk("es %04x, ", M.x86.R_ES );
 	printk("fs %04x, ", M.x86.R_FS );
 	printk("gs %04x\n", M.x86.R_GS );
-	printk("  eip %08x, eflags ", M.x86.R_EIP );
-	if (ACCESS_FLAG(F_OF))    printk("OF ");
-	if (ACCESS_FLAG(F_DF))    printk("DF ");
-	if (ACCESS_FLAG(F_IF))    printk("IF ");
-	if (ACCESS_FLAG(F_SF))    printk("SF ");
-	if (ACCESS_FLAG(F_ZF))    printk("ZF ");
-	if (ACCESS_FLAG(F_AF))    printk("AF ");
-	if (ACCESS_FLAG(F_PF))    printk("PF ");
-	if (ACCESS_FLAG(F_CF))    printk("CF ");
+	printk("  eip %08x, eflags %08x ", M.x86.R_EIP, M.x86.R_EFLG );
+	if (ACCESS_FLAG(F_OF))    printk("of ");
+	if (ACCESS_FLAG(F_DF))    printk("df ");
+	if (ACCESS_FLAG(F_IF))    printk("if ");
+	if (ACCESS_FLAG(F_SF))    printk("sf ");
+	if (ACCESS_FLAG(F_ZF))    printk("zf ");
+	if (ACCESS_FLAG(F_AF))    printk("af ");
+	if (ACCESS_FLAG(F_PF))    printk("pf ");
+	if (ACCESS_FLAG(F_CF))    printk("cf ");
 	printk("\n");
 }
 
