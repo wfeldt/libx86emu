@@ -115,7 +115,7 @@ void X86EMU_exec(void)
 
     M.x86.mode = 0;
     if(ACC_D(M.x86.R_CS_ACC)) {
-      M.x86.mode |= _MODE_DATA32 | _MODE_ADDR32;
+      M.x86.mode |= _MODE_DATA32 | _MODE_ADDR32 | _MODE_CODE32;
     }
     if(ACC_D(M.x86.R_SS_ACC)) {
       M.x86.mode |= _MODE_STACK32;
@@ -145,7 +145,7 @@ void X86EMU_exec(void)
     memcpy(M.x86.decode_seg, "[", 1);
 
     /* handle prefixes here */
-    while(is_prefix[op1 = fetch_byte_imm()]) {
+    while(is_prefix[op1 = fetch_byte()]) {
       switch(op1) {
         case 0x26:
           memcpy(M.x86.decode_seg, "es:[", 4);
@@ -232,7 +232,7 @@ void fetch_decode_modrm(int *mod, int *regh, int *regl)
 {
   u8 fetched;
 
-  fetched = fetch_byte_imm();
+  fetched = fetch_byte();
 
   *mod  = (fetched >> 6) & 0x03;
   *regh = (fetched >> 3) & 0x07;
@@ -249,15 +249,18 @@ moves the instruction pointer to the next value.
 
 NOTE: Do not inline this function, as (*sys_rdb) is already inline!
 ****************************************************************************/
-u8 fetch_byte_imm(void)
+u8 fetch_byte(void)
 {
   u8 fetched;
 
-// if (CHECK_IP_FETCH()) x86emu_check_ip_access();
-
   fetched = (*sys_rdb)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP));
 
-  M.x86.R_IP += 1;
+  if(MODE_CODE32) {
+    M.x86.R_EIP++;
+  }
+  else {
+    M.x86.R_IP++;
+  }
 
   if(M.x86.instr_len < sizeof M.x86.instr_buf) {
     M.x86.instr_buf[M.x86.instr_len++] = fetched;
@@ -276,14 +279,18 @@ moves the instruction pointer to the next value.
 
 NOTE: Do not inline this function, as (*sys_rdw) is already inline!
 ****************************************************************************/
-u16 fetch_word_imm(void)
+u16 fetch_word(void)
 {
   u16 fetched;
 
-// if (CHECK_IP_FETCH()) x86emu_check_ip_access();
   fetched = (*sys_rdw)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP));
 
-  M.x86.R_IP += 2;
+  if(MODE_CODE32) {
+    M.x86.R_EIP += 2;
+  }
+  else {
+    M.x86.R_IP += 2;
+  }
 
   if(M.x86.instr_len + 1 < sizeof M.x86.instr_buf) {
     M.x86.instr_buf[M.x86.instr_len++] = fetched;
@@ -303,14 +310,18 @@ moves the instruction pointer to the next value.
 
 NOTE: Do not inline this function, as (*sys_rdw) is already inline!
 ****************************************************************************/
-u32 fetch_long_imm(void)
+u32 fetch_long(void)
 {
   u32 fetched;
 
-// if (CHECK_IP_FETCH()) x86emu_check_ip_access();
   fetched = (*sys_rdl)(((u32)M.x86.R_CS << 4) + (M.x86.R_IP));
 
-  M.x86.R_IP += 4;
+  if(MODE_CODE32) {
+    M.x86.R_EIP += 4;
+  }
+  else {
+    M.x86.R_IP += 4;
+  }
 
   if(M.x86.instr_len + 3 < sizeof M.x86.instr_buf) {
     M.x86.instr_buf[M.x86.instr_len++] = fetched;
@@ -977,13 +988,13 @@ u32 decode_rm00_address(int rm)
         return M.x86.R_EBX;
 
       case 4:
-        sib = fetch_byte_imm();
+        sib = fetch_byte();
         base = decode_sib_address(sib, 0);
         OP_DECODE("]");
         return base;
 
       case 5:
-        offset = fetch_long_imm();
+        offset = fetch_long();
         SEGPREF_DECODE;
         decode_hex8(offset);
         OP_DECODE("]");
@@ -1037,7 +1048,7 @@ u32 decode_rm00_address(int rm)
         return M.x86.R_DI;
 
       case 6:
-        offset = fetch_word_imm();
+        offset = fetch_word();
         SEGPREF_DECODE;
         decode_hex4(offset);
         OP_DECODE("]");
@@ -1065,7 +1076,7 @@ u32 decode_rm01_address(int rm)
 
   /* Fetch disp8 if no SIB byte */
   if(!((M.x86.mode & SYSMODE_PREFIX_ADDR) && (rm == 4))) {
-    displacement = (s8) fetch_byte_imm();
+    displacement = (s8) fetch_byte();
   }
 
   if(M.x86.mode & SYSMODE_PREFIX_ADDR) {
@@ -1100,9 +1111,9 @@ u32 decode_rm01_address(int rm)
         return M.x86.R_EBX + displacement;
 
       case 4:
-        sib = fetch_byte_imm();
+        sib = fetch_byte();
         base = decode_sib_address(sib, 1);
-        displacement = (s8) fetch_byte_imm();
+        displacement = (s8) fetch_byte();
         decode_hex2s(displacement);
         OP_DECODE("]");
         return base + displacement;
@@ -1209,11 +1220,11 @@ u32 decode_rm10_address(int rm)
 
   /* Fetch disp16 if 16-bit addr mode */
   if(!(M.x86.mode & SYSMODE_PREFIX_ADDR)) {
-    displacement = (s16) fetch_word_imm();
+    displacement = (s16) fetch_word();
   }
   else {
     /* Fetch disp32 if no SIB byte */
-    if(rm != 4) displacement = (s32) fetch_long_imm();
+    if(rm != 4) displacement = (s32) fetch_long();
   }
 
   if(M.x86.mode & SYSMODE_PREFIX_ADDR) {
@@ -1248,9 +1259,9 @@ u32 decode_rm10_address(int rm)
         return M.x86.R_EBX + displacement;
 
       case 4:
-        sib = fetch_byte_imm();
+        sib = fetch_byte();
         base = decode_sib_address(sib, 2);
-        displacement = (s32) fetch_long_imm();
+        displacement = (s32) fetch_long();
         decode_hex8s(displacement);
         OP_DECODE("]");
         return base + displacement;
@@ -1394,7 +1405,7 @@ u32 decode_sib_address(int sib, int mod)
     case 5:
       SEGPREF_DECODE;
       if(mod == 0) {
-        base = fetch_long_imm();
+        base = fetch_long();
         decode_hex8(base);
       }
       else {

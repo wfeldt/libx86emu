@@ -323,6 +323,7 @@ typedef struct {
 #define _MODE_DATA32            0x00000008
 #define _MODE_ADDR32            0x00000010
 #define _MODE_STACK32           0x00000020
+#define _MODE_CODE32            0x00000040
 #define SYSMODE_INTR_PENDING    0x10000000
 #define SYSMODE_EXTRN_INTR      0x20000000
 #define SYSMODE_HALTED          0x40000000
@@ -330,9 +331,10 @@ typedef struct {
 #define SYSMODE_PREFIX_DATA     _MODE_DATA32
 #define SYSMODE_PREFIX_ADDR     _MODE_ADDR32
 
-#define MODE_DATA32		(M.x86.mode & SYSMODE_PREFIX_DATA)
-#define MODE_ADDR32		(M.x86.mode & SYSMODE_PREFIX_ADDR)
+#define MODE_DATA32		(M.x86.mode & _MODE_DATA32)
+#define MODE_ADDR32		(M.x86.mode & _MODE_ADDR32)
 #define MODE_STACK32		(M.x86.mode & _MODE_STACK32)
+#define MODE_CODE32		(M.x86.mode & _MODE_CODE32)
 
 #define  INTR_SYNCH           0x1
 #define  INTR_ASYNCH          0x2

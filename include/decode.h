@@ -65,9 +65,9 @@ extern "C" {            			/* Use "C" linkage when in C++ mode */
 
 void 	x86emu_intr_raise (u8 type);
 void    fetch_decode_modrm (int *mod,int *regh,int *regl);
-u8      fetch_byte_imm (void);
-u16     fetch_word_imm (void);
-u32     fetch_long_imm (void);
+u8      fetch_byte (void);
+u16     fetch_word (void);
+u32     fetch_long (void);
 u8      fetch_data_byte (uint offset);
 u8      fetch_data_byte_abs (uint segment, uint offset);
 u16     fetch_data_word (uint offset);

@@ -2597,10 +2597,16 @@ NOTE: Do not inline this, as (*sys_wrX) is already inline!
 ****************************************************************************/
 void push_word(u16 w)
 {
-	if (CHECK_SP_ACCESS())
-	  x86emu_check_sp_access();
-	M.x86.R_SP -= 2;
-	(*sys_wrw)(((u32)M.x86.R_SS << 4)  + M.x86.R_SP, w);
+  if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
+
+  if(MODE_STACK32) {
+    M.x86.R_ESP -= 2;
+    (*sys_wrw)(((u32)M.x86.R_SS << 4) + M.x86.R_ESP, w);
+  }
+  else {
+    M.x86.R_SP -= 2;
+    (*sys_wrw)(((u32)M.x86.R_SS << 4) + M.x86.R_SP, w);
+  }
 }
 
 /****************************************************************************
@@ -2611,10 +2617,16 @@ NOTE: Do not inline this, as (*sys_wrX) is already inline!
 ****************************************************************************/
 void push_long(u32 w)
 {
-	if (CHECK_SP_ACCESS())
-	  x86emu_check_sp_access();
-	M.x86.R_SP -= 4;
-	(*sys_wrl)(((u32)M.x86.R_SS << 4)  + M.x86.R_SP, w);
+  if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
+
+  if(MODE_STACK32) {
+    M.x86.R_ESP -= 4;
+    (*sys_wrl)(((u32)M.x86.R_SS << 4) + M.x86.R_ESP, w);
+  }
+  else {
+    M.x86.R_SP -= 4;
+    (*sys_wrl)(((u32)M.x86.R_SS << 4) + M.x86.R_SP, w);
+  }
 }
 
 /****************************************************************************
@@ -2625,13 +2637,20 @@ NOTE: Do not inline this, as (*sys_rdX) is already inline!
 ****************************************************************************/
 u16 pop_word(void)
 {
-	register u16 res;
+  u16 res;
 
-	if (CHECK_SP_ACCESS())
-	  x86emu_check_sp_access();
-	res = (*sys_rdw)(((u32)M.x86.R_SS << 4)  + M.x86.R_SP);
-	M.x86.R_SP += 2;
-	return res;
+  if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
+
+  if(MODE_STACK32) {
+    res = (*sys_rdw)(((u32)M.x86.R_SS << 4) + M.x86.R_ESP);
+    M.x86.R_ESP += 2;
+  }
+  else {
+    res = (*sys_rdw)(((u32)M.x86.R_SS << 4) + M.x86.R_SP);
+    M.x86.R_SP += 2;
+  }
+
+  return res;
 }
 
 /****************************************************************************
@@ -2642,12 +2661,19 @@ NOTE: Do not inline this, as (*sys_rdX) is already inline!
 ****************************************************************************/
 u32 pop_long(void)
 {
-    register u32 res;
+  u32 res;
 
-	if (CHECK_SP_ACCESS())
-	  x86emu_check_sp_access();
-	res = (*sys_rdl)(((u32)M.x86.R_SS << 4)  + M.x86.R_SP);
-	M.x86.R_SP += 4;
-    return res;
+  if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
+
+  if(MODE_STACK32) {
+    res = (*sys_rdl)(((u32)M.x86.R_SS << 4)  + M.x86.R_ESP);
+    M.x86.R_ESP += 4;
+  }
+  else {
+    res = (*sys_rdl)(((u32)M.x86.R_SS << 4)  + M.x86.R_SP);
+    M.x86.R_SP += 4;
+  }
+
+  return res;
 }
 
