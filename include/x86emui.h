@@ -56,7 +56,6 @@
 #endif
 
 #include "libx86.h"
-#include "debug.h"
 #include "decode.h"
 #include "ops.h"
 #include "prim_ops.h"

@@ -57,6 +57,29 @@
   memcpy(M.x86.disasm_ptr, M.x86.decode_seg, 4), \
   M.x86.disasm_ptr += M.x86.default_seg ? 4 : 1
 
+# define CHECK_IP_FETCH()              	(M.x86.check & CHECK_IP_FETCH_F)
+# define CHECK_SP_ACCESS()             	(M.x86.check & CHECK_SP_ACCESS_F)
+# define CHECK_MEM_ACCESS()            	(M.x86.check & CHECK_MEM_ACCESS_F)
+# define CHECK_DATA_ACCESS()           	(M.x86.check & CHECK_DATA_ACCESS_F)
+
+# define DEBUG_DECODE()        	(M.x86.debug & DEBUG_DECODE_F)
+# define DEBUG_TRACE()         	(M.x86.debug & DEBUG_TRACE_F)
+# define DEBUG_MEM_TRACE()     	(M.x86.debug & DEBUG_MEM_TRACE_F)
+# define DEBUG_IO_TRACE()      	(M.x86.debug & DEBUG_IO_TRACE_F)
+
+
+# define DECODE_PRINTF(x) \
+  if (DEBUG_DECODE()) x86emu_decode_printf(x)
+
+# define DECODE_PRINTF2(x,y) \
+  if (DEBUG_DECODE()) x86emu_decode_printf2(x,y) 
+
+#define TRACE_AND_STEP()
+
+# define START_OF_INSTR()
+# define END_OF_INSTR()		x86emu_end_instr();
+# define END_OF_INSTR_NO_TRACE()	x86emu_end_instr();
+
 /*-------------------------- Function Prototypes --------------------------*/
 
 #ifdef  __cplusplus
@@ -99,6 +122,14 @@ void decode_hex8s(s32 ofs);
 
 void decode_set_seg_register(sel_t *sel, u16 val);
 
+void x86emu_decode_printf (char *x);
+void x86emu_decode_printf2 (char *x, int y);
+void x86emu_end_instr (void);
+void x86emu_dump_regs (void);
+void x86emu_check_ip_access (void);
+void x86emu_check_sp_access (void);
+void x86emu_check_mem_access (u32 p);
+void x86emu_check_data_access (uint s, uint o);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/
