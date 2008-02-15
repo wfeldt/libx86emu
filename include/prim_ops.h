@@ -128,7 +128,6 @@ void    div_word (u16 s);
 void    div_long (u32 s);
 void    ins (int size);
 void    outs (int size);
-u16     mem_access_word (int addr);
 void    push_word (u16 w);
 void    push_long (u32 w);
 u16     pop_word (void);

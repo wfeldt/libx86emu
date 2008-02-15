@@ -317,7 +317,7 @@ typedef struct {
  * Emulator machine state.
  * Segment usage control.
  */
-#define SYSMODE_SEG_DS_SS       0x00000001
+#define _MODE_SEG_DS_SS         0x00000001
 #define SYSMODE_PREFIX_REPE     0x00000002
 #define SYSMODE_PREFIX_REPNE    0x00000004
 #define _MODE_DATA32            0x00000008

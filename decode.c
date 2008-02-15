@@ -334,12 +334,12 @@ cpu-state-varible M.x86.mode. There are several potential states:
 
 Each of the above 7 items are handled with a bit in the mode field.
 ****************************************************************************/
-static sel_t *get_data_segment2(void)
+static sel_t *get_data_segment(void)
 {
   sel_t *seg;
 
   if(!(seg = M.x86.default_seg)) {
-    seg = M.x86.seg + (M.x86.mode & SYSMODE_SEG_DS_SS ? R_SS_INDEX : R_DS_INDEX);
+    seg = M.x86.seg + (M.x86.mode & _MODE_SEG_DS_SS ? R_SS_INDEX : R_DS_INDEX);
   }
 
   return seg;
@@ -356,7 +356,7 @@ NOTE: Do not inline this function as (*sys_rdX) is already inline!
 ****************************************************************************/
 u8 fetch_data_byte(u32 offset)
 {
-  sel_t *seg = get_data_segment2();
+  sel_t *seg = get_data_segment();
 
   // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 1);
 
@@ -374,7 +374,7 @@ NOTE: Do not inline this function as (*sys_rdX) is already inline!
 ****************************************************************************/
 u16 fetch_data_word(u32 offset)
 {
-  sel_t *seg = get_data_segment2();
+  sel_t *seg = get_data_segment();
 
   // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 2);
 
@@ -392,7 +392,7 @@ NOTE: Do not inline this function as (*sys_rdX) is already inline!
 ****************************************************************************/
 u32 fetch_data_long(u32 offset)
 {
-  sel_t *seg = get_data_segment2();
+  sel_t *seg = get_data_segment();
 
   // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 4);
 
@@ -463,7 +463,7 @@ NOTE: Do not inline this function as (*sys_wrX) is already inline!
 ****************************************************************************/
 void store_data_byte(u32 offset, u8 val)
 {
-  sel_t *seg = get_data_segment2();
+  sel_t *seg = get_data_segment();
 
   // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 1);
 
@@ -483,7 +483,7 @@ NOTE: Do not inline this function as (*sys_wrX) is already inline!
 ****************************************************************************/
 void store_data_word(u32 offset, u16 val)
 {
-  sel_t *seg = get_data_segment2();
+  sel_t *seg = get_data_segment();
 
   // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 2);
 
@@ -503,7 +503,7 @@ NOTE: Do not inline this function as (*sys_wrX) is already inline!
 ****************************************************************************/
 void store_data_long(u32 offset, u32 val)
 {
-  sel_t *seg = get_data_segment2();
+  sel_t *seg = get_data_segment();
 
   // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 4);
 
@@ -880,7 +880,7 @@ decoding of instructions.
 NOTE: 	The code which specifies the corresponding segment (ds vs ss)
 		below in the case of [BP+..].  The assumption here is that at the
 		point that this subroutine is called, the bit corresponding to
-		SYSMODE_SEG_DS_SS will be zero.  After every instruction
+		_MODE_SEG_DS_SS will be zero.  After every instruction
 		except the segment override instructions, this bit (as well
 		as any bits indicating segment overrides) will be clear.  So
 		if a SS access is needed, set this bit.  Otherwise, DS access
@@ -979,13 +979,13 @@ u32 decode_rm00_address(int rm)
       case 2:
         SEGPREF_DECODE;
         OP_DECODE("bp+si]");
-        M.x86.mode |= SYSMODE_SEG_DS_SS;
+        M.x86.mode |= _MODE_SEG_DS_SS;
         return (M.x86.R_BP + M.x86.R_SI) & 0xffff;
 
       case 3:
         SEGPREF_DECODE;
         OP_DECODE("bp+di]");
-        M.x86.mode |= SYSMODE_SEG_DS_SS;
+        M.x86.mode |= _MODE_SEG_DS_SS;
         return (M.x86.R_BP + M.x86.R_DI) & 0xffff;
 
       case 4:
@@ -1114,7 +1114,7 @@ u32 decode_rm01_address(int rm)
         OP_DECODE("bp+si");
         decode_hex2s(displacement);
         OP_DECODE("]");
-        M.x86.mode |= SYSMODE_SEG_DS_SS;
+        M.x86.mode |= _MODE_SEG_DS_SS;
         return (M.x86.R_BP + M.x86.R_SI + displacement) & 0xffff;
 
       case 3:
@@ -1123,7 +1123,7 @@ u32 decode_rm01_address(int rm)
         decode_hex2s(displacement);
         OP_DECODE("]");
         DECODE_PRINTF2("%d[bp+di]", displacement);
-        M.x86.mode |= SYSMODE_SEG_DS_SS;
+        M.x86.mode |= _MODE_SEG_DS_SS;
         return (M.x86.R_BP + M.x86.R_DI + displacement) & 0xffff;
 
       case 4:
@@ -1145,7 +1145,7 @@ u32 decode_rm01_address(int rm)
         OP_DECODE("bp");
         decode_hex2s(displacement);
         OP_DECODE("]");
-        M.x86.mode |= SYSMODE_SEG_DS_SS;
+        M.x86.mode |= _MODE_SEG_DS_SS;
         return (M.x86.R_BP + displacement) & 0xffff;
 
       case 7:
@@ -1223,7 +1223,7 @@ u32 decode_rm10_address(int rm)
         OP_DECODE("ebp");
         decode_hex8s(displacement);
         OP_DECODE("]");
-        M.x86.mode |= SYSMODE_SEG_DS_SS;
+        M.x86.mode |= _MODE_SEG_DS_SS;
         return M.x86.R_EBP + displacement;
 
       case 6:
@@ -1264,7 +1264,7 @@ u32 decode_rm10_address(int rm)
         OP_DECODE("bp+si");
         decode_hex4s(displacement);
         OP_DECODE("]");
-        M.x86.mode |= SYSMODE_SEG_DS_SS;
+        M.x86.mode |= _MODE_SEG_DS_SS;
         return (M.x86.R_BP + M.x86.R_SI + displacement) & 0xffff;
 
       case 3:
@@ -1272,7 +1272,7 @@ u32 decode_rm10_address(int rm)
         OP_DECODE("bp+di");
         decode_hex4s(displacement);
         OP_DECODE("]");
-        M.x86.mode |= SYSMODE_SEG_DS_SS;
+        M.x86.mode |= _MODE_SEG_DS_SS;
         return (M.x86.R_BP + M.x86.R_DI + displacement) & 0xffff;
 
       case 4:
@@ -1294,7 +1294,7 @@ u32 decode_rm10_address(int rm)
         OP_DECODE("bp");
         decode_hex4s(displacement);
         OP_DECODE("]");
-        M.x86.mode |= SYSMODE_SEG_DS_SS;
+        M.x86.mode |= _MODE_SEG_DS_SS;
         return (M.x86.R_BP + displacement) & 0xffff;
 
       case 7:
@@ -1350,7 +1350,7 @@ u32 decode_sib_address(int sib, int mod)
       SEGPREF_DECODE;
       OP_DECODE("esp");
       base = M.x86.R_ESP;
-      M.x86.mode |= SYSMODE_SEG_DS_SS;
+      M.x86.mode |= _MODE_SEG_DS_SS;
       break;
 
     case 5:
@@ -1362,7 +1362,7 @@ u32 decode_sib_address(int sib, int mod)
       else {
         OP_DECODE("ebp");
         base = M.x86.R_EBP;
-        M.x86.mode |= SYSMODE_SEG_DS_SS;
+        M.x86.mode |= _MODE_SEG_DS_SS;
       }
       break;
 
@@ -1565,16 +1565,61 @@ void x86emu_dump_regs (void)
 
 void decode_set_seg_register(sel_t *seg, u16 val)
 {
-  seg->sel = val;
-  seg->base = val << 4;
+  int err = 1;
+  unsigned ofs, acc;
+  u32 dl, dh, base, limit;
+
+  if(MODE_REAL) {
+    seg->sel = val;
+    seg->base = val << 4;
+
+    err = 0;
+  }
+  else {
+    ofs = val & ~7;
+
+    if(val & 4) {
+      // LDT
+    }
+    else {
+      if(ofs == 0) {
+        seg->sel = 0;
+        seg->base = 0;
+        seg->limit = 0;
+        seg->acc = 0;
+
+        err = 0;
+      }
+      else if(ofs + 7 <= M.x86.R_GDT_LIMIT) {
+        dl = (*sys_rdl)(M.x86.R_GDT_BASE + ofs);
+        dh = (*sys_rdl)(M.x86.R_GDT_BASE + ofs + 4);
+
+        acc = ((dh >> 8) & 0xff) + ((dh >> 12) & 0xf00);
+        base = ((dl >> 16) & 0xffff) + ((dh & 0xff) << 16) + (dh & 0xff000000);
+        limit = (dl & 0xffff) + (dh & 0xf0000);
+        if(ACC_G(acc)) limit = (limit << 12) + 0xfff;
+
+        if(ACC_P(acc) && ACC_S(acc)) {
+          seg->sel = val;
+          seg->base = base;
+          seg->limit = limit;
+          seg->acc = acc;
+
+          err = 0;
+        }
+      }
+    }
+  }
+
+  if(err) INTR_RAISE_GP(val);
 }
 
 
 void idt_lookup(u8 nr, u32 *new_cs, u32 *new_eip)
 {
   if(MODE_REAL) {
-    *new_eip = mem_access_word(M.x86.R_IDT_BASE + nr * 4);
-    *new_cs = mem_access_word(M.x86.R_IDT_BASE + nr * 4 + 2);
+    *new_eip = (*sys_rdw)(M.x86.R_IDT_BASE + nr * 4);
+    *new_cs = (*sys_rdw)(M.x86.R_IDT_BASE + nr * 4 + 2);
   }
   else {
   }

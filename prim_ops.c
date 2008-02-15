@@ -2576,20 +2576,6 @@ void outs(int size)
 }
 
 /****************************************************************************
-PARAMETERS:
-addr	- Address to fetch word from
-
-REMARKS:
-Fetches a word from emulator memory using an absolute address.
-****************************************************************************/
-u16 mem_access_word(int addr)
-{
-	if (CHECK_MEM_ACCESS())
-	  x86emu_check_mem_access(addr);
-	return (*sys_rdw)(addr);
-}
-
-/****************************************************************************
 REMARKS:
 Pushes a word onto the stack.
 
