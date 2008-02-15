@@ -113,13 +113,15 @@ void X86EMU_exec(void)
 
     M.x86.default_seg = NULL;
 
-    X86EMU_trace_regs();
-
     if(CHECK_IP_FETCH()) x86emu_check_ip_access();
 
     if(MODE_HALTED) break;
 
     x86emu_intr_handle();
+
+    if(MODE_HALTED) break;
+
+    X86EMU_trace_regs();
 
     /* save EIP and CS values */
     M.x86.saved_cs = M.x86.R_CS;
@@ -1642,6 +1644,9 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
       eip = M.x86.R_EIP;
       cs = M.x86.R_CS;
     }
+
+    new_cs = cs;
+    new_eip = eip;
 
     idt_lookup(nr, &new_cs, &new_eip);
 
