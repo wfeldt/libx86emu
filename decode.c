@@ -808,6 +808,18 @@ void decode_hex8(u32 ofs)
 }
 
 
+void decode_hex_addr(u32 ofs)
+{
+  if(MODE_CODE32) {
+    decode_hex4(ofs >> 16);
+    decode_hex4(ofs & 0xffff);
+  }
+  else {
+    decode_hex4(ofs & 0xffff);
+  }
+}
+
+
 void decode_hex2s(s32 ofs)
 {
   static const char *h = "0123456789abcdef";

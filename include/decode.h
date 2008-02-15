@@ -116,6 +116,7 @@ u32     decode_rm_address(int mod, int rl);
 void decode_hex2(u32 ofs);
 void decode_hex4(u32 ofs);
 void decode_hex8(u32 ofs);
+void decode_hex_addr(u32 ofs);
 void decode_hex2s(s32 ofs);
 void decode_hex4s(s32 ofs);
 void decode_hex8s(s32 ofs);

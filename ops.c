@@ -82,15 +82,10 @@ op1 - Instruction op code
 REMARKS:
 Handles illegal opcodes.
 ****************************************************************************/
-static void x86emuOp_illegal_op(
-    u8 op1)
+static void x86emuOp_illegal_op(u8 op1)
 {
-    START_OF_INSTR();
-    DECODE_PRINTF("illegal x86 opcode\n");
-    printk("%04x:%04x: %02X ILLEGAL X86 OPCODE!\n",
-        M.x86.R_CS, M.x86.R_IP-1,op1);
-    HALT_SYS();
-    END_OF_INSTR();
+  OP_DECODE("illegal opcode");
+  INTR_RAISE_UD;
 }
 
 /****************************************************************************
@@ -9085,6 +9080,7 @@ static void x86emuOp_opcD3_word_RM_CL(u8 X86EMU_UNUSED(op1))
     END_OF_INSTR();
 }
 
+
 /****************************************************************************
 REMARKS:
 Handles opcode 0xd4
@@ -9104,6 +9100,7 @@ static void x86emuOp_aam(u8 X86EMU_UNUSED(op1))
   M.x86.R_AX = aam_word(M.x86.R_AL, base);
 }
 
+
 /****************************************************************************
 REMARKS:
 Handles opcode 0xd5
@@ -9118,7 +9115,9 @@ static void x86emuOp_aad(u8 X86EMU_UNUSED(op1))
   M.x86.R_AX = aad_word(M.x86.R_AX, base);
 }
 
+
 /* opcode 0xd6 ILLEGAL OPCODE */
+
 
 /****************************************************************************
 REMARKS:
@@ -9140,7 +9139,9 @@ static void x86emuOp_xlat(u8 X86EMU_UNUSED(op1))
   M.x86.R_AL = fetch_data_byte(addr);
 }
 
+
 /* instuctions  D8 .. DF are in i87_ops.c */
+
 
 /****************************************************************************
 REMARKS:
@@ -9148,20 +9149,24 @@ Handles opcode 0xe0
 ****************************************************************************/
 static void x86emuOp_loopne(u8 X86EMU_UNUSED(op1))
 {
-    s16 ip;
+  s32 ofs;
+  u32 eip;
 
-    START_OF_INSTR();
-    DECODE_PRINTF("loopne ");
-    ip = (s8) fetch_byte();
-    ip += (s16) M.x86.R_IP;
-    DECODE_PRINTF2("%04x\n", ip);
-    TRACE_AND_STEP();
-    M.x86.R_CX -= 1;
-    if (M.x86.R_CX != 0 && !ACCESS_FLAG(F_ZF))      /* CX != 0 and !ZF */
-        M.x86.R_IP = ip;
-    DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
+  OP_DECODE("loopne ");
+  ofs = (s8) fetch_byte();
+  eip = M.x86.R_EIP + ofs;
+  decode_hex_addr(eip);
+
+  if(MODE_DATA32) {
+    if(!--M.x86.R_ECX && !ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
+  }
+  else {
+    eip &= 0xffff;      // FIXME: is not correct
+    if(!--M.x86.R_CX && !ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
+  }
+
 }
+
 
 /****************************************************************************
 REMARKS:
@@ -9169,20 +9174,23 @@ Handles opcode 0xe1
 ****************************************************************************/
 static void x86emuOp_loope(u8 X86EMU_UNUSED(op1))
 {
-    s16 ip;
+  s32 ofs;
+  u32 eip;
 
-    START_OF_INSTR();
-    DECODE_PRINTF("loope ");
-    ip = (s8) fetch_byte();
-    ip += (s16) M.x86.R_IP;
-    DECODE_PRINTF2("%04x\n", ip);
-    TRACE_AND_STEP();
-    M.x86.R_CX -= 1;
-    if (M.x86.R_CX != 0 && ACCESS_FLAG(F_ZF))       /* CX != 0 and ZF */
-        M.x86.R_IP = ip;
-    DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
+  OP_DECODE("loope ");
+  ofs = (s8) fetch_byte();
+  eip = M.x86.R_EIP + ofs;
+  decode_hex_addr(eip);
+
+  if(MODE_DATA32) {
+    if(!--M.x86.R_ECX && ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
+  }
+  else {
+    eip &= 0xffff;      // FIXME: is not correct
+    if(!--M.x86.R_CX && ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
+  }
 }
+
 
 /****************************************************************************
 REMARKS:
@@ -9190,20 +9198,23 @@ Handles opcode 0xe2
 ****************************************************************************/
 static void x86emuOp_loop(u8 X86EMU_UNUSED(op1))
 {
-    s16 ip;
+  s32 ofs;
+  u32 eip;
 
-    START_OF_INSTR();
-    DECODE_PRINTF("loop ");
-    ip = (s8) fetch_byte();
-    ip += (s16) M.x86.R_IP;
-    DECODE_PRINTF2("%04x\n", ip);
-    TRACE_AND_STEP();
-    M.x86.R_CX -= 1;
-    if (M.x86.R_CX != 0)
-        M.x86.R_IP = ip;
-    DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
+  OP_DECODE("loop ");
+  ofs = (s8) fetch_byte();
+  eip = M.x86.R_EIP + ofs;
+  decode_hex_addr(eip);
+
+  if(MODE_DATA32) {
+    if(--M.x86.R_ECX) M.x86.R_EIP = eip;
+  }
+  else {
+    eip &= 0xffff;      // FIXME: is not correct
+    if(--M.x86.R_CX) M.x86.R_EIP = eip;
+  }
 }
+
 
 /****************************************************************************
 REMARKS:
@@ -9211,21 +9222,25 @@ Handles opcode 0xe3
 ****************************************************************************/
 static void x86emuOp_jcxz(u8 X86EMU_UNUSED(op1))
 {
-    u16 target;
-    s8  offset;
+  s32 ofs;
+  u32 eip;
 
-    /* jump to byte offset if overflow flag is set */
-    START_OF_INSTR();
-    DECODE_PRINTF("jcxz ");
-    offset = (s8)fetch_byte();
-    target = (u16)(M.x86.R_IP + offset);
-    DECODE_PRINTF2("%x\n", target);
-    TRACE_AND_STEP();
-    if (M.x86.R_CX == 0)
-        M.x86.R_IP = target;
-    DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
+  ofs = (s8) fetch_byte();
+  eip = M.x86.R_EIP + ofs;
+
+  if(MODE_DATA32) {
+    OP_DECODE("jecxz ");
+    decode_hex_addr(eip);
+    if(M.x86.R_ECX == 0) M.x86.R_EIP = eip;
+  }
+  else {
+    OP_DECODE("jcxz ");
+    eip &= 0xffff;      // FIXME: is not correct
+    decode_hex_addr(eip);
+    if(M.x86.R_CX == 0) M.x86.R_EIP = eip;
+  }
 }
+
 
 /****************************************************************************
 REMARKS:
@@ -9241,6 +9256,7 @@ static void x86emuOp_in_byte_AL_IMM(u8 X86EMU_UNUSED(op1))
 
   M.x86.R_AL = (*sys_inb)(port);
 }
+
 
 /****************************************************************************
 REMARKS:
@@ -9264,6 +9280,7 @@ static void x86emuOp_in_word_AX_IMM(u8 X86EMU_UNUSED(op1))
   decode_hex2(port);
 }
 
+
 /****************************************************************************
 REMARKS:
 Handles opcode 0xe6
@@ -9279,6 +9296,7 @@ static void x86emuOp_out_byte_IMM_AL(u8 X86EMU_UNUSED(op1))
 
   (*sys_outb)(port, M.x86.R_AL);
 }
+
 
 /****************************************************************************
 REMARKS:
@@ -9302,6 +9320,7 @@ static void x86emuOp_out_word_IMM_AX(u8 X86EMU_UNUSED(op1))
   }
 }
 
+
 /****************************************************************************
 REMARKS:
 Handles opcode 0xe8
@@ -9322,19 +9341,20 @@ static void x86emuOp_call_near_IMM(u8 X86EMU_UNUSED(op1))
   eip = M.x86.R_EIP + ofs;
 
   if(MODE_DATA32) {
-    decode_hex8(eip);
+    decode_hex_addr(eip);
 
     push_long(M.x86.R_EIP);
   }
   else {
     eip &= 0xffff;	// FIXME: is not correct
-    decode_hex4(eip);
+    decode_hex_addr(eip);
 
     push_word(M.x86.R_IP);
   }
 
   M.x86.R_EIP = eip;
 }
+
 
 /****************************************************************************
 REMARKS:
@@ -9357,15 +9377,16 @@ static void x86emuOp_jump_near_IMM(u8 X86EMU_UNUSED(op1))
   eip = M.x86.R_EIP + ofs;
 
   if(MODE_DATA32) {
-    decode_hex8(eip);
+    decode_hex_addr(eip);
   }
   else {
     eip &= 0xffff;	// FIXME: is not correct
-    decode_hex4(eip);
+    decode_hex_addr(eip);
   }
 
   M.x86.R_EIP = eip;
 }
+
 
 /****************************************************************************
 REMARKS:
@@ -9393,6 +9414,7 @@ static void x86emuOp_jump_far_IMM(u8 X86EMU_UNUSED(op1))
   }
 }
 
+
 /****************************************************************************
 REMARKS:
 Handles opcode 0xeb
@@ -9408,15 +9430,16 @@ static void x86emuOp_jump_byte_IMM(u8 X86EMU_UNUSED(op1))
   eip = M.x86.R_EIP + ofs;
 
   if(MODE_DATA32) {
-    decode_hex8(eip);
+    decode_hex_addr(eip);
   }
   else {
     eip &= 0xffff;	// FIXME: is not correct
-    decode_hex4(eip);
+    decode_hex_addr(eip);
   }
 
   M.x86.R_EIP = eip;
 }
+
 
 /****************************************************************************
 REMARKS:
@@ -9427,6 +9450,7 @@ static void x86emuOp_in_byte_AL_DX(u8 X86EMU_UNUSED(op1))
   OP_DECODE("in al,dx");
   M.x86.R_AL = (*sys_inb)(M.x86.R_DX);
 }
+
 
 /****************************************************************************
 REMARKS:
@@ -9444,6 +9468,7 @@ static void x86emuOp_in_word_AX_DX(u8 X86EMU_UNUSED(op1))
   }
 }
 
+
 /****************************************************************************
 REMARKS:
 Handles opcode 0xee
@@ -9454,6 +9479,7 @@ static void x86emuOp_out_byte_DX_AL(u8 X86EMU_UNUSED(op1))
   (*sys_outb)(M.x86.R_DX, M.x86.R_AL);
 }
 
+
 /****************************************************************************
 REMARKS:
 Handles opcode 0xef
@@ -9461,14 +9487,15 @@ Handles opcode 0xef
 static void x86emuOp_out_word_DX_AX(u8 X86EMU_UNUSED(op1))
 {
   if(MODE_DATA32) {
-    DECODE_PRINTF("out dx,eax");
+    OP_DECODE("out dx,eax");
     (*sys_outl)(M.x86.R_DX, M.x86.R_EAX);
   }
   else {
-    DECODE_PRINTF("out dx,ax");
+    OP_DECODE("out dx,ax");
     (*sys_outw)(M.x86.R_DX, M.x86.R_AX);
   }
 }
+
 
 /****************************************************************************
 REMARKS:
@@ -9480,6 +9507,7 @@ static void x86emuOp_hlt(u8 X86EMU_UNUSED(op1))
   HALT_SYS();
 }
 
+
 /****************************************************************************
 REMARKS:
 Handles opcode 0xf5
@@ -9490,6 +9518,7 @@ static void x86emuOp_cmc(u8 X86EMU_UNUSED(op1))
   OP_DECODE("cmc");
   TOGGLE_FLAG(F_CF);
 }
+
 
 /****************************************************************************
 REMARKS:
