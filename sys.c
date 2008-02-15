@@ -46,7 +46,6 @@
 /*------------------------- Global Variables ------------------------------*/
 
 X86EMU_sysEnv		_X86EMU_env;		/* Global emulator machine state */
-X86EMU_intrFuncs	_X86EMU_intrTab[256];
 
 /*----------------------------- Implementation ----------------------------*/
 #if defined(__alpha__) || defined(__alpha)
@@ -564,17 +563,22 @@ in the emulator via the interrupt vector table. This allows the application
 to get control when the code being emulated executes specific software
 interrupts.
 ****************************************************************************/
-void X86EMU_setupIntrFuncs(
-	X86EMU_intrFuncs funcs[])
+void X86EMU_setupIntrFuncs(X86EMU_intrFuncs funcs[])
 {
-    int i;
-    
-	for (i=0; i < 256; i++)
-		_X86EMU_intrTab[i] = NULL;
-	if (funcs) {
-		for (i = 0; i < 256; i++)
-			_X86EMU_intrTab[i] = funcs[i];
-		}
+  int i;
+
+  memset(M.intr_table, 0, sizeof M.intr_table);
+
+  if(funcs) {
+    for(i = 0; i < sizeof M.intr_table / sizeof *M.intr_table; i++) {
+      M.intr_table[i] = funcs[i];
+    }
+  }
+}
+
+void X86EMU_setupIntrFunc(X86EMU_sysEnv *emu, u8 nr, X86EMU_intrFuncs func)
+{
+  emu->intr_table[nr] = func;
 }
 
 void X86EMU_setupCheckFuncs(X86EMU_checkFuncs *funcs)
@@ -582,27 +586,3 @@ void X86EMU_setupCheckFuncs(X86EMU_checkFuncs *funcs)
     sys_check_ip = funcs->ip;
 }
 
-/****************************************************************************
-PARAMETERS:
-int	- New software interrupt to prepare for
-
-REMARKS:
-This function is used to set up the emulator state to exceute a software
-interrupt. This can be used by the user application code to allow an
-interrupt to be hooked, examined and then reflected back to the emulator
-so that the code in the emulator will continue processing the software
-interrupt as per normal. This essentially allows system code to actively
-hook and handle certain software interrupts as necessary.
-****************************************************************************/
-void X86EMU_prepareForInt(
-	int num)
-{
-    push_word((u16)M.x86.R_FLG);
-    CLEAR_FLAG(F_IF);
-    CLEAR_FLAG(F_TF);
-    push_word(M.x86.R_CS);
-    M.x86.R_CS = mem_access_word(num * 4 + 2);
-    push_word(M.x86.R_IP);
-    M.x86.R_IP = mem_access_word(num * 4);
-	M.x86.intr = 0;
-}

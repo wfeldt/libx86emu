@@ -86,23 +86,23 @@
 extern "C" {            			/* Use "C" linkage when in C++ mode */
 #endif
 
-void 	x86emu_intr_raise (u8 type);
+void 	x86emu_intr_raise (u8 intr_nr, unsigned type, unsigned err);
 void    fetch_decode_modrm (int *mod,int *regh,int *regl);
-u8      fetch_byte (void);
-u16     fetch_word (void);
-u32     fetch_long (void);
-u8      fetch_data_byte (uint offset);
-u8      fetch_data_byte_abs (uint segment, uint offset);
-u16     fetch_data_word (uint offset);
-u16     fetch_data_word_abs (uint segment, uint offset);
-u32     fetch_data_long (uint offset);
-u32     fetch_data_long_abs (uint segment, uint offset);
-void    store_data_byte (uint offset, u8 val);
-void    store_data_byte_abs (uint segment, uint offset, u8 val);
-void    store_data_word (uint offset, u16 val);
-void    store_data_word_abs (uint segment, uint offset, u16 val);
-void    store_data_long (uint offset, u32 val);
-void    store_data_long_abs (uint segment, uint offset, u32 val);
+u8 fetch_byte (void);
+u16 fetch_word(void);
+u32 fetch_long(void);
+u8 fetch_data_byte(u32 offset);
+u8 fetch_data_byte_abs(sel_t *seg, u32 offset);
+u16 fetch_data_word(u32 offset);
+u16 fetch_data_word_abs(sel_t *seg, u32 offset);
+u32 fetch_data_long(u32 offset);
+u32 fetch_data_long_abs(sel_t *seg, u32 offset);
+void store_data_byte(u32 offset, u8 val);
+void store_data_byte_abs(sel_t *seg, u32 offset, u8 val);
+void store_data_word(u32 offset, u16 val);
+void store_data_word_abs(sel_t *seg, u32 offset, u16 val);
+void store_data_long(u32 offset, u32 val);
+void store_data_long_abs(sel_t *seg, u32 offset, u32 val);
 u8* 	decode_rm_byte_register(int reg);
 u16* 	decode_rm_word_register(int reg);
 u32* 	decode_rm_long_register(int reg);
@@ -121,6 +121,7 @@ void decode_hex4s(s32 ofs);
 void decode_hex8s(s32 ofs);
 
 void decode_set_seg_register(sel_t *sel, u16 val);
+void generate_int(u8 nr, unsigned type, unsigned errcode);
 
 void x86emu_decode_printf (char *x);
 void x86emu_decode_printf2 (char *x, int y);

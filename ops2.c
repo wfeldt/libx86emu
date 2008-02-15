@@ -49,12 +49,9 @@ op1 - Instruction op code
 REMARKS:
 Handles illegal opcodes.
 ****************************************************************************/
-static void x86emuOp2_illegal_op(
-	u8 op2)
+static void x86emuOp2_illegal_op(u8 op2)
 {
-  START_OF_INSTR();
-  ILLEGAL_OP();
-  END_OF_INSTR();
+  ILLEGAL_OP;
 }
 
 #define xorl(a,b)   ((a) && !(b)) || (!(a) && (b))
@@ -101,7 +98,7 @@ static void x86emuOp2_opc_01(u8 X86EMU_UNUSED(op2))
       break;
 
     case 4:
-      ILLEGAL_OP();
+      ILLEGAL_OP;
       break;
 
     case 5:
@@ -1335,47 +1332,32 @@ Handles opcode 0x0f,0xb2
 ****************************************************************************/
 static void x86emuOp2_lss_R_IMM(u8 X86EMU_UNUSED(op2))
 {
-	int mod, rh, rl;
-    u16 *dstreg;
-    uint srcoffset;
+  int mod, rh, rl;
+  u16 *reg16;
+  u32 *reg32, addr;
 
-    START_OF_INSTR();
-    DECODE_PRINTF("lss ");
-    FETCH_DECODE_MODRM(mod, rh, rl);
-    switch (mod) {
-    case 0:
-        dstreg = DECODE_RM_WORD_REGISTER(rh);
-        DECODE_PRINTF(",");
-        srcoffset = decode_rm00_address(rl);
-        DECODE_PRINTF("\n");
-        TRACE_AND_STEP();
-        *dstreg = fetch_data_word(srcoffset);
-        M.x86.R_SS = fetch_data_word(srcoffset + 2);
-        break;
-    case 1:
-        dstreg = DECODE_RM_WORD_REGISTER(rh);
-        DECODE_PRINTF(",");
-        srcoffset = decode_rm01_address(rl);
-        DECODE_PRINTF("\n");
-        TRACE_AND_STEP();
-        *dstreg = fetch_data_word(srcoffset);
-        M.x86.R_SS = fetch_data_word(srcoffset + 2);
-        break;
-    case 2:
-        dstreg = DECODE_RM_WORD_REGISTER(rh);
-        DECODE_PRINTF(",");
-        srcoffset = decode_rm10_address(rl);
-        DECODE_PRINTF("\n");
-        TRACE_AND_STEP();
-        *dstreg = fetch_data_word(srcoffset);
-        M.x86.R_SS = fetch_data_word(srcoffset + 2);
-        break;
-    case 3:                     /* register to register */
-        /* UNDEFINED! */
-        TRACE_AND_STEP();
+  OP_DECODE("lss ");
+  fetch_decode_modrm(&mod, &rh, &rl);
+  if(mod == 3) {
+    ILLEGAL_OP;
+  }
+  else {
+    if(MODE_DATA32){
+      reg32 = decode_rm_long_register(rh);
+      OP_DECODE(",");
+      addr = decode_rm_address(mod, rl);
+      *reg32 = fetch_data_long(addr);
+      addr += 4;
     }
-    DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
+    else {
+      reg16 = decode_rm_word_register(rh);
+      OP_DECODE(",");
+      addr = decode_rm_address(mod, rl);
+      *reg16 = fetch_data_word(addr);
+      addr += 2;
+    }
+    decode_set_seg_register(M.x86.seg + R_SS_INDEX, fetch_data_word(addr));
+  }
 }
 
 /****************************************************************************
@@ -1523,47 +1505,32 @@ Handles opcode 0x0f,0xb4
 ****************************************************************************/
 static void x86emuOp2_lfs_R_IMM(u8 X86EMU_UNUSED(op2))
 {
-	int mod, rh, rl;
-    u16 *dstreg;
-    uint srcoffset;
+  int mod, rh, rl;
+  u16 *reg16;
+  u32 *reg32, addr;
 
-    START_OF_INSTR();
-    DECODE_PRINTF("lfs ");
-    FETCH_DECODE_MODRM(mod, rh, rl);
-    switch (mod) {
-    case 0:
-        dstreg = DECODE_RM_WORD_REGISTER(rh);
-        DECODE_PRINTF(",");
-        srcoffset = decode_rm00_address(rl);
-        DECODE_PRINTF("\n");
-        TRACE_AND_STEP();
-        *dstreg = fetch_data_word(srcoffset);
-        M.x86.R_FS = fetch_data_word(srcoffset + 2);
-        break;
-    case 1:
-        dstreg = DECODE_RM_WORD_REGISTER(rh);
-        DECODE_PRINTF(",");
-        srcoffset = decode_rm01_address(rl);
-        DECODE_PRINTF("\n");
-        TRACE_AND_STEP();
-        *dstreg = fetch_data_word(srcoffset);
-        M.x86.R_FS = fetch_data_word(srcoffset + 2);
-        break;
-    case 2:
-        dstreg = DECODE_RM_WORD_REGISTER(rh);
-        DECODE_PRINTF(",");
-        srcoffset = decode_rm10_address(rl);
-        DECODE_PRINTF("\n");
-        TRACE_AND_STEP();
-        *dstreg = fetch_data_word(srcoffset);
-        M.x86.R_FS = fetch_data_word(srcoffset + 2);
-        break;
-    case 3:                     /* register to register */
-        /* UNDEFINED! */
-        TRACE_AND_STEP();
+  OP_DECODE("lfs ");
+  fetch_decode_modrm(&mod, &rh, &rl);
+  if(mod == 3) {
+    ILLEGAL_OP;
+  }
+  else {
+    if(MODE_DATA32){
+      reg32 = decode_rm_long_register(rh);
+      OP_DECODE(",");
+      addr = decode_rm_address(mod, rl);
+      *reg32 = fetch_data_long(addr);
+      addr += 4;
     }
-    DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
+    else {
+      reg16 = decode_rm_word_register(rh);
+      OP_DECODE(",");
+      addr = decode_rm_address(mod, rl);
+      *reg16 = fetch_data_word(addr);
+      addr += 2;
+    }
+    decode_set_seg_register(M.x86.seg + R_FS_INDEX, fetch_data_word(addr));
+  }
 }
 
 /****************************************************************************
@@ -1572,47 +1539,32 @@ Handles opcode 0x0f,0xb5
 ****************************************************************************/
 static void x86emuOp2_lgs_R_IMM(u8 X86EMU_UNUSED(op2))
 {
-	int mod, rh, rl;
-    u16 *dstreg;
-    uint srcoffset;
+  int mod, rh, rl;
+  u16 *reg16;
+  u32 *reg32, addr;
 
-    START_OF_INSTR();
-    DECODE_PRINTF("lgs ");
-    FETCH_DECODE_MODRM(mod, rh, rl);
-    switch (mod) {
-    case 0:
-        dstreg = DECODE_RM_WORD_REGISTER(rh);
-        DECODE_PRINTF(",");
-        srcoffset = decode_rm00_address(rl);
-        DECODE_PRINTF("\n");
-        TRACE_AND_STEP();
-        *dstreg = fetch_data_word(srcoffset);
-        M.x86.R_GS = fetch_data_word(srcoffset + 2);
-        break;
-    case 1:
-        dstreg = DECODE_RM_WORD_REGISTER(rh);
-        DECODE_PRINTF(",");
-        srcoffset = decode_rm01_address(rl);
-        DECODE_PRINTF("\n");
-        TRACE_AND_STEP();
-        *dstreg = fetch_data_word(srcoffset);
-        M.x86.R_GS = fetch_data_word(srcoffset + 2);
-        break;
-    case 2:
-        dstreg = DECODE_RM_WORD_REGISTER(rh);
-        DECODE_PRINTF(",");
-        srcoffset = decode_rm10_address(rl);
-        DECODE_PRINTF("\n");
-        TRACE_AND_STEP();
-        *dstreg = fetch_data_word(srcoffset);
-        M.x86.R_GS = fetch_data_word(srcoffset + 2);
-        break;
-    case 3:                     /* register to register */
-        /* UNDEFINED! */
-        TRACE_AND_STEP();
+  OP_DECODE("lgs ");
+  fetch_decode_modrm(&mod, &rh, &rl);
+  if(mod == 3) {
+    ILLEGAL_OP;
+  }
+  else {
+    if(MODE_DATA32){
+      reg32 = decode_rm_long_register(rh);
+      OP_DECODE(",");
+      addr = decode_rm_address(mod, rl);
+      *reg32 = fetch_data_long(addr);
+      addr += 4;
     }
-    DECODE_CLEAR_SEGOVR();
-    END_OF_INSTR();
+    else {
+      reg16 = decode_rm_word_register(rh);
+      OP_DECODE(",");
+      addr = decode_rm_address(mod, rl);
+      *reg16 = fetch_data_word(addr);
+      addr += 2;
+    }
+    decode_set_seg_register(M.x86.seg + R_GS_INDEX, fetch_data_word(addr));
+  }
 }
 
 /****************************************************************************
@@ -1814,8 +1766,6 @@ static void x86emuOp2_btX_I(u8 X86EMU_UNUSED(op2))
 	break;
     default:
 	DECODE_PRINTF("illegal extended x86 opcode\n");
-	printk("%04x:%04x: %02X%02X ILLEGAL EXTENDED X86 OPCODE EXTENSION!\n",
-		M.x86.R_CS, M.x86.R_IP-3,op2, (mod<<6)|(rh<<3)|rl);
 	HALT_SYS();
     }
     switch (mod) {

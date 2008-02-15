@@ -2211,13 +2211,13 @@ void idiv_byte(u8 s)
 
 	dvd = (s16)M.x86.R_AX;
 	if (s == 0) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
         return;
 	}
 	div = dvd / (s8)s;
 	mod = dvd % (s8)s;
 	if (abs(div) > 0x7f) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 	M.x86.R_AL = (s8) div;
@@ -2234,13 +2234,13 @@ void idiv_word(u16 s)
 
 	dvd = (((s32)M.x86.R_DX) << 16) | M.x86.R_AX;
 	if (s == 0) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 	div = dvd / (s16)s;
 	mod = dvd % (s16)s;
 	if (abs(div) > 0x7fff) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 	CLEAR_FLAG(F_CF);
@@ -2263,13 +2263,13 @@ void idiv_long(u32 s)
 
 	dvd = (((s64)M.x86.R_EDX) << 32) | M.x86.R_EAX;
 	if (s == 0) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 	div = dvd / (s32)s;
 	mod = dvd % (s32)s;
 	if (abs(div) > 0x7fffffff) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 #else
@@ -2284,7 +2284,7 @@ void idiv_long(u32 s)
 	int carry;
 
 	if (s == 0) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 	do {
@@ -2308,7 +2308,7 @@ void idiv_long(u32 s)
 	} while (counter > -1);
 	/* overflow */
 	if (abs_h_dvd || (l_dvd > abs_s)) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 	/* sign */
@@ -2336,13 +2336,13 @@ void div_byte(u8 s)
 
 	dvd = M.x86.R_AX;
     if (s == 0) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
         return;
     }
 	div = dvd / (u8)s;
 	mod = dvd % (u8)s;
 	if (abs(div) > 0xff) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
         return;
 	}
 	M.x86.R_AL = (u8)div;
@@ -2359,13 +2359,13 @@ void div_word(u16 s)
 
 	dvd = (((u32)M.x86.R_DX) << 16) | M.x86.R_AX;
 	if (s == 0) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
         return;
     }
 	div = dvd / (u16)s;
 	mod = dvd % (u16)s;
 	if (abs(div) > 0xffff) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 	CLEAR_FLAG(F_CF);
@@ -2388,13 +2388,13 @@ void div_long(u32 s)
 
 	dvd = (((u64)M.x86.R_EDX) << 32) | M.x86.R_EAX;
 	if (s == 0) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 	div = dvd / (u32)s;
 	mod = dvd % (u32)s;
 	if (abs(div) > 0xffffffff) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 #else
@@ -2408,7 +2408,7 @@ void div_long(u32 s)
 	int carry;
 		
 	if (s == 0) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 	do {
@@ -2432,7 +2432,7 @@ void div_long(u32 s)
 	} while (counter > -1);
 	/* overflow */
 	if (h_dvd || (l_dvd > s)) {
-		x86emu_intr_raise(0);
+		INTR_RAISE_DIV0;
 		return;
 	}
 	mod = l_dvd;
@@ -2466,7 +2466,7 @@ void ins(int size)
         switch (size) {
           case 1:
             while (count--) {
-				store_data_byte_abs(M.x86.R_ES, M.x86.R_DI,
+				store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
 									(*sys_inb)(M.x86.R_DX));
 				M.x86.R_DI += inc;
             }
@@ -2474,14 +2474,14 @@ void ins(int size)
 
           case 2:
             while (count--) {
-				store_data_word_abs(M.x86.R_ES, M.x86.R_DI,
+				store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
 									(*sys_inw)(M.x86.R_DX));
 				M.x86.R_DI += inc;
             }
             break;
           case 4:
             while (count--) {
-				store_data_long_abs(M.x86.R_ES, M.x86.R_DI,
+				store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
 									(*sys_inl)(M.x86.R_DX));
 				M.x86.R_DI += inc;
                 break;
@@ -2495,15 +2495,15 @@ void ins(int size)
     } else {
         switch (size) {
           case 1:
-			store_data_byte_abs(M.x86.R_ES, M.x86.R_DI,
+			store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
 								(*sys_inb)(M.x86.R_DX));
             break;
           case 2:
-			store_data_word_abs(M.x86.R_ES, M.x86.R_DI,
+			store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
 								(*sys_inw)(M.x86.R_DX));
             break;
           case 4:
-			store_data_long_abs(M.x86.R_ES, M.x86.R_DI,
+			store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
 								(*sys_inl)(M.x86.R_DX));
             break;
         }
@@ -2531,7 +2531,7 @@ void outs(int size)
           case 1:
             while (count--) {
 				(*sys_outb)(M.x86.R_DX,
-						 fetch_data_byte_abs(M.x86.R_ES, M.x86.R_SI));
+						 fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
 				M.x86.R_SI += inc;
             }
             break;
@@ -2539,14 +2539,14 @@ void outs(int size)
           case 2:
             while (count--) {
 				(*sys_outw)(M.x86.R_DX,
-						 fetch_data_word_abs(M.x86.R_ES, M.x86.R_SI));
+						 fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
 				M.x86.R_SI += inc;
             }
             break;
           case 4:
             while (count--) {
 				(*sys_outl)(M.x86.R_DX,
-						 fetch_data_long_abs(M.x86.R_ES, M.x86.R_SI));
+						 fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
 				M.x86.R_SI += inc;
                 break;
             }
@@ -2560,15 +2560,15 @@ void outs(int size)
         switch (size) {
           case 1:
 			(*sys_outb)(M.x86.R_DX,
-					 fetch_data_byte_abs(M.x86.R_ES, M.x86.R_SI));
+					 fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
             break;
           case 2:
 			(*sys_outw)(M.x86.R_DX,
-					 fetch_data_word_abs(M.x86.R_ES, M.x86.R_SI));
+					 fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
             break;
           case 4:
 			(*sys_outl)(M.x86.R_DX,
-					 fetch_data_long_abs(M.x86.R_ES, M.x86.R_SI));
+					 fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
             break;
         }
 		M.x86.R_SI += inc;
@@ -2601,11 +2601,11 @@ void push_word(u16 w)
 
   if(MODE_STACK32) {
     M.x86.R_ESP -= 2;
-    (*sys_wrw)(((u32)M.x86.R_SS << 4) + M.x86.R_ESP, w);
+    (*sys_wrw)(M.x86.R_SS_BASE + M.x86.R_ESP, w);
   }
   else {
     M.x86.R_SP -= 2;
-    (*sys_wrw)(((u32)M.x86.R_SS << 4) + M.x86.R_SP, w);
+    (*sys_wrw)(M.x86.R_SS_BASE + M.x86.R_SP, w);
   }
 }
 
@@ -2621,11 +2621,11 @@ void push_long(u32 w)
 
   if(MODE_STACK32) {
     M.x86.R_ESP -= 4;
-    (*sys_wrl)(((u32)M.x86.R_SS << 4) + M.x86.R_ESP, w);
+    (*sys_wrl)(M.x86.R_SS_BASE + M.x86.R_ESP, w);
   }
   else {
     M.x86.R_SP -= 4;
-    (*sys_wrl)(((u32)M.x86.R_SS << 4) + M.x86.R_SP, w);
+    (*sys_wrl)(M.x86.R_SS_BASE + M.x86.R_SP, w);
   }
 }
 
@@ -2642,11 +2642,11 @@ u16 pop_word(void)
   if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
 
   if(MODE_STACK32) {
-    res = (*sys_rdw)(((u32)M.x86.R_SS << 4) + M.x86.R_ESP);
+    res = (*sys_rdw)(M.x86.R_SS_BASE + M.x86.R_ESP);
     M.x86.R_ESP += 2;
   }
   else {
-    res = (*sys_rdw)(((u32)M.x86.R_SS << 4) + M.x86.R_SP);
+    res = (*sys_rdw)(M.x86.R_SS_BASE + M.x86.R_SP);
     M.x86.R_SP += 2;
   }
 
@@ -2666,11 +2666,11 @@ u32 pop_long(void)
   if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
 
   if(MODE_STACK32) {
-    res = (*sys_rdl)(((u32)M.x86.R_SS << 4)  + M.x86.R_ESP);
+    res = (*sys_rdl)(M.x86.R_SS_BASE  + M.x86.R_ESP);
     M.x86.R_ESP += 4;
   }
   else {
-    res = (*sys_rdl)(((u32)M.x86.R_SS << 4)  + M.x86.R_SP);
+    res = (*sys_rdl)(M.x86.R_SS_BASE  + M.x86.R_SP);
     M.x86.R_SP += 4;
   }
 

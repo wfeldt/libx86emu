@@ -324,9 +324,7 @@ typedef struct {
 #define _MODE_ADDR32            0x00000010
 #define _MODE_STACK32           0x00000020
 #define _MODE_CODE32            0x00000040
-#define SYSMODE_INTR_PENDING    0x10000000
-#define SYSMODE_EXTRN_INTR      0x20000000
-#define SYSMODE_HALTED          0x40000000
+#define _MODE_HALTED            0x00000080
 
 #define SYSMODE_PREFIX_DATA     _MODE_DATA32
 #define SYSMODE_PREFIX_ADDR     _MODE_ADDR32
@@ -335,11 +333,22 @@ typedef struct {
 #define MODE_ADDR32		(M.x86.mode & _MODE_ADDR32)
 #define MODE_STACK32		(M.x86.mode & _MODE_STACK32)
 #define MODE_CODE32		(M.x86.mode & _MODE_CODE32)
+#define MODE_HALTED		(M.x86.mode & _MODE_HALTED)
 
-#define  INTR_SYNCH           0x1
-#define  INTR_ASYNCH          0x2
-#define  INTR_HALTED          0x4
-#define  INTR_ILLEGAL_OP      0x8
+#define MODE_PROTECTED		(M.x86.R_CR0 & 1)
+#define MODE_REAL		(!MODE_PROTECTED)
+
+#define INTR_TYPE_SOFT		1
+#define INTR_TYPE_FAULT		2
+#define INTR_MODE_RESTART	0x100
+#define INTR_MODE_ERRCODE	0x200
+
+#define INTR_RAISE_DIV0		x86emu_intr_raise(0, INTR_TYPE_SOFT | INTR_MODE_RESTART, 0)
+#define INTR_RAISE_SOFT(n)	x86emu_intr_raise(n, INTR_TYPE_SOFT, 0)
+#define INTR_RAISE_GP(err)	x86emu_intr_raise(0x0d, INTR_TYPE_FAULT | INTR_MODE_RESTART | INTR_MODE_ERRCODE, err)
+#define INTR_RAISE_UD		x86emu_intr_raise(0x06, INTR_TYPE_FAULT | INTR_MODE_RESTART, 0)
+
+#define ILLEGAL_OP		INTR_RAISE_UD
 
 typedef struct {
     struct i386_general_regs    gen;
@@ -383,8 +392,12 @@ typedef struct {
     unsigned                    instr_len;		/* bytes in instr_buf */
     char			*disasm_ptr;
     char			decode_seg[4];
-    u8                          intno;
+    u8                          intr_nr;
+    unsigned                    intr_type;
+    unsigned                    intr_errcode;
 } X86EMU_regs;
+
+typedef int (X86APIP X86EMU_intrFuncs)(u8 num, unsigned type);
 
 /****************************************************************************
 REMARKS:
@@ -397,11 +410,12 @@ private			- private data pointer
 x86			- X86 registers
 ****************************************************************************/
 typedef struct {
-	unsigned long	mem_base;
-	unsigned long	mem_size;
-	void*        	private;
-	X86EMU_regs		x86;
-	} X86EMU_sysEnv;
+  unsigned long	mem_base;
+  unsigned long	mem_size;
+  void *private;
+  X86EMU_intrFuncs intr_table[256];
+  X86EMU_regs x86;
+} X86EMU_sysEnv;
 
 /*----------------------------- Global Variables --------------------------*/
 
@@ -507,16 +521,9 @@ typedef struct {
 } X86EMU_checkFuncs;
 
 
-/*--------------------- type definitions -----------------------------------*/
-
-typedef void (X86APIP X86EMU_intrFuncs)(int num);
-extern X86EMU_intrFuncs _X86EMU_intrTab[256];
-
-
 /*-------------------------- Function Prototypes --------------------------*/
 
 #define	HALT_SYS()	X86EMU_halt_sys()
-#define	ILLEGAL_OP()	X86EMU_illegal_op()
 
 /* checks to be enabled for "runtime" */
 
@@ -536,15 +543,15 @@ void	X86EMU_setupMemFuncs(X86EMU_memFuncs *funcs);
 void	X86EMU_setupPioFuncs(X86EMU_pioFuncs *funcs);
 void	X86EMU_setupIntrFuncs(X86EMU_intrFuncs funcs[]);
 void	X86EMU_setupCheckFuncs(X86EMU_checkFuncs *funcs);
-void	X86EMU_prepareForInt(int num);
 
 void	X86EMU_trace_code(void);
 void	X86EMU_trace_regs(void);
 
-void	X86EMU_exec(void);
-void	X86EMU_reset(X86EMU_sysEnv *emu);
-void	X86EMU_halt_sys(void);
-void	X86EMU_illegal_op(void);
+void X86EMU_exec(void);
+void X86EMU_reset(X86EMU_sysEnv *emu);
+void X86EMU_setupIntrFunc(X86EMU_sysEnv *emu, u8 nr, X86EMU_intrFuncs func);
+void X86EMU_halt_sys(void);
+void X86EMU_illegal_op(void);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/
