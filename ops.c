@@ -9158,11 +9158,11 @@ static void x86emuOp_loopne(u8 X86EMU_UNUSED(op1))
   decode_hex_addr(eip);
 
   if(MODE_DATA32) {
-    if(!--M.x86.R_ECX && !ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
+    if(--M.x86.R_ECX && !ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
   }
   else {
     eip &= 0xffff;      // FIXME: is not correct
-    if(!--M.x86.R_CX && !ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
+    if(--M.x86.R_CX && !ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
   }
 
 }
@@ -9183,11 +9183,11 @@ static void x86emuOp_loope(u8 X86EMU_UNUSED(op1))
   decode_hex_addr(eip);
 
   if(MODE_DATA32) {
-    if(!--M.x86.R_ECX && ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
+    if(--M.x86.R_ECX && ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
   }
   else {
     eip &= 0xffff;      // FIXME: is not correct
-    if(!--M.x86.R_CX && ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
+    if(--M.x86.R_CX && ACCESS_FLAG(F_ZF)) M.x86.R_EIP = eip;
   }
 }
 
