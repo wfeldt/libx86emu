@@ -93,13 +93,9 @@ void X86EMU_exec(void)
   };
 
   M.x86.intr = 0;
-  x86emu_end_instr();
 
   for(;;) {
-    M.x86.disasm_ptr = M.x86.disasm_buf;
-    *M.x86.disasm_ptr = 0;	// for now
-
-    *M.x86.decoded_buf = 0;	// dto.
+    *(M.x86.disasm_ptr = M.x86.disasm_buf) = 0;
 
     M.x86.instr_len = 0;
 
@@ -167,11 +163,11 @@ void X86EMU_exec(void)
           break;
         case 0xf2:
           OP_DECODE("repne ");
-          M.x86.mode |= SYSMODE_PREFIX_REPNE;
+          M.x86.mode |= _MODE_REPNE;
           break;
         case 0xf3:
           OP_DECODE("repe ");
-          M.x86.mode |= SYSMODE_PREFIX_REPE;
+          M.x86.mode |= _MODE_REPE;
           break;
       }
     }
@@ -1508,25 +1504,6 @@ void x86emu_check_data_access (uint dummy1, uint dummy2)
 	/*  check bounds, etc */
 }
 
-void x86emu_decode_printf (char *x)
-{
-	sprintf(M.x86.decoded_buf+M.x86.enc_str_pos,"%s",x);
-	M.x86.enc_str_pos += strlen(x);
-}
-
-void x86emu_decode_printf2 (char *x, int y)
-{
-	char temp[100];
-	sprintf(temp,x,y);
-	sprintf(M.x86.decoded_buf+M.x86.enc_str_pos,"%s",temp);
-	M.x86.enc_str_pos += strlen(temp);
-}
-
-void x86emu_end_instr (void)
-{
-	M.x86.enc_str_pos = 0;
-}
-
 void print_encoded_bytes (u16 s, u32 o)
 {
   unsigned u;
@@ -1540,12 +1517,7 @@ void print_encoded_bytes (u16 s, u32 o)
 
 void print_decoded_instruction (void)
 {
-  if(*M.x86.disasm_buf) {
-    printk("%s\n", M.x86.disasm_buf);
-  }
-  else {
-    printk("%s", *M.x86.decoded_buf ? M.x86.decoded_buf : "\n");
-  }
+  printk("%s\n", M.x86.disasm_buf);
 }
 
 void x86emu_dump_regs (void)

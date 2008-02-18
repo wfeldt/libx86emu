@@ -2663,3 +2663,45 @@ u32 pop_long(void)
   return res;
 }
 
+
+int eval_condition(unsigned type)
+{
+  int cond = 0;
+  unsigned flags = M.x86.R_EFLG;
+
+  switch(type >> 1) {
+    case 0:	/* O */
+      cond = flags & F_OF;
+      break;
+
+    case 1:	/* B */
+      cond = flags & F_CF;
+      break;
+
+    case 3:	/* BE */
+      cond = (flags & F_CF) != 0;
+
+    case 2:	/* Z */
+      cond |= (flags & F_ZF) != 0;
+      break;
+
+    case 4:	/* S */
+      cond = flags & F_SF;
+      break;
+
+    case 5:	/* P */
+      cond = flags & F_PF;
+      break;
+
+    case 7:	/* LE */
+      cond = (flags & F_ZF) != 0;
+
+    case 6:	/* L */
+      cond |= ((flags & F_SF) != 0) ^ ((flags & F_OF) != 0);
+      break;
+  }
+
+  return type & 1 ? !cond : cond;
+}
+
+

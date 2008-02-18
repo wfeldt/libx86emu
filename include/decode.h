@@ -41,13 +41,7 @@
 
 /*---------------------- Macros and type definitions ----------------------*/
 
-/* Instruction Decoding Stuff */
-
-#define FETCH_DECODE_MODRM(mod,rh,rl) 	fetch_decode_modrm(&mod,&rh,&rl)
-#define DECODE_RM_BYTE_REGISTER(r)    	decode_rm_byte_register(r)
-#define DECODE_RM_WORD_REGISTER(r)    	decode_rm_word_register(r)
-#define DECODE_RM_LONG_REGISTER(r)    	decode_rm_long_register(r)
-#define DECODE_CLEAR_SEGOVR()
+/* Instruction Decoding */
 
 #define OP_DECODE(a) \
   memcpy(M.x86.disasm_ptr, a, sizeof a - 1), \
@@ -68,17 +62,13 @@
 # define DEBUG_IO_TRACE()      	(M.x86.debug & DEBUG_IO_TRACE_F)
 
 
-# define DECODE_PRINTF(x) \
-  if (DEBUG_DECODE()) x86emu_decode_printf(x)
-
-# define DECODE_PRINTF2(x,y) \
-  if (DEBUG_DECODE()) x86emu_decode_printf2(x,y) 
-
-#define TRACE_AND_STEP()
-
+# define DECODE_CLEAR_SEGOVR()
+# define DECODE_PRINTF(x)
+# define DECODE_PRINTF2(x,y)
+# define TRACE_AND_STEP()
 # define START_OF_INSTR()
-# define END_OF_INSTR()		x86emu_end_instr();
-# define END_OF_INSTR_NO_TRACE()	x86emu_end_instr();
+# define END_OF_INSTR()
+# define END_OF_INSTR_NO_TRACE()
 
 /*-------------------------- Function Prototypes --------------------------*/
 
@@ -86,8 +76,8 @@
 extern "C" {            			/* Use "C" linkage when in C++ mode */
 #endif
 
-void 	x86emu_intr_raise (u8 intr_nr, unsigned type, unsigned err);
-void    fetch_decode_modrm (int *mod,int *regh,int *regl);
+void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err);
+void fetch_decode_modrm (int *mod, int *regh, int *regl);
 u8 fetch_byte (void);
 u16 fetch_word(void);
 u32 fetch_long(void);
@@ -103,15 +93,15 @@ void store_data_word(u32 offset, u16 val);
 void store_data_word_abs(sel_t *seg, u32 offset, u16 val);
 void store_data_long(u32 offset, u32 val);
 void store_data_long_abs(sel_t *seg, u32 offset, u32 val);
-u8* 	decode_rm_byte_register(int reg);
-u16* 	decode_rm_word_register(int reg);
-u32* 	decode_rm_long_register(int reg);
+u8* decode_rm_byte_register(int reg);
+u16* decode_rm_word_register(int reg);
+u32* decode_rm_long_register(int reg);
 sel_t *decode_rm_seg_register(int reg);
-u32	decode_rm00_address(int rm);
-u32	decode_rm01_address(int rm);
-u32	decode_rm10_address(int rm);
-u32	decode_sib_address(int sib, int mod);
-u32     decode_rm_address(int mod, int rl);
+u32 decode_rm00_address(int rm);
+u32 decode_rm01_address(int rm);
+u32 decode_rm10_address(int rm);
+u32 decode_sib_address(int sib, int mod);
+u32 decode_rm_address(int mod, int rl);
 
 void decode_hex2(u32 ofs);
 void decode_hex4(u32 ofs);
@@ -124,9 +114,6 @@ void decode_hex8s(s32 ofs);
 void decode_set_seg_register(sel_t *sel, u16 val);
 void generate_int(u8 nr, unsigned type, unsigned errcode);
 
-void x86emu_decode_printf (char *x);
-void x86emu_decode_printf2 (char *x, int y);
-void x86emu_end_instr (void);
 void x86emu_dump_regs (void);
 void x86emu_check_ip_access (void);
 void x86emu_check_sp_access (void);

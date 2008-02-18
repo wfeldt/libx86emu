@@ -41,6 +41,11 @@
 
 /*----------------------------- Implementation ----------------------------*/
 
+// FIXME: just a dummy!
+#undef DECODE_PRINTF
+#define DECODE_PRINTF(a) foo(a)
+static void foo(char *s) { }
+
 /* opcode=0xd8 */
 void x86emuOp_esc_coprocess_d8(u8 X86EMU_UNUSED(op1))
 {
@@ -95,7 +100,7 @@ void x86emuOp_esc_coprocess_d9(u8 X86EMU_UNUSED(op1))
     u8 stkelem = 0;
 
     START_OF_INSTR();
-    FETCH_DECODE_MODRM(mod, rh, rl);
+    fetch_decode_modrm(&mod, &rh, &rl);
 
     if (mod != 3) {
         DECODE_PRINTINSTR32(x86emu_fpu_op_d9_tab, mod, rh, rl);
@@ -321,7 +326,7 @@ void x86emuOp_esc_coprocess_da(u8 X86EMU_UNUSED(op1))
     u8 stkelem = 0;
 
     START_OF_INSTR();
-    FETCH_DECODE_MODRM(mod, rh, rl);
+    fetch_decode_modrm(&mod, &rh, &rl);
     DECODE_PRINTINSTR32(x86emu_fpu_op_da_tab, mod, rh, rl);
     switch (mod) {
       case 0:
@@ -400,7 +405,7 @@ void x86emuOp_esc_coprocess_db(u8 X86EMU_UNUSED(op1))
     uint destoffset = 0;
 
     START_OF_INSTR();
-    FETCH_DECODE_MODRM(mod, rh, rl);
+    fetch_decode_modrm(&mod, &rh, &rl);
 
     if (mod != 3) {
         DECODE_PRINTINSTR32(x86emu_fpu_op_db_tab, mod, rh, rl);
@@ -528,7 +533,7 @@ void x86emuOp_esc_coprocess_dc(u8 X86EMU_UNUSED(op1))
     u8 stkelem = 0;
 
     START_OF_INSTR();
-    FETCH_DECODE_MODRM(mod, rh, rl);
+    fetch_decode_modrm(&mod, &rh, &rl);
     DECODE_PRINTINSTR32(x86emu_fpu_op_dc_tab, mod, rh, rl);
     switch (mod) {
       case 0:
@@ -637,7 +642,7 @@ void x86emuOp_esc_coprocess_dd(u8 X86EMU_UNUSED(op1))
     u8 stkelem = 0;
 
     START_OF_INSTR();
-    FETCH_DECODE_MODRM(mod, rh, rl);
+    fetch_decode_modrm(&mod, &rh, &rl);
     DECODE_PRINTINSTR32(x86emu_fpu_op_dd_tab, mod, rh, rl);
     switch (mod) {
       case 0:
@@ -743,7 +748,7 @@ void x86emuOp_esc_coprocess_de(u8 X86EMU_UNUSED(op1))
     u8 stkelem = 0;
 
     START_OF_INSTR();
-    FETCH_DECODE_MODRM(mod, rh, rl);
+    fetch_decode_modrm(&mod, &rh, &rl);
     DECODE_PRINTINSTR32(x86emu_fpu_op_de_tab, mod, rh, rl);
     switch (mod) {
       case 0:
@@ -861,7 +866,7 @@ void x86emuOp_esc_coprocess_df(u8 X86EMU_UNUSED(op1))
     u8 stkelem = 0;
 
     START_OF_INSTR();
-    FETCH_DECODE_MODRM(mod, rh, rl);
+    fetch_decode_modrm(&mod, &rh, &rl);
     DECODE_PRINTINSTR32(x86emu_fpu_op_df_tab, mod, rh, rl);
     switch (mod) {
       case 0:

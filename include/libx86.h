@@ -318,8 +318,8 @@ typedef struct {
  * Segment usage control.
  */
 #define _MODE_SEG_DS_SS         0x00000001
-#define SYSMODE_PREFIX_REPE     0x00000002
-#define SYSMODE_PREFIX_REPNE    0x00000004
+#define _MODE_REPE              0x00000002
+#define _MODE_REPNE             0x00000004
 #define _MODE_DATA32            0x00000008
 #define _MODE_ADDR32            0x00000010
 #define _MODE_STACK32           0x00000020
@@ -328,7 +328,12 @@ typedef struct {
 
 #define SYSMODE_PREFIX_DATA     _MODE_DATA32
 #define SYSMODE_PREFIX_ADDR     _MODE_ADDR32
+#define SYSMODE_PREFIX_REPE     _MODE_REPE
+#define SYSMODE_PREFIX_REPNE    _MODE_REPNE
 
+#define MODE_REPE		(M.x86.mode & _MODE_REPE)
+#define MODE_REPNE		(M.x86.mode & _MODE_REPNE)
+#define MODE_REP		(M.x86.mode & (_MODE_REPE | _MODE_REPNE))
 #define MODE_DATA32		(M.x86.mode & _MODE_DATA32)
 #define MODE_ADDR32		(M.x86.mode & _MODE_ADDR32)
 #define MODE_STACK32		(M.x86.mode & _MODE_STACK32)
@@ -384,14 +389,11 @@ typedef struct {
     int                         check;
     u32                         saved_eip;
     u16                         saved_cs;
-    int                         enc_str_pos;
-    char                        decode_buf[32];		/* encoded byte stream  */
-    char                        decoded_buf[256];	/* disassembled strings */
-    char			disasm_buf[256];
+    char			decode_seg[4];
     unsigned char               instr_buf[32];		/* instruction bytes */
     unsigned                    instr_len;		/* bytes in instr_buf */
+    char			disasm_buf[256];
     char			*disasm_ptr;
-    char			decode_seg[4];
     u8                          intr_nr;
     unsigned                    intr_type;
     unsigned                    intr_errcode;

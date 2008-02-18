@@ -132,6 +132,7 @@ void    push_word (u16 w);
 void    push_long (u32 w);
 u16     pop_word (void);
 u32     pop_long (void);
+int eval_condition(unsigned type);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/
