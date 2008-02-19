@@ -59,8 +59,10 @@
 #include "decode.h"
 #include "ops.h"
 #include "prim_ops.h"
+#if 0
 #include "fpu.h"
 #include "fpu_regs.h"
+#endif
 
 #ifdef IN_MODULE
 #include <xf86_ansic.h>

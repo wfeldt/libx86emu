@@ -61,15 +61,6 @@
 # define DEBUG_MEM_TRACE()     	(M.x86.debug & DEBUG_MEM_TRACE_F)
 # define DEBUG_IO_TRACE()      	(M.x86.debug & DEBUG_IO_TRACE_F)
 
-
-# define DECODE_CLEAR_SEGOVR()
-# define DECODE_PRINTF(x)
-# define DECODE_PRINTF2(x,y)
-# define TRACE_AND_STEP()
-# define START_OF_INSTR()
-# define END_OF_INSTR()
-# define END_OF_INSTR_NO_TRACE()
-
 /*-------------------------- Function Prototypes --------------------------*/
 
 #ifdef  __cplusplus
@@ -103,6 +94,7 @@ u32 decode_rm10_address(int rm);
 u32 decode_sib_address(int sib, int mod);
 u32 decode_rm_address(int mod, int rl);
 
+void decode_hex1(u32 ofs);
 void decode_hex2(u32 ofs);
 void decode_hex4(u32 ofs);
 void decode_hex8(u32 ofs);

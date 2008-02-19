@@ -95,6 +95,8 @@ void X86EMU_exec(void)
   M.x86.intr = 0;
 
   for(;;) {
+    M.x86.msr_10++;	// time stamp counter
+
     *(M.x86.disasm_ptr = M.x86.disasm_buf) = 0;
 
     M.x86.instr_len = 0;
@@ -767,6 +769,17 @@ sel_t *decode_rm_seg_register(int reg)
 }
 
 
+void decode_hex1(u32 ofs)
+{
+  static const char *h = "0123456789abcdef";
+  char *s = M.x86.disasm_ptr;
+
+  M.x86.disasm_ptr++;
+
+  *s = h[ofs & 0xf];
+}
+
+
 void decode_hex2(u32 ofs)
 {
   static const char *h = "0123456789abcdef";
@@ -1132,7 +1145,6 @@ u32 decode_rm01_address(int rm)
         OP_DECODE("bp+di");
         decode_hex2s(displacement);
         OP_DECODE("]");
-        DECODE_PRINTF2("%d[bp+di]", displacement);
         M.x86.mode |= _MODE_SEG_DS_SS;
         return (M.x86.R_BP + M.x86.R_DI + displacement) & 0xffff;
 
@@ -1554,6 +1566,7 @@ void decode_set_seg_register(sel_t *seg, u16 val)
   int err = 1;
   unsigned ofs, acc;
   u32 dl, dh, base, limit;
+  u32 dt_base, dt_limit;
 
   if(MODE_REAL) {
     seg->sel = val;
@@ -1565,34 +1578,38 @@ void decode_set_seg_register(sel_t *seg, u16 val)
     ofs = val & ~7;
 
     if(val & 4) {
-      // LDT
+      dt_base = M.x86.R_LDT_BASE;
+      dt_limit = M.x86.R_LDT_BASE;
     }
     else {
-      if(ofs == 0) {
-        seg->sel = 0;
-        seg->base = 0;
-        seg->limit = 0;
-        seg->acc = 0;
+      dt_base = M.x86.R_GDT_BASE;
+      dt_limit = M.x86.R_GDT_BASE;
+    }
+
+    if(ofs == 0) {
+      seg->sel = 0;
+      seg->base = 0;
+      seg->limit = 0;
+      seg->acc = 0;
+
+      err = 0;
+    }
+    else if(ofs + 7 <= dt_limit) {
+      dl = (*sys_rdl)(dt_base + ofs);
+      dh = (*sys_rdl)(dt_base + ofs + 4);
+
+      acc = ((dh >> 8) & 0xff) + ((dh >> 12) & 0xf00);
+      base = ((dl >> 16) & 0xffff) + ((dh & 0xff) << 16) + (dh & 0xff000000);
+      limit = (dl & 0xffff) + (dh & 0xf0000);
+      if(ACC_G(acc)) limit = (limit << 12) + 0xfff;
+
+      if(ACC_P(acc) && ACC_S(acc)) {
+        seg->sel = val;
+        seg->base = base;
+        seg->limit = limit;
+        seg->acc = acc;
 
         err = 0;
-      }
-      else if(ofs + 7 <= M.x86.R_GDT_LIMIT) {
-        dl = (*sys_rdl)(M.x86.R_GDT_BASE + ofs);
-        dh = (*sys_rdl)(M.x86.R_GDT_BASE + ofs + 4);
-
-        acc = ((dh >> 8) & 0xff) + ((dh >> 12) & 0xf00);
-        base = ((dl >> 16) & 0xffff) + ((dh & 0xff) << 16) + (dh & 0xff000000);
-        limit = (dl & 0xffff) + (dh & 0xf0000);
-        if(ACC_G(acc)) limit = (limit << 12) + 0xfff;
-
-        if(ACC_P(acc) && ACC_S(acc)) {
-          seg->sel = val;
-          seg->base = base;
-          seg->limit = limit;
-          seg->acc = acc;
-
-          err = 0;
-        }
       }
     }
   }

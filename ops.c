@@ -42,9 +42,7 @@
 * Each opcode proc has a comment preceeding it which gives it's table
 * address.  Several opcodes are missing (undefined) in the table.
 *
-* Each proc includes information for decoding (DECODE_PRINTF and
-* DECODE_PRINTF2), debugging (TRACE_REGS, SINGLE_STEP), and misc
-* functions (START_OF_INSTR, END_OF_INSTR).
+* Each proc includes information for decoding (OP_DECODE).
 *
 * Many of the procedures are *VERY* similar in coding.  This has
 * allowed for a very large amount of code to be generated in a fairly
@@ -5590,6 +5588,8 @@ void (*x86emu_optab[256])(u8) =
   /*  0xd5 */ x86emuOp_aad,
   /*  0xd6 */ x86emuOp_setalc,
   /*  0xd7 */ x86emuOp_xlat,
+
+#if 0
   /*  0xd8 */ x86emuOp_esc_coprocess_d8,
   /*  0xd9 */ x86emuOp_esc_coprocess_d9,
   /*  0xda */ x86emuOp_esc_coprocess_da,
@@ -5598,6 +5598,16 @@ void (*x86emu_optab[256])(u8) =
   /*  0xdd */ x86emuOp_esc_coprocess_dd,
   /*  0xde */ x86emuOp_esc_coprocess_de,
   /*  0xdf */ x86emuOp_esc_coprocess_df,
+#else
+  /*  0xd8 */ x86emuOp_illegal_op,
+  /*  0xd9 */ x86emuOp_illegal_op,
+  /*  0xda */ x86emuOp_illegal_op,
+  /*  0xdb */ x86emuOp_illegal_op,
+  /*  0xdc */ x86emuOp_illegal_op,
+  /*  0xdd */ x86emuOp_illegal_op,
+  /*  0xde */ x86emuOp_illegal_op,
+  /*  0xdf */ x86emuOp_illegal_op,
+#endif
 
   /*  0xe0 */ x86emuOp_loopne,
   /*  0xe1 */ x86emuOp_loope,

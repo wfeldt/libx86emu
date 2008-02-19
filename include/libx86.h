@@ -257,14 +257,6 @@ typedef struct {
 #define R_DR5		drx[5]
 #define R_DR6		drx[6]
 #define R_DR7		drx[7]
-#define R_TR0		trx[0]
-#define R_TR1		trx[1]
-#define R_TR2		trx[2]
-#define R_TR3		trx[3]
-#define R_TR4		trx[4]
-#define R_TR5		trx[5]
-#define R_TR6		trx[6]
-#define R_TR7		trx[7]
 
 /* flag conditions   */
 #define FB_CF 0x0001            /* CARRY flag  */
@@ -363,13 +355,13 @@ typedef struct {
     sel_t tr;
     u32 crx[8];
     u32 drx[8];
-    u32 trx[8];
     struct {
       u32 base, limit;
     } gdt;
     struct {
       u32 base, limit;
     } idt;
+    u32				msr_10;		/* TSC */
     /*
      * MODE contains information on:
      *  REPE prefix             2 bits  repe,repne

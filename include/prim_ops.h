@@ -116,7 +116,7 @@ u32     xor_long (u32 d, u32 s);
 void    imul_byte (u8 s);
 void    imul_word (u16 s);
 void    imul_long (u32 s);
-void 	imul_long_direct(u32 *res_lo, u32* res_hi,u32 d, u32 s);
+void 	imul_long_direct(u32 *res_lo, u32* res_hi, u32 d, u32 s);
 void    mul_byte (u8 s);
 void    mul_word (u16 s);
 void    mul_long (u32 s);
