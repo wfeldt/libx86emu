@@ -421,14 +421,6 @@ extern    X86EMU_sysEnv	_X86EMU_env;
 
 /*-------------------------- Function Prototypes --------------------------*/
 
-/* Function to log information at runtime */
-
-void	printk(const char *fmt, ...);
-
-
-
-
-
 
 /*---------------------- Macros and type definitions ----------------------*/
 

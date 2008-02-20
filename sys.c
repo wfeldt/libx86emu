@@ -66,12 +66,10 @@ u8 X86API rdb(
 	u8 val;
 
 	if (addr > M.mem_size - 1) {
-		printk("mem_read: address %#lx out of range!\n", addr);
+		// printk("mem_read: address %#lx out of range!\n", addr);
 		HALT_SYS();
 		}
 	val = *(u8*)(M.mem_base + addr);
-	if (DEBUG_MEM_TRACE())
-		printk("%#08x 1 -> %#x\n", addr, val);
 	return val;
 }
 
@@ -91,7 +89,7 @@ u16 X86API rdw(
 	u16 val = 0;
 
 	if (addr > M.mem_size - 2) {
-		printk("mem_read: address %#lx out of range!\n", addr);
+		// printk("mem_read: address %#lx out of range!\n", addr);
 		HALT_SYS();
 		}
 #ifdef __BIG_ENDIAN__
@@ -106,8 +104,6 @@ u16 X86API rdw(
 #else
 		val = *(u16*)(M.mem_base + addr);
 #endif
-			if (DEBUG_MEM_TRACE())
-		printk("%#08x 2 -> %#x\n", addr, val);
     return val;
 }
 
@@ -126,7 +122,7 @@ u32 X86API rdl(
 	u32 val = 0;
 
 	if (addr > M.mem_size - 4) {
-		printk("mem_read: address %#lx out of range!\n", addr);
+		// printk("mem_read: address %#lx out of range!\n", addr);
 		HALT_SYS();
 		}
 #ifdef __BIG_ENDIAN__
@@ -143,8 +139,6 @@ u32 X86API rdl(
 #else
 		val = *(u32*)(M.mem_base + addr);
 #endif
-	if (DEBUG_MEM_TRACE())
-		printk("%#08x 4 -> %#x\n", addr, val);
 	return val;
 }
 
@@ -160,10 +154,8 @@ void X86API wrb(
 	u32 addr,
 	u8 val)
 {
-	if (DEBUG_MEM_TRACE())
-		printk("%#08x 1 <- %#x\n", addr, val);
     if (addr > M.mem_size - 1) {
-		printk("mem_write: address %#lx out of range!\n", addr);
+		// printk("mem_write: address %#lx out of range!\n", addr);
 		HALT_SYS();
 		}
 	*(u8*)(M.mem_base + addr) = val;
@@ -181,10 +173,8 @@ void X86API wrw(
 	u32 addr,
 	u16 val)
 {
-	if (DEBUG_MEM_TRACE())
-		printk("%#08x 2 <- %#x\n", addr, val);
 	if (addr > M.mem_size - 2) {
-		printk("mem_write: address %#lx out of range!\n", addr);
+		// printk("mem_write: address %#lx out of range!\n", addr);
 		HALT_SYS();
 		}
 #ifdef __BIG_ENDIAN__
@@ -213,10 +203,8 @@ void X86API wrl(
 	u32 addr,
 	u32 val)
 {
-	if (DEBUG_MEM_TRACE())
-		printk("%#08x 4 <- %#x\n", addr, val);
 	if (addr > M.mem_size - 4) {
-		printk("mem_write: address %#lx out of range!\n", addr);
+		// printk("mem_write: address %#lx out of range!\n", addr);
 		HALT_SYS();
 		}
 #ifdef __BIG_ENDIAN__
@@ -246,9 +234,8 @@ Default PIO byte read function. Doesn't perform real inb.
 static u8 X86API p_inb(
 	X86EMU_pioAddr addr)
 {
-	printk("No real inb\n");
-	if (DEBUG_IO_TRACE())
-		printk("inb %#04x \n", addr);
+	// printk("No real inb\n");
+
 	return 0;
 }
 
@@ -263,9 +250,7 @@ Default PIO word read function. Doesn't perform real inw.
 static u16 X86API p_inw(
 	X86EMU_pioAddr addr)
 {
-	printk("No real inw\n");
-	if (DEBUG_IO_TRACE())
-		printk("inw %#04x \n", addr);
+	// printk("No real inw\n");
 	return 0;
 }
 
@@ -280,9 +265,7 @@ Default PIO long read function. Doesn't perform real inl.
 static u32 X86API p_inl(
 	X86EMU_pioAddr addr)
 {
-	printk("No real inl\n");
-	if (DEBUG_IO_TRACE())
-		printk("inl %#04x \n", addr);
+	// printk("No real inl\n");
 	return 0;
 }
 
@@ -297,9 +280,7 @@ static void X86API p_outb(
 	X86EMU_pioAddr addr,
 	u8 val)
 {
-	printk("No real outb\n");
-	if (DEBUG_IO_TRACE())
-		printk("outb %#02x -> %#04x \n", val, addr);
+	// printk("No real outb\n");
     return;
 }
 
@@ -314,9 +295,7 @@ static void X86API p_outw(
 	X86EMU_pioAddr addr,
 	u16 val)
 {
-	printk("No real outw\n");
-	if (DEBUG_IO_TRACE())
-		printk("outw %#04x -> %#04x \n", val, addr);
+	// printk("No real outw\n");
 	return;
 }
 
@@ -331,9 +310,7 @@ static void X86API p_outl(
 	X86EMU_pioAddr addr,
 	u32 val)
 {
-	printk("No real outl\n");
-	if (DEBUG_IO_TRACE())
-		printk("outl %#08x -> %#04x \n", val, addr);
+	// printk("No real outl\n");
     return;
 }
 
