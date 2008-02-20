@@ -51,6 +51,15 @@
   memcpy(M.x86.disasm_ptr, M.x86.decode_seg, 4), \
   M.x86.disasm_ptr += M.x86.default_seg ? 4 : 1
 
+#define DECODE_HEX1(ofs) decode_hex1(&M.x86.disasm_ptr, ofs)
+#define DECODE_HEX2(ofs) decode_hex2(&M.x86.disasm_ptr, ofs)
+#define DECODE_HEX4(ofs) decode_hex4(&M.x86.disasm_ptr, ofs)
+#define DECODE_HEX8(ofs) decode_hex8(&M.x86.disasm_ptr, ofs)
+#define DECODE_HEX2S(ofs) decode_hex2s(&M.x86.disasm_ptr, ofs)
+#define DECODE_HEX4S(ofs) decode_hex4s(&M.x86.disasm_ptr, ofs)
+#define DECODE_HEX8S(ofs) decode_hex8s(&M.x86.disasm_ptr, ofs)
+#define DECODE_HEX_ADDR(ofs) decode_hex_addr(&M.x86.disasm_ptr, ofs)
+
 # define CHECK_IP_FETCH()              	(M.x86.check & CHECK_IP_FETCH_F)
 # define CHECK_SP_ACCESS()             	(M.x86.check & CHECK_SP_ACCESS_F)
 # define CHECK_MEM_ACCESS()            	(M.x86.check & CHECK_MEM_ACCESS_F)
@@ -94,20 +103,19 @@ u32 decode_rm10_address(int rm);
 u32 decode_sib_address(int sib, int mod);
 u32 decode_rm_address(int mod, int rl);
 
-void decode_hex1(u32 ofs);
-void decode_hex2(u32 ofs);
-void decode_hex4(u32 ofs);
-void decode_hex8(u32 ofs);
-void decode_hex_addr(u32 ofs);
-void decode_hex2s(s32 ofs);
-void decode_hex4s(s32 ofs);
-void decode_hex8s(s32 ofs);
+void decode_hex1(char **p, u32 ofs);
+void decode_hex2(char **p, u32 ofs);
+void decode_hex4(char **p, u32 ofs);
+void decode_hex8(char **p, u32 ofs);
+void decode_hex_addr(char **p, u32 ofs);
+void decode_hex2s(char **p, s32 ofs);
+void decode_hex4s(char **p, s32 ofs);
+void decode_hex8s(char **p, s32 ofs);
 
 void decode_set_seg_register(sel_t *sel, u16 val);
 void generate_int(u8 nr, unsigned type, unsigned errcode);
 
 void x86emu_dump_regs (void);
-void x86emu_check_ip_access (void);
 void x86emu_check_sp_access (void);
 void x86emu_check_mem_access (u32 p);
 void x86emu_check_data_access (uint s, uint o);

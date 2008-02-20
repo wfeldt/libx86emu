@@ -383,6 +383,7 @@ typedef struct {
 } X86EMU_regs;
 
 typedef int (* x86emu_intr_handler_t)(u8 num, unsigned type);
+typedef int (* x86emu_instr_check_t)(void);
 
 /****************************************************************************
 REMARKS:
@@ -398,7 +399,13 @@ typedef struct {
   unsigned long	mem_base;
   unsigned long	mem_size;
   void *private;
+  struct {
+    unsigned size;
+    char *data;
+    char *ptr;
+  } log;
   x86emu_intr_handler_t intr_table[256];
+  x86emu_instr_check_t instr_check;
   X86EMU_regs x86;
 } X86EMU_sysEnv;
 
@@ -501,11 +508,6 @@ extern void X86API wrl(u32 addr, u32 val);
  
 /*  #pragma	pack() */
 
-typedef struct {
-	void (* ip)(void);
-} X86EMU_checkFuncs;
-
-
 /*-------------------------- Function Prototypes --------------------------*/
 
 #define	HALT_SYS()	X86EMU_halt_sys()
@@ -524,13 +526,17 @@ typedef struct {
 #define DEBUG_MEM_TRACE_F       0x001000 
 #define DEBUG_IO_TRACE_F        0x002000 
 
-void x86emu_exec(void);
 void x86emu_set_intr_handler(X86EMU_sysEnv *emu, unsigned num, x86emu_intr_handler_t handler);
+void x86emu_set_instr_check(X86EMU_sysEnv *emu, x86emu_instr_check_t instr_check);
+void x86emu_set_log(X86EMU_sysEnv *emu, char *buffer, unsigned buffer_size);
+char *x86emu_get_log();
+void x86emu_clear_log();
+void x86emu_log(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 void x86emu_reset(X86EMU_sysEnv *emu);
+void x86emu_exec(void);
 
 void	X86EMU_setupMemFuncs(X86EMU_memFuncs *funcs);
 void	X86EMU_setupPioFuncs(X86EMU_pioFuncs *funcs);
-void	X86EMU_setupCheckFuncs(X86EMU_checkFuncs *funcs);
 
 void	X86EMU_trace_code(void);
 void	X86EMU_trace_regs(void);

@@ -42,6 +42,7 @@
 
 #include "include/x86emui.h"
 #include <string.h>
+#include <stdarg.h>
 
 /*------------------------- Global Variables ------------------------------*/
 
@@ -351,8 +352,6 @@ void 	(X86APIP sys_outb)(X86EMU_pioAddr addr, u8 val) 	= p_outb;
 void 	(X86APIP sys_outw)(X86EMU_pioAddr addr, u16 val)	= p_outw;
 void 	(X86APIP sys_outl)(X86EMU_pioAddr addr, u32 val)	= p_outl;
 
-void 	(* sys_check_ip)(void)	= NULL;
-
 /*----------------------------- Setup -------------------------------------*/
 
 /****************************************************************************
@@ -414,8 +413,50 @@ void x86emu_set_intr_handler(X86EMU_sysEnv *emu, unsigned num, x86emu_intr_handl
 }
 
 
-void X86EMU_setupCheckFuncs(X86EMU_checkFuncs *funcs)
+void x86emu_set_instr_check(X86EMU_sysEnv *emu, x86emu_instr_check_t instr_check)
 {
-    sys_check_ip = funcs->ip;
+  emu->instr_check = instr_check;
 }
+
+
+void x86emu_set_log(X86EMU_sysEnv *emu, char *buffer, unsigned buffer_size)
+{
+  emu->log.size = buffer_size;
+  emu->log.data = buffer;
+  emu->log.ptr = emu->log.data;
+  *emu->log.data = 0;
+}
+
+
+void x86emu_clear_log()
+{
+  M.log.ptr = M.log.data;
+  *M.log.ptr = 0;
+}
+
+
+char *x86emu_get_log()
+{
+  return M.log.data;
+}
+
+
+void x86emu_log(const char *format, ...)
+{
+  va_list args;
+  int size = M.log.size - (M.log.ptr - M.log.data);
+
+  va_start(args, format);
+  if(size > 0) {
+    size = vsnprintf(M.log.ptr, size, format, args);
+    if(size > 0) {
+      M.log.ptr += size;
+    }
+    else {
+      *M.log.ptr = 0;
+    }
+  }
+  va_end(args);  
+}
+
 

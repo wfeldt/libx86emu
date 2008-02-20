@@ -266,7 +266,7 @@ static void x86emuOp_mov_word_RM_CRx(u8 X86EMU_UNUSED(op2))
   if(mod == 3) {
     reg32 = decode_rm_long_register(rl);
     OP_DECODE(",cr");
-    decode_hex1(rh);
+    DECODE_HEX1(rh);
     *reg32 = M.x86.crx[rh];
   }
   else {
@@ -290,7 +290,7 @@ static void x86emuOp_mov_word_RM_DRx(u8 X86EMU_UNUSED(op2))
   if(mod == 3) {
     reg32 = decode_rm_long_register(rl);
     OP_DECODE(",dr");
-    decode_hex1(rh);
+    DECODE_HEX1(rh);
     *reg32 = M.x86.drx[rh];
   }
   else {
@@ -309,7 +309,7 @@ static void x86emuOp_mov_word_CRx_RM(u8 X86EMU_UNUSED(op2))
 
   OP_DECODE("mov cr");
   fetch_decode_modrm(&mod, &rh, &rl);
-  decode_hex1(rh);
+  DECODE_HEX1(rh);
   OP_DECODE(",");
 
   if(mod == 3) {
@@ -331,7 +331,7 @@ static void x86emuOp_mov_word_DRx_RM(u8 X86EMU_UNUSED(op2))
 
   OP_DECODE("mov dr");
   fetch_decode_modrm(&mod, &rh, &rl);
-  decode_hex1(rh);
+  DECODE_HEX1(rh);
   OP_DECODE(",");
 
   if(mod == 3) {
@@ -371,7 +371,7 @@ static void x86emuOp2_long_jump(u8 op2)
 
   ofs = (s16) fetch_word();
   eip = M.x86.R_EIP + ofs;
-  decode_hex_addr(eip);
+  DECODE_HEX_ADDR(eip);
   if(!MODE_DATA32) eip &= 0xffff;
   if(eval_condition(type)) M.x86.R_EIP = eip;
 }
@@ -503,7 +503,7 @@ static void x86emuOp2_shld_IMM(u8 X86EMU_UNUSED(op2))
       src32 = decode_rm_long_register(rh);
       OP_DECODE(",");
       imm = fetch_byte();
-      decode_hex2(imm);
+      DECODE_HEX2(imm);
       *dst32 = shld_long(*dst32, *src32, imm);
     }
     else {
@@ -512,7 +512,7 @@ static void x86emuOp2_shld_IMM(u8 X86EMU_UNUSED(op2))
       src16 = decode_rm_word_register(rh);
       OP_DECODE(",");
       imm = fetch_byte();
-      decode_hex2(imm);
+      DECODE_HEX2(imm);
       *dst16 = shld_word(*dst16, *src16, imm);
     }
   }
@@ -524,7 +524,7 @@ static void x86emuOp2_shld_IMM(u8 X86EMU_UNUSED(op2))
       src32 = decode_rm_long_register(rh);
       OP_DECODE(",");
       imm = fetch_byte();
-      decode_hex2(imm);
+      DECODE_HEX2(imm);
       val = fetch_data_long(addr);
       val = shld_long(val, *src32, imm);
       store_data_long(addr, val);
@@ -533,7 +533,7 @@ static void x86emuOp2_shld_IMM(u8 X86EMU_UNUSED(op2))
       src16 = decode_rm_word_register(rh);
       OP_DECODE(",");
       imm = fetch_byte();
-      decode_hex2(imm);
+      DECODE_HEX2(imm);
       val = fetch_data_word(addr);
       val = shld_word(val, *src16, imm);
       store_data_word(addr, val);
@@ -697,7 +697,7 @@ static void x86emuOp2_shrd_IMM(u8 X86EMU_UNUSED(op2))
       src32 = decode_rm_long_register(rh);
       OP_DECODE(",");
       imm = fetch_byte();
-      decode_hex2(imm);
+      DECODE_HEX2(imm);
       *dst32 = shrd_long(*dst32, *src32, imm);
     }
     else {
@@ -706,7 +706,7 @@ static void x86emuOp2_shrd_IMM(u8 X86EMU_UNUSED(op2))
       src16 = decode_rm_word_register(rh);
       OP_DECODE(",");
       imm = fetch_byte();
-      decode_hex2(imm);
+      DECODE_HEX2(imm);
       *dst16 = shrd_word(*dst16, *src16, imm);
     }
   }
@@ -718,7 +718,7 @@ static void x86emuOp2_shrd_IMM(u8 X86EMU_UNUSED(op2))
       src32 = decode_rm_long_register(rh);
       OP_DECODE(",");
       imm = fetch_byte();
-      decode_hex2(imm);
+      DECODE_HEX2(imm);
       val = fetch_data_long(addr);
       val = shrd_long(val, *src32, imm);
       store_data_long(addr, val);
@@ -727,7 +727,7 @@ static void x86emuOp2_shrd_IMM(u8 X86EMU_UNUSED(op2))
       src16 = decode_rm_word_register(rh);
       OP_DECODE(",");
       imm = fetch_byte();
-      decode_hex2(imm);
+      DECODE_HEX2(imm);
       val = fetch_data_word(addr);
       val = shrd_word(val, *src16, imm);
       store_data_word(addr, val);
@@ -1157,7 +1157,7 @@ static void x86emuOp2_btX_I(u8 X86EMU_UNUSED(op2))
       reg32 = decode_rm_long_register(rl);
       OP_DECODE(",");
       imm = fetch_byte();
-      decode_hex2(imm);
+      DECODE_HEX2(imm);
       mask = 1 << (imm & 0x1f);
       CONDITIONAL_SET_FLAG(*reg32 & mask, F_CF);
       switch(rh) {
@@ -1176,7 +1176,7 @@ static void x86emuOp2_btX_I(u8 X86EMU_UNUSED(op2))
       reg16 = decode_rm_word_register(rl);
       OP_DECODE(",");
       imm = fetch_byte();
-      decode_hex2(imm);
+      DECODE_HEX2(imm);
       mask = 1 << (imm & 0x1f);
       CONDITIONAL_SET_FLAG(*reg16 & mask, F_CF);
       switch(rh) {
@@ -1196,7 +1196,7 @@ static void x86emuOp2_btX_I(u8 X86EMU_UNUSED(op2))
     addr = decode_rm_address(mod, rl);
     OP_DECODE(",");
     imm = fetch_byte();
-    decode_hex2(imm);
+    DECODE_HEX2(imm);
 
     if(MODE_DATA32) {
       mask = 1 << (imm & 0x1f);
