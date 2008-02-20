@@ -103,6 +103,7 @@ u32 decode_rm10_address(int rm);
 u32 decode_sib_address(int sib, int mod);
 u32 decode_rm_address(int mod, int rl);
 
+void decode_hex(char **p, u32 ofs);
 void decode_hex1(char **p, u32 ofs);
 void decode_hex2(char **p, u32 ofs);
 void decode_hex4(char **p, u32 ofs);
@@ -115,7 +116,6 @@ void decode_hex8s(char **p, s32 ofs);
 void decode_set_seg_register(sel_t *sel, u16 val);
 void generate_int(u8 nr, unsigned type, unsigned errcode);
 
-void x86emu_dump_regs (void);
 void x86emu_check_sp_access (void);
 void x86emu_check_mem_access (u32 p);
 void x86emu_check_data_access (uint s, uint o);

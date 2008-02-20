@@ -162,7 +162,7 @@ void x86emu_exec(void)
     }
     (*x86emu_optab[op1])(op1);
 
-    *M.x86.disasm_ptr++ = 0;
+    *M.x86.disasm_ptr = 0;
 
     X86EMU_trace_code();
 
@@ -753,6 +753,22 @@ sel_t *decode_rm_seg_register(int reg)
   }
 
   return M.x86.seg + reg;
+}
+
+
+void decode_hex(char **p, u32 ofs)
+{
+  static const char *h = "0123456789abcdef";
+
+  if(ofs) {
+    while(!(ofs & 0xf0000000)) ofs <<= 4;
+    for(; ofs & 0xf0000000; ofs <<= 4) {
+      *(*p)++ = h[(ofs >> 28) & 0xf];
+    }
+  }
+  else {
+    *(*p)++ = '0';
+  }
 }
 
 
@@ -1457,28 +1473,100 @@ void x86emu_reset(X86EMU_sysEnv *emu)
 }
 
 
+#define LOG_STR(a) memcpy(*p, a, sizeof a - 1), *p += sizeof a - 1
+
 void X86EMU_trace_code (void)
 {
   unsigned u;
-  char buf1[256];
+  char **p = &M.log.ptr;
 
-  printk(MODE_CODE32 ? "  %x %04x:%08x " : "  %x %04x:%04x ", M.x86.msr_10, M.x86.saved_cs, M.x86.saved_eip);
+  if(M.log.ptr - M.log.data + 512 >= M.log.size) return;
 
-  for(u = 0, *buf1 = 0; u < M.x86.instr_len; u++) {
-    sprintf(buf1 + 2 * u, "%02x", M.x86.instr_buf[u]);
+  decode_hex(p, M.x86.msr_10);
+  LOG_STR(" ");
+  decode_hex4(p, M.x86.saved_cs);
+  LOG_STR(":");
+  MODE_CODE32 ? decode_hex8(p, M.x86.saved_eip) : decode_hex4(p, M.x86.saved_eip);
+  LOG_STR(" ");
+
+  for(u = 0; u < M.x86.instr_len; u++) {
+    decode_hex2(p, M.x86.instr_buf[u]);
   }
-  printk("%-24s  ", buf1);
 
-  printk("%s\n", M.x86.disasm_buf);
+  while(u++ < 12) {
+    LOG_STR("  ");
+  }
+
+  LOG_STR(" ");
+
+  u = M.x86.disasm_ptr - M.x86.disasm_buf;
+  memcpy(*p, M.x86.disasm_buf, u);
+  *p += u;
+
+  LOG_STR("\n");
+
+  **p = 0;
 }
+
 
 void X86EMU_trace_regs (void)
 {
-	if (DEBUG_TRACE()) {
-		printk("\n");
-		x86emu_dump_regs();
-	}
+  char **p = &M.log.ptr;
+
+  if(M.log.ptr - M.log.data + 512 >= M.log.size) return;
+
+  LOG_STR("\neax ");
+  decode_hex8(p, M.x86.R_EAX);
+  LOG_STR(", ebx ");
+  decode_hex8(p, M.x86.R_EBX);
+  LOG_STR(", ecx ");
+  decode_hex8(p, M.x86.R_ECX);
+  LOG_STR(", edx ");
+  decode_hex8(p, M.x86.R_EDX);
+
+  LOG_STR("\nesi ");
+  decode_hex8(p, M.x86.R_ESI);
+  LOG_STR(", edi ");
+  decode_hex8(p, M.x86.R_EDI);
+  LOG_STR(", ebp ");
+  decode_hex8(p, M.x86.R_EBP);
+  LOG_STR(", esp ");
+  decode_hex8(p, M.x86.R_ESP);
+
+  LOG_STR("\ncs ");
+  decode_hex4(p, M.x86.R_CS);
+  LOG_STR(", ss ");
+  decode_hex4(p, M.x86.R_SS);
+  LOG_STR(", ds ");
+  decode_hex4(p, M.x86.R_DS);
+  LOG_STR(", es ");
+  decode_hex4(p, M.x86.R_ES);
+  LOG_STR(", fs ");
+  decode_hex4(p, M.x86.R_FS);
+  LOG_STR(", gs ");
+  decode_hex4(p, M.x86.R_GS);
+
+  LOG_STR("\neip ");
+  decode_hex8(p, M.x86.R_EIP);
+  LOG_STR(", eflags ");
+  decode_hex8(p, M.x86.R_EFLG);
+
+  if(ACCESS_FLAG(F_OF)) LOG_STR(" of");
+  if(ACCESS_FLAG(F_DF)) LOG_STR(" df");
+  if(ACCESS_FLAG(F_IF)) LOG_STR(" if");
+  if(ACCESS_FLAG(F_SF)) LOG_STR(" sf");
+  if(ACCESS_FLAG(F_ZF)) LOG_STR(" zf");
+  if(ACCESS_FLAG(F_AF)) LOG_STR(" af");
+  if(ACCESS_FLAG(F_PF)) LOG_STR(" pf");
+  if(ACCESS_FLAG(F_CF)) LOG_STR(" cf");
+
+  LOG_STR("\n");
+
+  **p = 0;
 }
+
+#undef LOG_STR
+
 
 void x86emu_check_sp_access (void)
 {
@@ -1492,34 +1580,6 @@ void x86emu_check_mem_access (u32 dummy)
 void x86emu_check_data_access (uint dummy1, uint dummy2)
 {
 	/*  check bounds, etc */
-}
-
-void x86emu_dump_regs (void)
-{
-	printk("  eax %08x, ", M.x86.R_EAX );
-	printk("ebx %08x, ", M.x86.R_EBX );
-	printk("ecx %08x, ", M.x86.R_ECX );
-	printk("edx %08x\n", M.x86.R_EDX );
-	printk("  esi %08x, ", M.x86.R_ESI );
-	printk("edi %08x, ", M.x86.R_EDI );
-	printk("ebp %08x, ", M.x86.R_EBP );
-	printk("esp %08x\n", M.x86.R_ESP );
-	printk("  cs %04x, ", M.x86.R_CS );
-	printk("ss %04x, ", M.x86.R_SS );
-	printk("ds %04x, ", M.x86.R_DS );
-	printk("es %04x, ", M.x86.R_ES );
-	printk("fs %04x, ", M.x86.R_FS );
-	printk("gs %04x\n", M.x86.R_GS );
-	printk("  eip %08x, eflags %08x ", M.x86.R_EIP, M.x86.R_EFLG );
-	if (ACCESS_FLAG(F_OF))    printk("of ");
-	if (ACCESS_FLAG(F_DF))    printk("df ");
-	if (ACCESS_FLAG(F_IF))    printk("if ");
-	if (ACCESS_FLAG(F_SF))    printk("sf ");
-	if (ACCESS_FLAG(F_ZF))    printk("zf ");
-	if (ACCESS_FLAG(F_AF))    printk("af ");
-	if (ACCESS_FLAG(F_PF))    printk("pf ");
-	if (ACCESS_FLAG(F_CF))    printk("cf ");
-	printk("\n");
 }
 
 
