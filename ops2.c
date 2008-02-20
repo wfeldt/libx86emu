@@ -883,7 +883,7 @@ static void x86emuOp2_lss_R_IMM(u8 X86EMU_UNUSED(op2))
   OP_DECODE("lss ");
   fetch_decode_modrm(&mod, &rh, &rl);
   if(mod == 3) {
-    ILLEGAL_OP;
+    INTR_RAISE_UD;
   }
   else {
     if(MODE_DATA32){
@@ -972,7 +972,7 @@ static void x86emuOp2_lfs_R_IMM(u8 X86EMU_UNUSED(op2))
   OP_DECODE("lfs ");
   fetch_decode_modrm(&mod, &rh, &rl);
   if(mod == 3) {
-    ILLEGAL_OP;
+    INTR_RAISE_UD;
   }
   else {
     if(MODE_DATA32){
@@ -1007,7 +1007,7 @@ static void x86emuOp2_lgs_R_IMM(u8 X86EMU_UNUSED(op2))
   OP_DECODE("lgs ");
   fetch_decode_modrm(&mod, &rh, &rl);
   if(mod == 3) {
-    ILLEGAL_OP;
+    INTR_RAISE_UD;
   }
   else {
     if(MODE_DATA32){

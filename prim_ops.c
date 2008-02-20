@@ -2453,62 +2453,93 @@ Implements the IN string instruction and side effects.
 ****************************************************************************/
 void ins(int size)
 {
-	int inc = size;
+  s32 inc;
+  u32 count;
 
-	if (ACCESS_FLAG(F_DF)) {
-		inc = -size;
-	}
-	if (M.x86.mode & (SYSMODE_PREFIX_REPE | SYSMODE_PREFIX_REPNE)) {
-        /* dont care whether REPE or REPNE */
-        /* in until CX is ZERO. */
-		u32 count = ((M.x86.mode & SYSMODE_PREFIX_DATA) ?
-					 M.x86.R_ECX : M.x86.R_CX);
-        switch (size) {
-          case 1:
-            while (count--) {
-				store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
-									(*sys_inb)(M.x86.R_DX));
-				M.x86.R_DI += inc;
-            }
-            break;
+  inc = ACCESS_FLAG(F_DF) ? -1 : 1;
 
-          case 2:
-            while (count--) {
-				store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
-									(*sys_inw)(M.x86.R_DX));
-				M.x86.R_DI += inc;
-            }
-            break;
-          case 4:
-            while (count--) {
-				store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
-									(*sys_inl)(M.x86.R_DX));
-				M.x86.R_DI += inc;
-                break;
-            }
-        }
-		M.x86.R_CX = 0;
-		if (M.x86.mode & SYSMODE_PREFIX_DATA) {
-			M.x86.R_ECX = 0;
-        }
-		M.x86.mode &= ~(SYSMODE_PREFIX_REPE | SYSMODE_PREFIX_REPNE);
-    } else {
-        switch (size) {
-          case 1:
-			store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
-								(*sys_inb)(M.x86.R_DX));
-            break;
-          case 2:
-			store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
-								(*sys_inw)(M.x86.R_DX));
-            break;
-          case 4:
-			store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI,
-								(*sys_inl)(M.x86.R_DX));
-            break;
-        }
-		M.x86.R_DI += inc;
+  if(MODE_ADDR32) {
+    if(MODE_REP) {
+      count = M.x86.R_ECX;
+      M.x86.R_ECX = 0;
+
+      switch(size) {
+        case 1:
+          while(count--) {
+            store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inb)(M.x86.R_DX));
+            M.x86.R_EDI += inc;
+          }
+          break;
+        case 2:
+          while(count--) {
+            store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inw)(M.x86.R_DX));
+            M.x86.R_EDI += inc;
+          }
+          break;
+        case 4:
+          while(count--) {
+            store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inl)(M.x86.R_DX));
+            M.x86.R_EDI += inc;
+          }
+          break;
+      }
     }
+    else {
+      switch(size) {
+        case 1:
+          store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inb)(M.x86.R_DX));
+          break;
+        case 2:
+          store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inw)(M.x86.R_DX));
+          break;
+        case 4:
+          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inl)(M.x86.R_DX));
+          break;
+      }
+       M.x86.R_EDI += inc;
+    }
+  }
+  else {
+    if(MODE_REP) {
+      count = M.x86.R_CX;
+      M.x86.R_CX = 0;
+
+      switch(size) {
+        case 1:
+          while(count--) {
+            store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inb)(M.x86.R_DX));
+            M.x86.R_DI += inc;
+          }
+          break;
+        case 2:
+          while(count--) {
+            store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inw)(M.x86.R_DX));
+            M.x86.R_DI += inc;
+          }
+          break;
+        case 4:
+          while(count--) {
+            store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inl)(M.x86.R_DX));
+            M.x86.R_DI += inc;
+          }
+          break;
+      }
+    }
+    else {
+      switch(size) {
+        case 1:
+          store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inb)(M.x86.R_DX));
+          break;
+        case 2:
+          store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inw)(M.x86.R_DX));
+          break;
+        case 4:
+          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inl)(M.x86.R_DX));
+          break;
+      }
+      M.x86.R_DI += inc;
+    }
+  }
 }
 
 /****************************************************************************
@@ -2517,62 +2548,93 @@ Implements the OUT string instruction and side effects.
 ****************************************************************************/
 void outs(int size)
 {
-    int inc = size;
+  s32 inc;
+  u32 count;
 
-	if (ACCESS_FLAG(F_DF)) {
-        inc = -size;
-    }
-	if (M.x86.mode & (SYSMODE_PREFIX_REPE | SYSMODE_PREFIX_REPNE)) {
-        /* dont care whether REPE or REPNE */
-        /* out until CX is ZERO. */
-		u32 count = ((M.x86.mode & SYSMODE_PREFIX_DATA) ?
-					 M.x86.R_ECX : M.x86.R_CX);
-        switch (size) {
-          case 1:
-            while (count--) {
-				(*sys_outb)(M.x86.R_DX,
-						 fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-				M.x86.R_SI += inc;
-            }
-            break;
+  inc = ACCESS_FLAG(F_DF) ? -1 : 1;
 
-          case 2:
-            while (count--) {
-				(*sys_outw)(M.x86.R_DX,
-						 fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-				M.x86.R_SI += inc;
-            }
-            break;
-          case 4:
-            while (count--) {
-				(*sys_outl)(M.x86.R_DX,
-						 fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-				M.x86.R_SI += inc;
-                break;
-            }
-        }
-		M.x86.R_CX = 0;
-		if (M.x86.mode & SYSMODE_PREFIX_DATA) {
-			M.x86.R_ECX = 0;
-        }
-		M.x86.mode &= ~(SYSMODE_PREFIX_REPE | SYSMODE_PREFIX_REPNE);
-    } else {
-        switch (size) {
-          case 1:
-			(*sys_outb)(M.x86.R_DX,
-					 fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-            break;
-          case 2:
-			(*sys_outw)(M.x86.R_DX,
-					 fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-            break;
-          case 4:
-			(*sys_outl)(M.x86.R_DX,
-					 fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-            break;
-        }
-		M.x86.R_SI += inc;
+  if(MODE_ADDR32) {
+    if(MODE_REP) {
+      count = M.x86.R_ECX;
+      M.x86.R_ECX = 0;
+   
+      switch(size) {
+        case 1:
+          while(count--) {
+            (*sys_outb)(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+            M.x86.R_ESI += inc;
+          }
+          break;
+        case 2:
+          while(count--) {
+            (*sys_outw)(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+            M.x86.R_ESI += inc;
+          }
+          break;
+        case 4:
+          while(count--) {
+            (*sys_outl)(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+            M.x86.R_ESI += inc;
+          }
+          break;
+      }
     }
+    else {
+      switch(size) {
+        case 1:
+          (*sys_outb)(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          break;
+        case 2:
+          (*sys_outw)(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          break;
+        case 4:
+          (*sys_outl)(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          break;
+      }
+      M.x86.R_SI += inc;
+    }
+  }
+  else {
+    if(MODE_REP) {
+      count = M.x86.R_CX;
+      M.x86.R_CX = 0;
+   
+      switch(size) {
+        case 1:
+          while(count--) {
+            (*sys_outb)(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+            M.x86.R_SI += inc;
+          }
+          break;
+        case 2:
+          while(count--) {
+            (*sys_outw)(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+            M.x86.R_SI += inc;
+          }
+          break;
+        case 4:
+          while(count--) {
+            (*sys_outl)(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+            M.x86.R_SI += inc;
+          }
+          break;
+      }
+    }
+    else {
+      switch(size) {
+        case 1:
+          (*sys_outb)(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          break;
+        case 2:
+          (*sys_outw)(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          break;
+        case 4:
+          (*sys_outl)(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          break;
+      }
+      M.x86.R_SI += inc;
+    }
+  }
 }
 
 /****************************************************************************

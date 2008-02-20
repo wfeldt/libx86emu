@@ -1440,6 +1440,10 @@ Handles opcode 0x6c
 ****************************************************************************/
 static void x86emuOp_ins_byte(u8 X86EMU_UNUSED(op1))
 {
+  if((MODE_ADDR32 && !MODE_CODE32) || (!MODE_ADDR32 && MODE_CODE32)) {	/* xor */
+    OP_DECODE("a32 ");
+  }
+
   OP_DECODE("insb");
   ins(1);
 }
@@ -1451,6 +1455,10 @@ Handles opcode 0x6d
 ****************************************************************************/
 static void x86emuOp_ins_word(u8 X86EMU_UNUSED(op1))
 {
+  if((MODE_ADDR32 && !MODE_CODE32) || (!MODE_ADDR32 && MODE_CODE32)) {	/* xor */
+    OP_DECODE("a32 ");
+  }
+
   if(MODE_DATA32) {
     OP_DECODE("insd");
     ins(4);
@@ -1468,6 +1476,10 @@ Handles opcode 0x6e
 ****************************************************************************/
 static void x86emuOp_outs_byte(u8 X86EMU_UNUSED(op1))
 {
+  if((MODE_ADDR32 && !MODE_CODE32) || (!MODE_ADDR32 && MODE_CODE32)) {	/* xor */
+    OP_DECODE("a32 ");
+  }
+
   OP_DECODE("outsb");
   outs(1);
 }
@@ -1479,6 +1491,10 @@ Handles opcode 0x6f
 ****************************************************************************/
 static void x86emuOp_outs_word(u8 X86EMU_UNUSED(op1))
 {
+  if((MODE_ADDR32 && !MODE_CODE32) || (!MODE_ADDR32 && MODE_CODE32)) {	/* xor */
+    OP_DECODE("a32 ");
+  }
+
   if(MODE_DATA32) {
     OP_DECODE("outsd");
     outs(4);
@@ -3788,15 +3804,16 @@ static void x86emuOp_mov_word_RM_IMM(u8 X86EMU_UNUSED(op1))
   }
   else {
     addr = decode_rm_address(mod, rl);
+    OP_DECODE(",");
 
     if(MODE_DATA32) {
-      OP_DECODE("dword ");
       imm = fetch_long();
       decode_hex8(imm);
       store_data_long(addr, imm);
     }
     else {
-      OP_DECODE("word ");
+      addr = decode_rm_address(mod, rl);
+      OP_DECODE(",");
       imm = fetch_word();
       decode_hex4(imm);
       store_data_word(addr, imm);
@@ -4204,10 +4221,7 @@ static void x86emuOp_aam(u8 X86EMU_UNUSED(op1))
   OP_DECODE("aam");
 
   base = fetch_byte();
-  if(base == 0) {
-    // FIXME: div by 0
-    HALT_SYS();
-  }
+  if(base == 0) INTR_RAISE_DIV0;
 
   M.x86.R_AX = aam_word(M.x86.R_AL, base);
 }

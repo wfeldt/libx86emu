@@ -84,37 +84,37 @@ typedef u16 X86EMU_pioAddr;
 #ifdef	__BIG_ENDIAN__
 
 typedef struct {
-    u32 e_reg;
-	} I32_reg_t;
+  u32 e_reg;
+} I32_reg_t;
 
 typedef struct {
-	u16 filler0, x_reg;
-	} I16_reg_t;
+  u16 filler0, x_reg;
+} I16_reg_t;
 
 typedef struct {
-	u8 filler0, filler1, h_reg, l_reg;
-	} I8_reg_t;
+  u8 filler0, filler1, h_reg, l_reg;
+} I8_reg_t;
 
 #else /* !__BIG_ENDIAN__ */
 
 typedef struct {
-    u32 e_reg;
-	} I32_reg_t;
+  u32 e_reg;
+} I32_reg_t;
 
 typedef struct {
-	u16 x_reg;
-	} I16_reg_t;
+  u16 x_reg;
+} I16_reg_t;
 
 typedef struct {
-	u8 l_reg, h_reg;
-	} I8_reg_t;
+  u8 l_reg, h_reg;
+} I8_reg_t;
 
 #endif /* BIG_ENDIAN */
 
 typedef union {
-  I32_reg_t   I32_reg;
-  I16_reg_t   I16_reg;
-  I8_reg_t    I8_reg;
+  I32_reg_t I32_reg;
+  I16_reg_t I16_reg;
+  I8_reg_t I8_reg;
 } i386_general_register;
 
 struct i386_general_regs {
@@ -149,7 +149,6 @@ typedef struct {
 #define ACC_R(a)	((a >> 1) & 1)		/* 0/1: readable no/yes (ACC_E = code) */
 #define ACC_A(a)	(a & 1)			/* 0/1: accessed no/yes */
 #define ACC_TYPE(a)	(a & 0xf)		/* 0..0xf: system descr type (ACC_S = system) */
-
 
 /* 8 bit registers */
 #define R_AH		gen.A.I8_reg.h_reg
@@ -297,7 +296,7 @@ typedef struct {
 #define CLEARALL_FLAG(m)    	(M.x86.R_FLG = 0)
 
 #define CONDITIONAL_SET_FLAG(COND,FLAG) \
-  if (COND) SET_FLAG(FLAG); else CLEAR_FLAG(FLAG)
+  if(COND) SET_FLAG(FLAG); else CLEAR_FLAG(FLAG)
 
 #define F_PF_CALC 0x010000      /* PARITY flag has been calced    */
 #define F_ZF_CALC 0x020000      /* ZERO flag has been calced      */
@@ -317,11 +316,6 @@ typedef struct {
 #define _MODE_STACK32           0x00000020
 #define _MODE_CODE32            0x00000040
 #define _MODE_HALTED            0x00000080
-
-#define SYSMODE_PREFIX_DATA     _MODE_DATA32
-#define SYSMODE_PREFIX_ADDR     _MODE_ADDR32
-#define SYSMODE_PREFIX_REPE     _MODE_REPE
-#define SYSMODE_PREFIX_REPNE    _MODE_REPNE
 
 #define MODE_REPE		(M.x86.mode & _MODE_REPE)
 #define MODE_REPNE		(M.x86.mode & _MODE_REPNE)
@@ -345,11 +339,9 @@ typedef struct {
 #define INTR_RAISE_GP(err)	x86emu_intr_raise(0x0d, INTR_TYPE_FAULT | INTR_MODE_RESTART | INTR_MODE_ERRCODE, err)
 #define INTR_RAISE_UD		x86emu_intr_raise(0x06, INTR_TYPE_FAULT | INTR_MODE_RESTART, 0)
 
-#define ILLEGAL_OP		INTR_RAISE_UD
-
 typedef struct {
-    struct i386_general_regs    gen;
-    struct i386_special_regs    spc;
+  struct i386_general_regs gen;
+    struct i386_special_regs spc;
     sel_t seg[8];
     sel_t ldt;
     sel_t tr;
@@ -376,7 +368,6 @@ typedef struct {
      */
     u32                         mode;
     sel_t                       *default_seg;
-    volatile int                intr;   /* mask of pending interrupts */
     int                         debug;
     int                         check;
     u32                         saved_eip;
@@ -391,7 +382,7 @@ typedef struct {
     unsigned                    intr_errcode;
 } X86EMU_regs;
 
-typedef int (X86APIP X86EMU_intrFuncs)(u8 num, unsigned type);
+typedef int (* x86emu_intr_handler_t)(u8 num, unsigned type);
 
 /****************************************************************************
 REMARKS:
@@ -407,7 +398,7 @@ typedef struct {
   unsigned long	mem_base;
   unsigned long	mem_size;
   void *private;
-  X86EMU_intrFuncs intr_table[256];
+  x86emu_intr_handler_t intr_table[256];
   X86EMU_regs x86;
 } X86EMU_sysEnv;
 
@@ -533,19 +524,18 @@ typedef struct {
 #define DEBUG_MEM_TRACE_F       0x001000 
 #define DEBUG_IO_TRACE_F        0x002000 
 
+void x86emu_exec(void);
+void x86emu_set_intr_handler(X86EMU_sysEnv *emu, unsigned num, x86emu_intr_handler_t handler);
+void x86emu_reset(X86EMU_sysEnv *emu);
+
 void	X86EMU_setupMemFuncs(X86EMU_memFuncs *funcs);
 void	X86EMU_setupPioFuncs(X86EMU_pioFuncs *funcs);
-void	X86EMU_setupIntrFuncs(X86EMU_intrFuncs funcs[]);
 void	X86EMU_setupCheckFuncs(X86EMU_checkFuncs *funcs);
 
 void	X86EMU_trace_code(void);
 void	X86EMU_trace_regs(void);
 
-void X86EMU_exec(void);
-void X86EMU_reset(X86EMU_sysEnv *emu);
-void X86EMU_setupIntrFunc(X86EMU_sysEnv *emu, u8 nr, X86EMU_intrFuncs func);
 void X86EMU_halt_sys(void);
-void X86EMU_illegal_op(void);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/

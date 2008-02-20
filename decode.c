@@ -82,7 +82,7 @@ Main execution loop for the emulator. We return from here when the system
 halts, which is normally caused by a stack fault when we return from the
 original real mode call.
 ****************************************************************************/
-void X86EMU_exec(void)
+void x86emu_exec(void)
 {
   u8 op1;
 
@@ -91,8 +91,6 @@ void X86EMU_exec(void)
     [0x64 ... 0x67] = 1,
     [0xf0] = 1, [0xf2 ... 0xf3] = 1
   };
-
-  M.x86.intr = 0;
 
   for(;;) {
     M.x86.msr_10++;	// time stamp counter
@@ -760,7 +758,7 @@ sel_t *decode_rm_seg_register(int reg)
       break;
 
     default:
-      ILLEGAL_OP;
+      INTR_RAISE_UD;
       reg = 6;
       break;
   }
@@ -925,7 +923,7 @@ u32 decode_rm_address(int mod, int rl)
       break;
 
     default:
-      ILLEGAL_OP;
+      INTR_RAISE_UD;
       break;
   }
 
@@ -938,7 +936,7 @@ u32 decode_rm00_address(int rm)
   u32 offset, base;
   int sib;
 
-  if(M.x86.mode & SYSMODE_PREFIX_ADDR) {
+  if(MODE_ADDR32) {
     /* 32-bit addressing */
     switch(rm) {
       case 0:
@@ -1049,11 +1047,11 @@ u32 decode_rm01_address(int rm)
   int sib;
 
   /* Fetch disp8 if no SIB byte */
-  if(!((M.x86.mode & SYSMODE_PREFIX_ADDR) && (rm == 4))) {
+  if(!(MODE_ADDR32 && (rm == 4))) {
     displacement = (s8) fetch_byte();
   }
 
-  if(M.x86.mode & SYSMODE_PREFIX_ADDR) {
+  if(MODE_ADDR32) {
     /* 32-bit addressing */
     switch(rm) {
       case 0:
@@ -1192,7 +1190,7 @@ u32 decode_rm10_address(int rm)
   int sib;
 
   /* Fetch disp16 if 16-bit addr mode */
-  if(!(M.x86.mode & SYSMODE_PREFIX_ADDR)) {
+  if(!MODE_ADDR32) {
     displacement = (s16) fetch_word();
   }
   else {
@@ -1200,7 +1198,7 @@ u32 decode_rm10_address(int rm)
     if(rm != 4) displacement = (s32) fetch_long();
   }
 
-  if(M.x86.mode & SYSMODE_PREFIX_ADDR) {
+  if(MODE_ADDR32) {
     /* 32-bit addressing */
     switch(rm) {
       case 0:
@@ -1456,7 +1454,7 @@ u32 decode_sib_address(int sib, int mod)
 }
 
 
-void X86EMU_reset(X86EMU_sysEnv *emu)
+void x86emu_reset(X86EMU_sysEnv *emu)
 {
   X86EMU_regs *x86 = &emu->x86;
 
@@ -1524,7 +1522,7 @@ void print_encoded_bytes (u16 s, u32 o)
   for(u = 0, *buf1 = 0; u < M.x86.instr_len; u++) {
     sprintf(buf1 + 2 * u, "%02x", M.x86.instr_buf[u]);
   }
-  printk("%-20s  ", buf1);
+  printk("%-24s  ", buf1);
 }
 
 void print_decoded_instruction (void)
