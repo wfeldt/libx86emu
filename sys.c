@@ -46,8 +46,6 @@
 
 /*------------------------- Global Variables ------------------------------*/
 
-X86EMU_sysEnv		_X86EMU_env;		/* Global emulator machine state */
-
 /*----------------------------- Implementation ----------------------------*/
 
 /****************************************************************************
@@ -223,97 +221,6 @@ void X86API wrl(
 #endif
 }
 
-/****************************************************************************
-PARAMETERS:
-addr	- PIO address to read
-RETURN:
-0
-REMARKS:
-Default PIO byte read function. Doesn't perform real inb.
-****************************************************************************/
-static u8 X86API p_inb(
-	X86EMU_pioAddr addr)
-{
-	// printk("No real inb\n");
-
-	return 0;
-}
-
-/****************************************************************************
-PARAMETERS:
-addr	- PIO address to read
-RETURN:
-0
-REMARKS:
-Default PIO word read function. Doesn't perform real inw.
-****************************************************************************/
-static u16 X86API p_inw(
-	X86EMU_pioAddr addr)
-{
-	// printk("No real inw\n");
-	return 0;
-}
-
-/****************************************************************************
-PARAMETERS:
-addr	- PIO address to read
-RETURN:
-0
-REMARKS:
-Default PIO long read function. Doesn't perform real inl.
-****************************************************************************/
-static u32 X86API p_inl(
-	X86EMU_pioAddr addr)
-{
-	// printk("No real inl\n");
-	return 0;
-}
-
-/****************************************************************************
-PARAMETERS:
-addr	- PIO address to write
-val     - Value to store
-REMARKS:
-Default PIO byte write function. Doesn't perform real outb.
-****************************************************************************/
-static void X86API p_outb(
-	X86EMU_pioAddr addr,
-	u8 val)
-{
-	// printk("No real outb\n");
-    return;
-}
-
-/****************************************************************************
-PARAMETERS:
-addr	- PIO address to write
-val     - Value to store
-REMARKS:
-Default PIO word write function. Doesn't perform real outw.
-****************************************************************************/
-static void X86API p_outw(
-	X86EMU_pioAddr addr,
-	u16 val)
-{
-	// printk("No real outw\n");
-	return;
-}
-
-/****************************************************************************
-PARAMETERS:
-addr	- PIO address to write
-val     - Value to store
-REMARKS:
-Default PIO ;ong write function. Doesn't perform real outl.
-****************************************************************************/
-static void X86API p_outl(
-	X86EMU_pioAddr addr,
-	u32 val)
-{
-	// printk("No real outl\n");
-    return;
-}
-
 /*------------------------- Global Variables ------------------------------*/
 
 u8  	(X86APIP sys_rdb)(u32 addr) 			            = rdb;
@@ -322,12 +229,6 @@ u32 	(X86APIP sys_rdl)(u32 addr) 			            = rdl;
 void 	(X86APIP sys_wrb)(u32 addr,u8 val) 		            = wrb;
 void 	(X86APIP sys_wrw)(u32 addr,u16 val) 	            = wrw;
 void 	(X86APIP sys_wrl)(u32 addr,u32 val) 	            = wrl;
-u8  	(X86APIP sys_inb)(X86EMU_pioAddr addr)	            = p_inb;
-u16 	(X86APIP sys_inw)(X86EMU_pioAddr addr)	            = p_inw;
-u32 	(X86APIP sys_inl)(X86EMU_pioAddr addr)              = p_inl;
-void 	(X86APIP sys_outb)(X86EMU_pioAddr addr, u8 val) 	= p_outb;
-void 	(X86APIP sys_outw)(X86EMU_pioAddr addr, u16 val)	= p_outw;
-void 	(X86APIP sys_outl)(X86EMU_pioAddr addr, u32 val)	= p_outl;
 
 /*----------------------------- Setup -------------------------------------*/
 
@@ -360,15 +261,16 @@ This function is used to set the pointers to functions which access
 I/O space, allowing the user application to override these functions
 and hook them out as necessary for their application.
 ****************************************************************************/
-void X86EMU_setupPioFuncs(
-	X86EMU_pioFuncs *funcs)
+void x86emu_set_io_funcs(x86emu_t *emu, x86emu_io_funcs_t *funcs)
 {
-    sys_inb = funcs->inb;
-    sys_inw = funcs->inw;
-    sys_inl = funcs->inl;
-    sys_outb = funcs->outb;
-    sys_outw = funcs->outw;
-    sys_outl = funcs->outl;
+  if(!funcs) return;
+
+  emu->io.inb = funcs->inb;
+  emu->io.inw = funcs->inw;
+  emu->io.inl = funcs->inl;
+  emu->io.outb = funcs->outb;
+  emu->io.outw = funcs->outw;
+  emu->io.outl = funcs->outl;
 }
 
 /****************************************************************************
@@ -384,19 +286,19 @@ in the emulator via the interrupt vector table. This allows the application
 to get control when the code being emulated executes specific software
 interrupts.
 ****************************************************************************/
-void x86emu_set_intr_handler(X86EMU_sysEnv *emu, unsigned num, x86emu_intr_handler_t handler)
+void x86emu_set_intr_handler(x86emu_t *emu, unsigned num, x86emu_intr_handler_t handler)
 {
   if(num < sizeof emu->intr_table / sizeof *emu->intr_table) emu->intr_table[num] = handler;
 }
 
 
-void x86emu_set_instr_check(X86EMU_sysEnv *emu, x86emu_instr_check_t instr_check)
+void x86emu_set_instr_check(x86emu_t *emu, x86emu_instr_check_t instr_check)
 {
   emu->instr_check = instr_check;
 }
 
 
-void x86emu_set_log(X86EMU_sysEnv *emu, char *buffer, unsigned buffer_size)
+void x86emu_set_log(x86emu_t *emu, char *buffer, unsigned buffer_size)
 {
   emu->log.size = buffer_size;
   emu->log.data = buffer;

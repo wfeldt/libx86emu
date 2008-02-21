@@ -60,11 +60,69 @@ extern "C" {            			/* Use "C" linkage when in C++ mode */
 #define s64	int64_t
 #define uint	uint32_t
 
-typedef u16 X86EMU_pioAddr;
-
-
 
 /*---------------------- Macros and type definitions ----------------------*/
+
+/****************************************************************************
+REMARKS:
+Data structure containing ponters to programmed I/O functions used by the
+emulator. This is used so that the user program can hook all programmed
+I/O for the emulator to handled as necessary by the user program. By
+default the emulator contains simple functions that do not do access the
+hardware in any way. To allow the emualtor access the hardware, you will
+need to override the programmed I/O functions using the X86EMU_setupPioFuncs
+function.
+
+MEMBERS:
+inb		- Function to read a byte from an I/O port
+inw		- Function to read a word from an I/O port
+inl     - Function to read a dword from an I/O port
+outb	- Function to write a byte to an I/O port
+outw    - Function to write a word to an I/O port
+outl    - Function to write a dword to an I/O port
+****************************************************************************/
+typedef struct {
+  u8 (* inb)(u16 port);
+  u16 (* inw)(u16 port);
+  u32 (* inl)(u16 port);
+  void (* outb)(u16 port, u8 val);
+  void (* outw)(u16 port, u16 val);
+  void (* outl)(u16 port, u32 val);
+} x86emu_io_funcs_t;
+
+
+/****************************************************************************
+REMARKS:
+Data structure containing ponters to memory access functions used by the
+emulator. This is used so that the user program can hook all memory
+access functions as necessary for the emulator. By default the emulator
+contains simple functions that only access the internal memory of the
+emulator. If you need specialised functions to handle access to different
+types of memory (ie: hardware framebuffer accesses and BIOS memory access
+etc), you will need to override this using the X86EMU_setupMemFuncs
+function.
+
+HEADER:
+libx86.h
+
+MEMBERS:
+rdb		- Function to read a byte from an address
+rdw		- Function to read a word from an address
+rdl     - Function to read a dword from an address
+wrb		- Function to write a byte to an address
+wrw    	- Function to write a word to an address
+wrl    	- Function to write a dword to an address
+****************************************************************************/
+typedef struct {
+	u8  	(X86APIP rdb)(u32 addr);
+	u16 	(X86APIP rdw)(u32 addr);
+	u32 	(X86APIP rdl)(u32 addr);
+	void 	(X86APIP wrb)(u32 addr, u8 val);
+	void 	(X86APIP wrw)(u32 addr, u16 val);
+	void	(X86APIP wrl)(u32 addr, u32 val);
+	} X86EMU_memFuncs;
+
+
 
 /*
  * General EAX, EBX, ECX, EDX type registers.  Note that for
@@ -398,6 +456,7 @@ x86			- X86 registers
 typedef struct {
   unsigned long	mem_base;
   unsigned long	mem_size;
+  x86emu_io_funcs_t io;
   void *private;
   struct {
     unsigned size;
@@ -407,7 +466,7 @@ typedef struct {
   x86emu_intr_handler_t intr_table[256];
   x86emu_instr_check_t instr_check;
   X86EMU_regs x86;
-} X86EMU_sysEnv;
+} x86emu_t;
 
 /*----------------------------- Global Variables --------------------------*/
 
@@ -416,76 +475,12 @@ typedef struct {
  * We keep it global to avoid pointer dereferences in the code for speed.
  */
 
-extern    X86EMU_sysEnv	_X86EMU_env;
-#define   M             _X86EMU_env
+extern x86emu_t x86emu;
 
 /*-------------------------- Function Prototypes --------------------------*/
 
 
 /*---------------------- Macros and type definitions ----------------------*/
-
-/*  #pragma	pack(1) */  /* Don't pack structs with function pointers! */
-
-/****************************************************************************
-REMARKS:
-Data structure containing ponters to programmed I/O functions used by the
-emulator. This is used so that the user program can hook all programmed
-I/O for the emulator to handled as necessary by the user program. By
-default the emulator contains simple functions that do not do access the
-hardware in any way. To allow the emualtor access the hardware, you will
-need to override the programmed I/O functions using the X86EMU_setupPioFuncs
-function.
-
-HEADER:
-libx86.h
-
-MEMBERS:
-inb		- Function to read a byte from an I/O port
-inw		- Function to read a word from an I/O port
-inl     - Function to read a dword from an I/O port
-outb	- Function to write a byte to an I/O port
-outw    - Function to write a word to an I/O port
-outl    - Function to write a dword to an I/O port
-****************************************************************************/
-typedef struct {
-	u8  	(X86APIP inb)(X86EMU_pioAddr addr);
-	u16 	(X86APIP inw)(X86EMU_pioAddr addr);
-	u32 	(X86APIP inl)(X86EMU_pioAddr addr);
-	void 	(X86APIP outb)(X86EMU_pioAddr addr, u8 val);
-	void 	(X86APIP outw)(X86EMU_pioAddr addr, u16 val);
-	void 	(X86APIP outl)(X86EMU_pioAddr addr, u32 val);
-	} X86EMU_pioFuncs;
-
-/****************************************************************************
-REMARKS:
-Data structure containing ponters to memory access functions used by the
-emulator. This is used so that the user program can hook all memory
-access functions as necessary for the emulator. By default the emulator
-contains simple functions that only access the internal memory of the
-emulator. If you need specialised functions to handle access to different
-types of memory (ie: hardware framebuffer accesses and BIOS memory access
-etc), you will need to override this using the X86EMU_setupMemFuncs
-function.
-
-HEADER:
-libx86.h
-
-MEMBERS:
-rdb		- Function to read a byte from an address
-rdw		- Function to read a word from an address
-rdl     - Function to read a dword from an address
-wrb		- Function to write a byte to an address
-wrw    	- Function to write a word to an address
-wrl    	- Function to write a dword to an address
-****************************************************************************/
-typedef struct {
-	u8  	(X86APIP rdb)(u32 addr);
-	u16 	(X86APIP rdw)(u32 addr);
-	u32 	(X86APIP rdl)(u32 addr);
-	void 	(X86APIP wrb)(u32 addr, u8 val);
-	void 	(X86APIP wrw)(u32 addr, u16 val);
-	void	(X86APIP wrl)(u32 addr, u32 val);
-	} X86EMU_memFuncs;
 
 /****************************************************************************
   Here are the default memory read and write
@@ -498,7 +493,6 @@ extern void X86API wrb(u32 addr, u8 val);
 extern void X86API wrw(u32 addr, u16 val);
 extern void X86API wrl(u32 addr, u32 val);
  
-/*  #pragma	pack() */
 
 /*-------------------------- Function Prototypes --------------------------*/
 
@@ -518,17 +512,18 @@ extern void X86API wrl(u32 addr, u32 val);
 #define DEBUG_MEM_TRACE_F       0x001000 
 #define DEBUG_IO_TRACE_F        0x002000 
 
-void x86emu_set_intr_handler(X86EMU_sysEnv *emu, unsigned num, x86emu_intr_handler_t handler);
-void x86emu_set_instr_check(X86EMU_sysEnv *emu, x86emu_instr_check_t instr_check);
-void x86emu_set_log(X86EMU_sysEnv *emu, char *buffer, unsigned buffer_size);
+void x86emu_set_io_funcs(x86emu_t *emu, x86emu_io_funcs_t *funcs);
+void x86emu_set_intr_handler(x86emu_t *emu, unsigned num, x86emu_intr_handler_t handler);
+void x86emu_set_instr_check(x86emu_t *emu, x86emu_instr_check_t instr_check);
+void x86emu_set_log(x86emu_t *emu, char *buffer, unsigned buffer_size);
+
 char *x86emu_get_log();
 void x86emu_clear_log();
 void x86emu_log(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
-void x86emu_reset(X86EMU_sysEnv *emu);
+void x86emu_reset(x86emu_t *emu);
 void x86emu_exec(void);
 
 void	X86EMU_setupMemFuncs(X86EMU_memFuncs *funcs);
-void	X86EMU_setupPioFuncs(X86EMU_pioFuncs *funcs);
 
 void	X86EMU_trace_code(void);
 void	X86EMU_trace_regs(void);
@@ -540,3 +535,4 @@ void X86EMU_halt_sys(void);
 #endif
 
 #endif /* __X86EMU_LIBX86_H */
+

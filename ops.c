@@ -4389,7 +4389,7 @@ static void x86emuOp_in_byte_AL_IMM(u8 X86EMU_UNUSED(op1))
   port = fetch_byte();
   DECODE_HEX2(port);
 
-  M.x86.R_AL = (*sys_inb)(port);
+  M.x86.R_AL = fetch_io_byte(port);
 }
 
 
@@ -4406,10 +4406,10 @@ static void x86emuOp_in_word_AX_IMM(u8 X86EMU_UNUSED(op1))
 
   if(MODE_DATA32) {
     OP_DECODE("eax,");
-    M.x86.R_EAX = (*sys_inl)(port);
+    M.x86.R_EAX = fetch_io_long(port);
   } else {
     OP_DECODE("ax,");
-    M.x86.R_AX = (*sys_inw)(port);
+    M.x86.R_AX = fetch_io_word(port);
   }
 
   DECODE_HEX2(port);
@@ -4429,7 +4429,7 @@ static void x86emuOp_out_byte_IMM_AL(u8 X86EMU_UNUSED(op1))
   DECODE_HEX2(port);
   OP_DECODE(",al");
 
-  (*sys_outb)(port, M.x86.R_AL);
+  store_io_byte(port, M.x86.R_AL);
 }
 
 
@@ -4447,11 +4447,11 @@ static void x86emuOp_out_word_IMM_AX(u8 X86EMU_UNUSED(op1))
 
   if(MODE_DATA32) {
     OP_DECODE(",eax");
-    (*sys_outl)(port, M.x86.R_EAX);
+    store_io_long(port, M.x86.R_EAX);
   }
   else {
     OP_DECODE(",ax");
-    (*sys_outw)(port, M.x86.R_AX);
+    store_io_word(port, M.x86.R_AX);
   }
 }
 
@@ -4583,7 +4583,7 @@ Handles opcode 0xec
 static void x86emuOp_in_byte_AL_DX(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("in al,dx");
-  M.x86.R_AL = (*sys_inb)(M.x86.R_DX);
+  M.x86.R_AL = fetch_io_byte(M.x86.R_DX);
 }
 
 
@@ -4595,11 +4595,11 @@ static void x86emuOp_in_word_AX_DX(u8 X86EMU_UNUSED(op1))
 {
   if(MODE_DATA32) {
     OP_DECODE("in eax,dx");
-    M.x86.R_EAX = (*sys_inl)(M.x86.R_DX);
+    M.x86.R_EAX = fetch_io_long(M.x86.R_DX);
   }
   else {
     OP_DECODE("in ax,dx");
-    M.x86.R_AX = (*sys_inw)(M.x86.R_DX);
+    M.x86.R_AX = fetch_io_word(M.x86.R_DX);
   }
 }
 
@@ -4611,7 +4611,7 @@ Handles opcode 0xee
 static void x86emuOp_out_byte_DX_AL(u8 X86EMU_UNUSED(op1))
 {
   OP_DECODE("out dx,al");
-  (*sys_outb)(M.x86.R_DX, M.x86.R_AL);
+  store_io_byte(M.x86.R_DX, M.x86.R_AL);
 }
 
 
@@ -4623,11 +4623,11 @@ static void x86emuOp_out_word_DX_AX(u8 X86EMU_UNUSED(op1))
 {
   if(MODE_DATA32) {
     OP_DECODE("out dx,eax");
-    (*sys_outl)(M.x86.R_DX, M.x86.R_EAX);
+    store_io_long(M.x86.R_DX, M.x86.R_EAX);
   }
   else {
     OP_DECODE("out dx,ax");
-    (*sys_outw)(M.x86.R_DX, M.x86.R_AX);
+    store_io_word(M.x86.R_DX, M.x86.R_AX);
   }
 }
 

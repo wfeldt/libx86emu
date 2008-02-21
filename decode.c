@@ -40,7 +40,12 @@
 
 #include "include/x86emui.h"
 
+#define LOG_STR(a) memcpy(*p, a, sizeof a - 1), *p += sizeof a - 1
+#define LOG_SPACE (M.log.ptr - M.log.data + 512 < M.log.size)
+
 /*----------------------------- Implementation ----------------------------*/
+
+x86emu_t x86emu;
 
 /****************************************************************************
 REMARKS:
@@ -556,6 +561,136 @@ void store_data_long_abs(sel_t *seg, u32 offset, u32 val)
 
   (*sys_wrl)(seg->base + offset, val);
 }
+
+
+u8 fetch_io_byte(u32 port)
+{
+  char **p = &M.log.ptr;
+  u8 val;
+
+  if(!M.io.inb) return 0xff;
+
+  val = (*M.io.inb)(port);
+
+  if(!p || !LOG_SPACE) return val;
+
+  LOG_STR("* in [");
+  decode_hex4(p, port);
+  LOG_STR("] = ");
+  decode_hex2(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
+
+  return val;
+}
+
+
+u16 fetch_io_word(u32 port)
+{
+  char **p = &M.log.ptr;
+  u16 val;
+
+  if(!M.io.inw) return 0xffff;
+
+  val = (*M.io.inw)(port);
+
+  if(!p || !LOG_SPACE) return val;
+
+  LOG_STR("* in [");
+  decode_hex4(p, port);
+  LOG_STR("] = ");
+  decode_hex4(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
+
+  return val;
+}
+
+
+u32 fetch_io_long(u32 port)
+{
+  char **p = &M.log.ptr;
+  u32 val;
+
+  if(!M.io.inl) return 0xffffffff;
+
+  val = (*M.io.inl)(port);
+
+  if(!p || !LOG_SPACE) return val;
+
+  LOG_STR("* in [");
+  decode_hex4(p, port);
+  LOG_STR("] = ");
+  decode_hex8(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
+
+  return val;
+}
+
+
+void store_io_byte(u32 port, u8 val)
+{
+  char **p = &M.log.ptr;
+
+  if(!M.io.outb) return;
+
+  (*M.io.outb)(port, val);
+
+  if(!p || !LOG_SPACE) return;
+
+  LOG_STR("* out [");
+  decode_hex4(p, port);
+  LOG_STR("] = ");
+  decode_hex2(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
+}
+
+
+void store_io_word(u32 port, u16 val)
+{
+  char **p = &M.log.ptr;
+
+  if(!M.io.outw) return;
+
+  (*M.io.outw)(port, val);
+
+  if(!p || !LOG_SPACE) return;
+
+  LOG_STR("* out [");
+  decode_hex4(p, port);
+  LOG_STR("] = ");
+  decode_hex4(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
+}
+
+
+void store_io_long(u32 port, u32 val)
+{
+  char **p = &M.log.ptr;
+
+  if(!M.io.outl) return;
+
+  (*M.io.outl)(port, val);
+
+  if(!p || !LOG_SPACE) return;
+
+  LOG_STR("* out [");
+  decode_hex4(p, port);
+  LOG_STR("] = ");
+  decode_hex8(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
+}
+
 
 /****************************************************************************
 PARAMETERS:
@@ -1449,7 +1584,7 @@ u32 decode_sib_address(int sib, int mod)
 }
 
 
-void x86emu_reset(X86EMU_sysEnv *emu)
+void x86emu_reset(x86emu_t *emu)
 {
   X86EMU_regs *x86 = &emu->x86;
 
@@ -1473,14 +1608,12 @@ void x86emu_reset(X86EMU_sysEnv *emu)
 }
 
 
-#define LOG_STR(a) memcpy(*p, a, sizeof a - 1), *p += sizeof a - 1
-
 void X86EMU_trace_code (void)
 {
   unsigned u;
   char **p = &M.log.ptr;
 
-  if(M.log.ptr - M.log.data + 512 >= M.log.size) return;
+  if(!p || !LOG_SPACE) return;
 
   decode_hex(p, M.x86.msr_10);
   LOG_STR(" ");
@@ -1513,7 +1646,7 @@ void X86EMU_trace_regs (void)
 {
   char **p = &M.log.ptr;
 
-  if(M.log.ptr - M.log.data + 512 >= M.log.size) return;
+  if(!p || !LOG_SPACE) return;
 
   LOG_STR("\neax ");
   decode_hex8(p, M.x86.R_EAX);
@@ -1564,8 +1697,6 @@ void X86EMU_trace_regs (void)
 
   **p = 0;
 }
-
-#undef LOG_STR
 
 
 void x86emu_check_sp_access (void)
@@ -1694,4 +1825,5 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
   }
 }
 
+#undef LOG_STR
 

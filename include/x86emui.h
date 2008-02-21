@@ -55,14 +55,12 @@
 #define	X86EMU_UNUSED(v)	v
 #endif
 
+#define M x86emu
+
 #include "libx86.h"
 #include "decode.h"
 #include "ops.h"
 #include "prim_ops.h"
-#if 0
-#include "fpu.h"
-#include "fpu_regs.h"
-#endif
 
 #ifdef IN_MODULE
 #include <xf86_ansic.h>
@@ -83,13 +81,6 @@ extern u32 	(X86APIP sys_rdl)(u32 addr);
 extern void (X86APIP sys_wrb)(u32 addr,u8 val);
 extern void (X86APIP sys_wrw)(u32 addr,u16 val);
 extern void (X86APIP sys_wrl)(u32 addr,u32 val);
-
-extern u8  	(X86APIP sys_inb)(X86EMU_pioAddr addr);
-extern u16 	(X86APIP sys_inw)(X86EMU_pioAddr addr);
-extern u32 	(X86APIP sys_inl)(X86EMU_pioAddr addr);
-extern void (X86APIP sys_outb)(X86EMU_pioAddr addr,u8 val);
-extern void (X86APIP sys_outw)(X86EMU_pioAddr addr,u16 val);
-extern void	(X86APIP sys_outl)(X86EMU_pioAddr addr,u32 val);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/

@@ -2466,19 +2466,19 @@ void ins(int size)
       switch(size) {
         case 1:
           while(count--) {
-            store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inb)(M.x86.R_DX));
+            store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_byte(M.x86.R_DX));
             M.x86.R_EDI += inc;
           }
           break;
         case 2:
           while(count--) {
-            store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inw)(M.x86.R_DX));
+            store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_word(M.x86.R_DX));
             M.x86.R_EDI += inc;
           }
           break;
         case 4:
           while(count--) {
-            store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inl)(M.x86.R_DX));
+            store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_long(M.x86.R_DX));
             M.x86.R_EDI += inc;
           }
           break;
@@ -2487,13 +2487,13 @@ void ins(int size)
     else {
       switch(size) {
         case 1:
-          store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inb)(M.x86.R_DX));
+          store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_byte(M.x86.R_DX));
           break;
         case 2:
-          store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inw)(M.x86.R_DX));
+          store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_word(M.x86.R_DX));
           break;
         case 4:
-          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, (*sys_inl)(M.x86.R_DX));
+          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_long(M.x86.R_DX));
           break;
       }
        M.x86.R_EDI += inc;
@@ -2507,19 +2507,19 @@ void ins(int size)
       switch(size) {
         case 1:
           while(count--) {
-            store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inb)(M.x86.R_DX));
+            store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_byte(M.x86.R_DX));
             M.x86.R_DI += inc;
           }
           break;
         case 2:
           while(count--) {
-            store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inw)(M.x86.R_DX));
+            store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_word(M.x86.R_DX));
             M.x86.R_DI += inc;
           }
           break;
         case 4:
           while(count--) {
-            store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inl)(M.x86.R_DX));
+            store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_long(M.x86.R_DX));
             M.x86.R_DI += inc;
           }
           break;
@@ -2528,13 +2528,13 @@ void ins(int size)
     else {
       switch(size) {
         case 1:
-          store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inb)(M.x86.R_DX));
+          store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_byte(M.x86.R_DX));
           break;
         case 2:
-          store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inw)(M.x86.R_DX));
+          store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_word(M.x86.R_DX));
           break;
         case 4:
-          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, (*sys_inl)(M.x86.R_DX));
+          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_byte(M.x86.R_DX));
           break;
       }
       M.x86.R_DI += inc;
@@ -2561,19 +2561,19 @@ void outs(int size)
       switch(size) {
         case 1:
           while(count--) {
-            (*sys_outb)(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+            store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
             M.x86.R_ESI += inc;
           }
           break;
         case 2:
           while(count--) {
-            (*sys_outw)(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+            store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
             M.x86.R_ESI += inc;
           }
           break;
         case 4:
           while(count--) {
-            (*sys_outl)(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+            store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
             M.x86.R_ESI += inc;
           }
           break;
@@ -2582,13 +2582,13 @@ void outs(int size)
     else {
       switch(size) {
         case 1:
-          (*sys_outb)(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
           break;
         case 2:
-          (*sys_outw)(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
           break;
         case 4:
-          (*sys_outl)(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
           break;
       }
       M.x86.R_SI += inc;
@@ -2602,19 +2602,19 @@ void outs(int size)
       switch(size) {
         case 1:
           while(count--) {
-            (*sys_outb)(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+            store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
             M.x86.R_SI += inc;
           }
           break;
         case 2:
           while(count--) {
-            (*sys_outw)(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+            store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
             M.x86.R_SI += inc;
           }
           break;
         case 4:
           while(count--) {
-            (*sys_outl)(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+            store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
             M.x86.R_SI += inc;
           }
           break;
@@ -2623,13 +2623,13 @@ void outs(int size)
     else {
       switch(size) {
         case 1:
-          (*sys_outb)(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
           break;
         case 2:
-          (*sys_outw)(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
           break;
         case 4:
-          (*sys_outl)(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
           break;
       }
       M.x86.R_SI += inc;
@@ -2640,8 +2640,6 @@ void outs(int size)
 /****************************************************************************
 REMARKS:
 Pushes a word onto the stack.
-
-NOTE: Do not inline this, as (*sys_wrX) is already inline!
 ****************************************************************************/
 void push_word(u16 w)
 {
@@ -2649,19 +2647,17 @@ void push_word(u16 w)
 
   if(MODE_STACK32) {
     M.x86.R_ESP -= 2;
-    (*sys_wrw)(M.x86.R_SS_BASE + M.x86.R_ESP, w);
+    store_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP, w);
   }
   else {
     M.x86.R_SP -= 2;
-    (*sys_wrw)(M.x86.R_SS_BASE + M.x86.R_SP, w);
+    store_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP, w);
   }
 }
 
 /****************************************************************************
 REMARKS:
 Pushes a long onto the stack.
-
-NOTE: Do not inline this, as (*sys_wrX) is already inline!
 ****************************************************************************/
 void push_long(u32 w)
 {
@@ -2669,19 +2665,17 @@ void push_long(u32 w)
 
   if(MODE_STACK32) {
     M.x86.R_ESP -= 4;
-    (*sys_wrl)(M.x86.R_SS_BASE + M.x86.R_ESP, w);
+    store_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP, w);
   }
   else {
     M.x86.R_SP -= 4;
-    (*sys_wrl)(M.x86.R_SS_BASE + M.x86.R_SP, w);
+    store_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP, w);
   }
 }
 
 /****************************************************************************
 REMARKS:
 Pops a word from the stack.
-
-NOTE: Do not inline this, as (*sys_rdX) is already inline!
 ****************************************************************************/
 u16 pop_word(void)
 {
@@ -2690,11 +2684,11 @@ u16 pop_word(void)
   if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
 
   if(MODE_STACK32) {
-    res = (*sys_rdw)(M.x86.R_SS_BASE + M.x86.R_ESP);
+    res = fetch_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP);
     M.x86.R_ESP += 2;
   }
   else {
-    res = (*sys_rdw)(M.x86.R_SS_BASE + M.x86.R_SP);
+    res = fetch_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP);
     M.x86.R_SP += 2;
   }
 
@@ -2704,8 +2698,6 @@ u16 pop_word(void)
 /****************************************************************************
 REMARKS:
 Pops a long from the stack.
-
-NOTE: Do not inline this, as (*sys_rdX) is already inline!
 ****************************************************************************/
 u32 pop_long(void)
 {
@@ -2714,11 +2706,11 @@ u32 pop_long(void)
   if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
 
   if(MODE_STACK32) {
-    res = (*sys_rdl)(M.x86.R_SS_BASE  + M.x86.R_ESP);
+    res = fetch_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP);
     M.x86.R_ESP += 4;
   }
   else {
-    res = (*sys_rdl)(M.x86.R_SS_BASE  + M.x86.R_SP);
+    res = fetch_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP);
     M.x86.R_SP += 4;
   }
 
