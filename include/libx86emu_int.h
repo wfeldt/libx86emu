@@ -39,8 +39,8 @@
 ****************************************************************************/
 
 
-#ifndef __X86EMU_X86EMUI_H
-#define __X86EMU_X86EMUI_H
+#ifndef __X86EMU_X86EMU_INT_H
+#define __X86EMU_X86EMU_INT_H
 
 #define M x86emu
 
@@ -54,5 +54,5 @@
 #include "ops.h"
 #include "prim_ops.h"
 
-#endif /* __X86EMU_X86EMUI_H */
+#endif /* __X86EMU_X86EMU_INT_H */
 
