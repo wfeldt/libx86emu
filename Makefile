@@ -1,7 +1,7 @@
 CC	= gcc
 CFLAGS	= -g -O2 -fPIC -Wall
 LIBDIR	= /usr/lib
-LIBX86	= libx86
+LIBX86	= libx86emu
 VERSION	= 1
 
 CFILES	= $(wildcard *.c)
@@ -19,7 +19,7 @@ shared: $(LIB_SO)
 install: shared
 	install -D $(LIB_SO) $(DESTDIR)$(LIBDIR)/$(LIB_SO)
 	ln -snf $(LIB_SO) $(DESTDIR)$(LIBDIR)/$(LIBX86).so
-	install -D include/libx86.h $(DESTDIR)/usr/include/libx86.h
+	install -D include/x86emu.h $(DESTDIR)/usr/include/x86emu.h
 
 $(LIB_SO): .depend $(OBJS)
 	$(CC) -shared -Wl,-soname,$(LIB_SO) $(OBJS) -o $(LIB_SO)
