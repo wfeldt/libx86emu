@@ -38,7 +38,7 @@
 ****************************************************************************/
 
 
-#include "include/x86emui.h"
+#include "include/x86emu_int.h"
 
 #define LOG_STR(a) memcpy(*p, a, sizeof a - 1), *p += sizeof a - 1
 #define LOG_SPACE (M.log.ptr - M.log.buf + 512 < M.log.size)
