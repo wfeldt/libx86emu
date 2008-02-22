@@ -3762,8 +3762,8 @@ static void x86emuOp_mov_byte_RM_IMM(u8 op1)
     *reg8 = imm;
   }
   else {
-    OP_DECODE("byte ");
     addr = decode_rm_address(mod, rl);
+    OP_DECODE(",");
     imm = fetch_byte();
     DECODE_HEX2(imm);
     store_data_byte(addr, imm);
@@ -3812,8 +3812,6 @@ static void x86emuOp_mov_word_RM_IMM(u8 op1)
       store_data_long(addr, imm);
     }
     else {
-      addr = decode_rm_address(mod, rl);
-      OP_DECODE(",");
       imm = fetch_word();
       DECODE_HEX4(imm);
       store_data_word(addr, imm);
@@ -4511,13 +4509,9 @@ static void x86emuOp_jump_near_IMM(u8 op1)
 
   eip = M.x86.R_EIP + ofs;
 
-  if(MODE_DATA32) {
-    DECODE_HEX_ADDR(eip);
-  }
-  else {
-    eip &= 0xffff;	// FIXME: is not correct
-    DECODE_HEX_ADDR(eip);
-  }
+  if(!MODE_DATA32) eip &= 0xffff;
+
+  DECODE_HEX_ADDR(eip);
 
   M.x86.R_EIP = eip;
 }
@@ -4560,7 +4554,7 @@ static void x86emuOp_jump_byte_IMM(u8 op1)
   u32 eip;
 
   OP_DECODE("jmp ");
-  ofs = fetch_byte();
+  ofs = (s8) fetch_byte();
 
   eip = M.x86.R_EIP + ofs;
 
@@ -5210,7 +5204,6 @@ static void x86emuOp_opcFF_word_RM(u8 op1)
     }
   }
   else {
-    addr = decode_rm_address(mod, rl);
     switch(rh) {
       case 0:	/* inc */
         OP_DECODE("inc ");

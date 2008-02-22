@@ -174,17 +174,17 @@ void handle_interrupt()
   char **p = &M.log.ptr;
 
   if(M.x86.intr_type) {
-    if(!M.log.intr || !p || !LOG_SPACE) return;
-
-    if((M.x86.intr_type & 0xff) == INTR_TYPE_FAULT) {
-      LOG_STR("* fault ");
+    if(M.log.intr && p && LOG_SPACE) {
+      if((M.x86.intr_type & 0xff) == INTR_TYPE_FAULT) {
+        LOG_STR("* fault ");
+      }
+      else {
+        LOG_STR("* int ");
+      }
+      decode_hex2(p, M.x86.intr_nr & 0xff);
+      LOG_STR("\n");
+      **p = 0;
     }
-    else {
-      LOG_STR("* int ");
-    }
-    decode_hex2(p, M.x86.intr_nr & 0xff);
-    LOG_STR("\n");
-    **p = 0;
 
     generate_int(M.x86.intr_nr, M.x86.intr_type, M.x86.intr_errcode);
   }
@@ -946,11 +946,13 @@ sel_t *decode_rm_seg_register(int reg)
 
 void decode_hex(char **p, u32 ofs)
 {
+  unsigned u;
   static const char *h = "0123456789abcdef";
 
   if(ofs) {
-    while(!(ofs & 0xf0000000)) ofs <<= 4;
-    for(; ofs & 0xf0000000; ofs <<= 4) {
+    u = 8;
+    while(!(ofs & 0xf0000000)) ofs <<= 4, u--;
+    for(; u ; ofs <<= 4, u--) {
       *(*p)++ = h[(ofs >> 28) & 0xf];
     }
   }

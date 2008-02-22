@@ -369,10 +369,19 @@ static void x86emuOp2_long_jump(u8 op2)
   OP_DECODE("j");
   decode_cond(type);
 
-  ofs = (s16) fetch_word();
+  if(MODE_DATA32) {
+    ofs = fetch_long();
+  }
+  else {
+    ofs = (s16) fetch_word();
+  }
+
   eip = M.x86.R_EIP + ofs;
-  DECODE_HEX_ADDR(eip);
+
   if(!MODE_DATA32) eip &= 0xffff;
+
+  DECODE_HEX_ADDR(eip);
+
   if(eval_condition(type)) M.x86.R_EIP = eip;
 }
 
@@ -1298,7 +1307,7 @@ static void x86emuOp2_bsf(u8 op2)
   u32 *reg32, addr, val, cnt;
   u16 *reg16;
 
-  OP_DECODE("bsf");
+  OP_DECODE("bsf ");
   fetch_decode_modrm(&mod, &rh, &rl);
 
   if(mod == 3) {
@@ -1351,7 +1360,7 @@ static void x86emuOp2_bsr(u8 op2)
   u32 *reg32, addr, val, cnt;
   u16 *reg16;
 
-  OP_DECODE("bsr");
+  OP_DECODE("bsr ");
   fetch_decode_modrm(&mod, &rh, &rl);
 
   if(mod == 3) {
