@@ -41,10 +41,6 @@
 ****************************************************************************/
 
 #include "include/x86emui.h"
-#include <string.h>
-#include <stdarg.h>
-
-/*------------------------- Global Variables ------------------------------*/
 
 /*----------------------------- Implementation ----------------------------*/
 
@@ -58,17 +54,11 @@ Byte value read from emulator memory.
 REMARKS:
 Reads a byte value from the emulator memory. 
 ****************************************************************************/
-u8 X86API rdb(
-    u32 addr)
+u8 rdb(u32 addr)
 {
-	u8 val;
+  if(addr <= M.mem_size - 1) return M.mem_base[addr];
 
-	if (addr > M.mem_size - 1) {
-		// printk("mem_read: address %#lx out of range!\n", addr);
-		HALT_SYS();
-		}
-	val = *(u8*)(M.mem_base + addr);
-	return val;
+  return 0xff;
 }
 
 /****************************************************************************
@@ -81,28 +71,13 @@ Word value read from emulator memory.
 REMARKS:
 Reads a word value from the emulator memory.
 ****************************************************************************/
-u16 X86API rdw(
-	u32 addr)
+u16 rdw(u32 addr)
 {
-	u16 val = 0;
+  if(addr <= M.mem_size - 2) return M.mem_base[addr] + (M.mem_base[addr + 1] << 8);
 
-	if (addr > M.mem_size - 2) {
-		// printk("mem_read: address %#lx out of range!\n", addr);
-		HALT_SYS();
-		}
-#ifdef __BIG_ENDIAN__
-	if (addr & 0x1) {
-		val = (*(u8*)(M.mem_base + addr) |
-			  (*(u8*)(M.mem_base + addr + 1) << 8));
-		}
-	else
-#endif
-#if defined(__alpha__) || defined(__alpha)
-		val = ldw_u((u16*)(M.mem_base + addr));
-#else
-		val = *(u16*)(M.mem_base + addr);
-#endif
-    return val;
+  if(addr == M.mem_size - 1) return M.mem_base[addr] + 0xff00;
+
+  return 0xffff;
 }
 
 /****************************************************************************
@@ -114,30 +89,30 @@ Long value read from emulator memory.
 REMARKS:
 Reads a long value from the emulator memory. 
 ****************************************************************************/
-u32 X86API rdl(
-	u32 addr)
+u32 rdl(u32 addr)
 {
-	u32 val = 0;
+  if(addr <= M.mem_size - 4) return
+    M.mem_base[addr] +
+    (M.mem_base[addr + 1] << 8) +
+    (M.mem_base[addr + 2] << 16) +
+    (M.mem_base[addr + 3] << 24);
 
-	if (addr > M.mem_size - 4) {
-		// printk("mem_read: address %#lx out of range!\n", addr);
-		HALT_SYS();
-		}
-#ifdef __BIG_ENDIAN__
-	if (addr & 0x3) {
-		val = (*(u8*)(M.mem_base + addr + 0) |
-			  (*(u8*)(M.mem_base + addr + 1) << 8) |
-			  (*(u8*)(M.mem_base + addr + 2) << 16) |
-			  (*(u8*)(M.mem_base + addr + 3) << 24));
-		}
-	else
-#endif
-#if defined(__alpha__) || defined(__alpha)
-		val = ldl_u((u32*)(M.mem_base + addr));
-#else
-		val = *(u32*)(M.mem_base + addr);
-#endif
-	return val;
+  if(addr == M.mem_size - 3) return
+    M.mem_base[addr] +
+    0xffffff00;
+
+  if(addr == M.mem_size - 2) return
+    M.mem_base[addr] +
+    (M.mem_base[addr + 1] << 8) +
+    0xffff0000;
+
+  if(addr == M.mem_size - 1) return
+    M.mem_base[addr] +
+    (M.mem_base[addr + 1] << 8) +
+    (M.mem_base[addr + 2] << 16) +
+    0xff000000;
+
+  return 0xffffffff;
 }
 
 /****************************************************************************
@@ -148,15 +123,9 @@ val		- Value to store
 REMARKS:
 Writes a byte value to emulator memory.
 ****************************************************************************/
-void X86API wrb(
-	u32 addr,
-	u8 val)
+void wrb(u32 addr, u8 val)
 {
-    if (addr > M.mem_size - 1) {
-		// printk("mem_write: address %#lx out of range!\n", addr);
-		HALT_SYS();
-		}
-	*(u8*)(M.mem_base + addr) = val;
+  if(addr <= M.mem_size - 1) M.mem_base[addr] = val;
 }
 
 /****************************************************************************
@@ -167,26 +136,15 @@ val		- Value to store
 REMARKS:
 Writes a word value to emulator memory.
 ****************************************************************************/
-void X86API wrw(
-	u32 addr,
-	u16 val)
+void wrw(u32 addr, u16 val)
 {
-	if (addr > M.mem_size - 2) {
-		// printk("mem_write: address %#lx out of range!\n", addr);
-		HALT_SYS();
-		}
-#ifdef __BIG_ENDIAN__
-	if (addr & 0x1) {
-		*(u8*)(M.mem_base + addr + 0) = (val >> 0) & 0xff;
-		*(u8*)(M.mem_base + addr + 1) = (val >> 8) & 0xff;
-		}
-	else
-#endif
-#if defined(__alpha__) || defined(__alpha)
-	 stw_u(val,(u16*)(M.mem_base + addr));
-#else
-	 *(u16*)(M.mem_base + addr) = val;
-#endif
+  if(addr <= M.mem_size - 2) {
+    M.mem_base[addr] = val;
+    M.mem_base[addr + 1] = val >> 8;
+  }
+  else if(addr == M.mem_size - 1) {
+    M.mem_base[addr] = val;
+  }
 }
 
 /****************************************************************************
@@ -197,38 +155,27 @@ val		- Value to store
 REMARKS:
 Writes a long value to emulator memory. 
 ****************************************************************************/
-void X86API wrl(
-	u32 addr,
-	u32 val)
+void wrl(u32 addr, u32 val)
 {
-	if (addr > M.mem_size - 4) {
-		// printk("mem_write: address %#lx out of range!\n", addr);
-		HALT_SYS();
-		}
-#ifdef __BIG_ENDIAN__
-	if (addr & 0x1) {
-		*(u8*)(M.mem_base + addr + 0) = (val >>  0) & 0xff;
-		*(u8*)(M.mem_base + addr + 1) = (val >>  8) & 0xff;
-		*(u8*)(M.mem_base + addr + 2) = (val >> 16) & 0xff;
-		*(u8*)(M.mem_base + addr + 3) = (val >> 24) & 0xff;
-		}
-	else
-#endif
-#if defined(__alpha__) || defined(__alpha)
-	 stl_u(val,(u32*)(M.mem_base + addr));
-#else
-	 *(u32*)(M.mem_base + addr) = val;
-#endif
+  if(addr <= M.mem_size - 4) {
+    M.mem_base[addr] = val;
+    M.mem_base[addr + 1] = val >> 8;
+    M.mem_base[addr + 2] = val >> 16;
+    M.mem_base[addr + 3] = val >> 24;
+  }
+  else if(addr == M.mem_size - 3) {
+    M.mem_base[addr] = val;
+    M.mem_base[addr + 1] = val >> 8;
+    M.mem_base[addr + 2] = val >> 16;
+  }
+  else if(addr == M.mem_size - 2) {
+    M.mem_base[addr] = val;
+    M.mem_base[addr + 1] = val >> 8;
+  }
+  else if(addr == M.mem_size - 1) {
+    M.mem_base[addr] = val;
+  }
 }
-
-/*------------------------- Global Variables ------------------------------*/
-
-u8  	(X86APIP sys_rdb)(u32 addr) 			            = rdb;
-u16 	(X86APIP sys_rdw)(u32 addr) 			            = rdw;
-u32 	(X86APIP sys_rdl)(u32 addr) 			            = rdl;
-void 	(X86APIP sys_wrb)(u32 addr,u8 val) 		            = wrb;
-void 	(X86APIP sys_wrw)(u32 addr,u16 val) 	            = wrw;
-void 	(X86APIP sys_wrl)(u32 addr,u32 val) 	            = wrl;
 
 /*----------------------------- Setup -------------------------------------*/
 
@@ -241,15 +188,16 @@ This function is used to set the pointers to functions which access
 memory space, allowing the user application to override these functions
 and hook them out as necessary for their application.
 ****************************************************************************/
-void X86EMU_setupMemFuncs(
-	X86EMU_memFuncs *funcs)
+void x86emu_set_mem_funcs(x86emu_t *emu, x86emu_mem_funcs_t *funcs)
 {
-    sys_rdb = funcs->rdb;
-    sys_rdw = funcs->rdw;
-    sys_rdl = funcs->rdl;
-    sys_wrb = funcs->wrb;
-    sys_wrw = funcs->wrw;
-    sys_wrl = funcs->wrl;
+  if(!funcs) return;
+
+  emu->mem.rdb = funcs->rdb;
+  emu->mem.rdw = funcs->rdw;
+  emu->mem.rdl = funcs->rdl;
+  emu->mem.wrb = funcs->wrb;
+  emu->mem.wrw = funcs->wrw;
+  emu->mem.wrl = funcs->wrl;
 }
 
 /****************************************************************************
@@ -286,44 +234,44 @@ in the emulator via the interrupt vector table. This allows the application
 to get control when the code being emulated executes specific software
 interrupts.
 ****************************************************************************/
-void x86emu_set_intr_handler(x86emu_t *emu, unsigned num, x86emu_intr_handler_t handler)
+void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handler)
 {
   if(num < sizeof emu->intr_table / sizeof *emu->intr_table) emu->intr_table[num] = handler;
 }
 
 
-void x86emu_set_instr_check(x86emu_t *emu, x86emu_instr_check_t instr_check)
+void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func)
 {
-  emu->instr_check = instr_check;
+  emu->code_check = func;
 }
 
 
 void x86emu_set_log(x86emu_t *emu, char *buffer, unsigned buffer_size)
 {
   emu->log.size = buffer_size;
-  emu->log.data = buffer;
-  emu->log.ptr = emu->log.data;
-  *emu->log.data = 0;
+  emu->log.buf = buffer;
+  emu->log.ptr = emu->log.buf;
+  *emu->log.buf = 0;
 }
 
 
 void x86emu_clear_log()
 {
-  M.log.ptr = M.log.data;
+  M.log.ptr = M.log.buf;
   *M.log.ptr = 0;
 }
 
 
 char *x86emu_get_log()
 {
-  return M.log.data;
+  return M.log.buf;
 }
 
 
 void x86emu_log(const char *format, ...)
 {
   va_list args;
-  int size = M.log.size - (M.log.ptr - M.log.data);
+  int size = M.log.size - (M.log.ptr - M.log.buf);
 
   va_start(args, format);
   if(size > 0) {

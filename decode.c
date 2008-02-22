@@ -41,41 +41,18 @@
 #include "include/x86emui.h"
 
 #define LOG_STR(a) memcpy(*p, a, sizeof a - 1), *p += sizeof a - 1
-#define LOG_SPACE (M.log.ptr - M.log.data + 512 < M.log.size)
+#define LOG_SPACE (M.log.ptr - M.log.buf + 512 < M.log.size)
 
 /*----------------------------- Implementation ----------------------------*/
 
 x86emu_t x86emu;
 
-/****************************************************************************
-REMARKS:
-Handles any pending asychronous interrupts.
-****************************************************************************/
-static void x86emu_intr_handle(void)
-{
-  if(M.x86.intr_type) {
-    generate_int(M.x86.intr_nr, M.x86.intr_type, M.x86.intr_errcode);
-  }
+static void handle_interrupt(void);
+static void generate_int(u8 nr, unsigned type, unsigned errcode);
+static void log_regs(void);
+static void log_code(void);
+void check_data_access(sel_t *seg, u32 ofs, u32 size);
 
-  M.x86.intr_type = 0;
-}
-
-/****************************************************************************
-PARAMETERS:
-intrnum - Interrupt number to raise
-
-REMARKS:
-Raise the specified interrupt to be handled before the execution of the
-next instruction.
-****************************************************************************/
-void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err)
-{
-  if(!M.x86.intr_type) {
-    M.x86.intr_nr = intr_nr;
-    M.x86.intr_type = type;
-    M.x86.intr_errcode = err;
-  }
-}
 
 /****************************************************************************
 REMARKS:
@@ -113,9 +90,9 @@ void x86emu_exec(void)
     M.x86.saved_cs = M.x86.R_CS;
     M.x86.saved_eip = M.x86.R_EIP;
 
-    X86EMU_trace_regs();
+    log_regs();
 
-    if(M.instr_check && (*M.instr_check)()) break;
+    if(M.code_check && (*M.code_check)()) break;
 
     memcpy(M.x86.decode_seg, "[", 1);
 
@@ -169,11 +146,11 @@ void x86emu_exec(void)
 
     *M.x86.disasm_ptr = 0;
 
-    X86EMU_trace_code();
+    handle_interrupt();
 
-    x86emu_intr_handle();
+    log_code();
 
-    M.x86.msr_10++;	// time stamp counter
+    M.x86.tsc++;	// time stamp counter
 
     if(MODE_HALTED) break;
   }
@@ -183,9 +160,53 @@ void x86emu_exec(void)
 REMARKS:
 Halts the system by setting the halted system flag.
 ****************************************************************************/
-void X86EMU_halt_sys(void)
+void x86emu_stop(void)
 {
   M.x86.mode |= _MODE_HALTED;
+}
+
+/****************************************************************************
+REMARKS:
+Handles any pending asychronous interrupts.
+****************************************************************************/
+void handle_interrupt()
+{
+  char **p = &M.log.ptr;
+
+  if(M.x86.intr_type) {
+    if(!M.log.intr || !p || !LOG_SPACE) return;
+
+    if((M.x86.intr_type & 0xff) == INTR_TYPE_FAULT) {
+      LOG_STR("* fault ");
+    }
+    else {
+      LOG_STR("* int ");
+    }
+    decode_hex2(p, M.x86.intr_nr & 0xff);
+    LOG_STR("\n");
+    **p = 0;
+
+    generate_int(M.x86.intr_nr, M.x86.intr_type, M.x86.intr_errcode);
+  }
+
+  M.x86.intr_type = 0;
+}
+
+/****************************************************************************
+PARAMETERS:
+intrnum - Interrupt number to raise
+
+REMARKS:
+Raise the specified interrupt to be handled before the execution of the
+next instruction.
+****************************************************************************/
+void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err)
+{
+  if(!M.x86.intr_type) {
+    M.x86.intr_nr = intr_nr;
+    M.x86.intr_type = type;
+    M.x86.intr_errcode = err;
+  }
 }
 
 /****************************************************************************
@@ -216,14 +237,12 @@ Immediate byte value read from instruction queue
 REMARKS:
 This function returns the immediate byte from the instruction queue, and
 moves the instruction pointer to the next value.
-
-NOTE: Do not inline this function, as (*sys_rdb) is already inline!
 ****************************************************************************/
 u8 fetch_byte(void)
 {
   u8 fetched;
 
-  fetched = (*sys_rdb)(M.x86.R_CS_BASE + M.x86.R_EIP);
+  fetched = (*M.mem.rdb)(M.x86.R_CS_BASE + M.x86.R_EIP);
 
   if(MODE_CODE32) {
     M.x86.R_EIP++;
@@ -246,14 +265,12 @@ Immediate word value read from instruction queue
 REMARKS:
 This function returns the immediate byte from the instruction queue, and
 moves the instruction pointer to the next value.
-
-NOTE: Do not inline this function, as (*sys_rdw) is already inline!
 ****************************************************************************/
 u16 fetch_word(void)
 {
   u16 fetched;
 
-  fetched = (*sys_rdw)(M.x86.R_CS_BASE + M.x86.R_EIP);
+  fetched = (*M.mem.rdw)(M.x86.R_CS_BASE + M.x86.R_EIP);
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 2;
@@ -277,14 +294,12 @@ Immediate lone value read from instruction queue
 REMARKS:
 This function returns the immediate byte from the instruction queue, and
 moves the instruction pointer to the next value.
-
-NOTE: Do not inline this function, as (*sys_rdw) is already inline!
 ****************************************************************************/
 u32 fetch_long(void)
 {
   u32 fetched;
 
-  fetched = (*sys_rdl)(M.x86.R_CS_BASE + M.x86.R_EIP);
+  fetched = (*M.mem.rdl)(M.x86.R_CS_BASE + M.x86.R_EIP);
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 4;
@@ -349,16 +364,10 @@ offset	- Offset to load data from
 
 RETURNS:
 Byte value read from the absolute memory location.
-
-NOTE: Do not inline this function as (*sys_rdX) is already inline!
 ****************************************************************************/
-u8 fetch_data_byte(u32 offset)
+u8 fetch_data_byte(u32 ofs)
 {
-  sel_t *seg = get_data_segment();
-
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 1);
-
-  return (*sys_rdb)(seg->base + offset);
+  return fetch_data_byte_abs(get_data_segment(), ofs);
 }
 
 /****************************************************************************
@@ -367,16 +376,10 @@ offset	- Offset to load data from
 
 RETURNS:
 Word value read from the absolute memory location.
-
-NOTE: Do not inline this function as (*sys_rdX) is already inline!
 ****************************************************************************/
-u16 fetch_data_word(u32 offset)
+u16 fetch_data_word(u32 ofs)
 {
-  sel_t *seg = get_data_segment();
-
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 2);
-
-  return (*sys_rdw)(seg->base + offset);
+  return fetch_data_word_abs(get_data_segment(), ofs);
 }
 
 /****************************************************************************
@@ -385,16 +388,10 @@ offset	- Offset to load data from
 
 RETURNS:
 Long value read from the absolute memory location.
-
-NOTE: Do not inline this function as (*sys_rdX) is already inline!
 ****************************************************************************/
-u32 fetch_data_long(u32 offset)
+u32 fetch_data_long(u32 ofs)
 {
-  sel_t *seg = get_data_segment();
-
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 4);
-
-  return (*sys_rdl)(seg->base + offset);
+  return fetch_data_long_abs(get_data_segment(), ofs);
 }
 
 /****************************************************************************
@@ -404,14 +401,28 @@ offset	- Offset to load data from
 
 RETURNS:
 Byte value read from the absolute memory location.
-
-NOTE: Do not inline this function as (*sys_rdX) is already inline!
 ****************************************************************************/
-u8 fetch_data_byte_abs(sel_t *seg, u32 offset)
+u8 fetch_data_byte_abs(sel_t *seg, u32 ofs)
 {
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 1);
+  u8 val;
+  u32 addr;
+  char **p = &M.log.ptr;
 
-  return (*sys_rdb)(seg->base + offset);
+  check_data_access(seg, ofs, 1);
+
+  val = (*M.mem.rdb)(addr = seg->base + ofs);
+
+  if(!M.log.data || !p || !LOG_SPACE) return val;
+
+  LOG_STR("* r [");
+  decode_hex8(p, addr);
+  LOG_STR("] = ");
+  decode_hex2(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
+
+  return val;
 }
 
 /****************************************************************************
@@ -421,14 +432,28 @@ offset	- Offset to load data from
 
 RETURNS:
 Word value read from the absolute memory location.
-
-NOTE: Do not inline this function as (*sys_rdX) is already inline!
 ****************************************************************************/
-u16 fetch_data_word_abs(sel_t *seg, u32 offset)
+u16 fetch_data_word_abs(sel_t *seg, u32 ofs)
 {
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 2);
+  u16 val;
+  u32 addr;
+  char **p = &M.log.ptr;
 
-  return (*sys_rdw)(seg->base + offset);
+  check_data_access(seg, ofs, 2);
+
+  val = (*M.mem.rdw)(addr = seg->base + ofs);
+
+  if(!M.log.data || !p || !LOG_SPACE) return val;
+
+  LOG_STR("* r [");
+  decode_hex8(p, addr);
+  LOG_STR("] = ");
+  decode_hex4(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
+
+  return val;
 }
 
 /****************************************************************************
@@ -438,14 +463,27 @@ offset	- Offset to load data from
 
 RETURNS:
 Long value read from the absolute memory location.
-
-NOTE: Do not inline this function as (*sys_rdX) is already inline!
 ****************************************************************************/
-u32 fetch_data_long_abs(sel_t *seg, u32 offset)
+u32 fetch_data_long_abs(sel_t *seg, u32 ofs)
 {
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 4);
+  u32 val, addr;
+  char **p = &M.log.ptr;
 
-  return (*sys_rdl)(seg->base + offset);
+  check_data_access(seg, ofs, 4);
+
+  val = (*M.mem.rdl)(addr = seg->base + ofs);
+
+  if(!M.log.data || !p || !LOG_SPACE) return val;
+
+  LOG_STR("* r [");
+  decode_hex8(p, addr);
+  LOG_STR("] = ");
+  decode_hex8(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
+
+  return val;
 }
 
 /****************************************************************************
@@ -456,16 +494,10 @@ val		- Value to store
 REMARKS:
 Writes a word value to an segmented memory location. The segment used is
 the current 'default' segment, which may have been overridden.
-
-NOTE: Do not inline this function as (*sys_wrX) is already inline!
 ****************************************************************************/
-void store_data_byte(u32 offset, u8 val)
+void store_data_byte(u32 ofs, u8 val)
 {
-  sel_t *seg = get_data_segment();
-
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 1);
-
-  (*sys_wrb)(seg->base + offset, val);
+  store_data_byte_abs(get_data_segment(), ofs, val);
 }
 
 /****************************************************************************
@@ -476,16 +508,10 @@ val		- Value to store
 REMARKS:
 Writes a word value to an segmented memory location. The segment used is
 the current 'default' segment, which may have been overridden.
-
-NOTE: Do not inline this function as (*sys_wrX) is already inline!
 ****************************************************************************/
-void store_data_word(u32 offset, u16 val)
+void store_data_word(u32 ofs, u16 val)
 {
-  sel_t *seg = get_data_segment();
-
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 2);
-
-  (*sys_wrw)(seg->base + offset, val);
+  store_data_word_abs(get_data_segment(), ofs, val);
 }
 
 /****************************************************************************
@@ -496,16 +522,10 @@ val		- Value to store
 REMARKS:
 Writes a long value to an segmented memory location. The segment used is
 the current 'default' segment, which may have been overridden.
-
-NOTE: Do not inline this function as (*sys_wrX) is already inline!
 ****************************************************************************/
-void store_data_long(u32 offset, u32 val)
+void store_data_long(u32 ofs, u32 val)
 {
-  sel_t *seg = get_data_segment();
-
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 4);
-
-  (*sys_wrl)(seg->base + offset, val);
+  store_data_long_abs(get_data_segment(), ofs, val);
 }
 
 /****************************************************************************
@@ -516,14 +536,25 @@ val		- Value to store
 
 REMARKS:
 Writes a byte value to an absolute memory location.
-
-NOTE: Do not inline this function as (*sys_wrX) is already inline!
 ****************************************************************************/
-void store_data_byte_abs(sel_t *seg, u32 offset, u8 val)
+void store_data_byte_abs(sel_t *seg, u32 ofs, u8 val)
 {
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 1);
+  u32 addr;
+  char **p = &M.log.ptr;
 
-  (*sys_wrb)(seg->base + offset, val);
+  check_data_access(seg, ofs, 1);
+
+  (*M.mem.wrb)(addr = seg->base + ofs, val);
+
+  if(!M.log.data || !p || !LOG_SPACE) return;
+
+  LOG_STR("* w [");
+  decode_hex8(p, addr);
+  LOG_STR("] = ");
+  decode_hex2(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
 }
 
 /****************************************************************************
@@ -534,14 +565,25 @@ val		- Value to store
 
 REMARKS:
 Writes a word value to an absolute memory location.
-
-NOTE: Do not inline this function as (*sys_wrX) is already inline!
 ****************************************************************************/
-void store_data_word_abs(sel_t *seg, u32 offset, u16 val)
+void store_data_word_abs(sel_t *seg, u32 ofs, u16 val)
 {
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 2);
+  u32 addr;
+  char **p = &M.log.ptr;
 
-  (*sys_wrw)(seg->base + offset, val);
+  check_data_access(seg, ofs, 2);
+
+  (*M.mem.wrw)(addr = seg->base + ofs, val);
+
+  if(!M.log.data || !p || !LOG_SPACE) return;
+
+  LOG_STR("* w [");
+  decode_hex8(p, addr);
+  LOG_STR("] = ");
+  decode_hex4(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
 }
 
 /****************************************************************************
@@ -552,14 +594,25 @@ val		- Value to store
 
 REMARKS:
 Writes a long value to an absolute memory location.
-
-NOTE: Do not inline this function as (*sys_wrX) is already inline!
 ****************************************************************************/
-void store_data_long_abs(sel_t *seg, u32 offset, u32 val)
+void store_data_long_abs(sel_t *seg, u32 ofs, u32 val)
 {
-  // if(CHECK_DATA_ACCESS()) x86emu_check_data_access(seg, offset, 4);
+  u32 addr;
+  char **p = &M.log.ptr;
 
-  (*sys_wrl)(seg->base + offset, val);
+  check_data_access(seg, ofs, 4);
+
+  (*M.mem.wrl)(addr = seg->base + ofs, val);
+
+  if(!M.log.data || !p || !LOG_SPACE) return;
+
+  LOG_STR("* w [");
+  decode_hex8(p, addr);
+  LOG_STR("] = ");
+  decode_hex8(p, val);
+
+  LOG_STR("\n");
+  **p = 0;
 }
 
 
@@ -572,7 +625,7 @@ u8 fetch_io_byte(u32 port)
 
   val = (*M.io.inb)(port);
 
-  if(!p || !LOG_SPACE) return val;
+  if(!M.log.io || !p || !LOG_SPACE) return val;
 
   LOG_STR("* in [");
   decode_hex4(p, port);
@@ -591,7 +644,7 @@ u16 fetch_io_word(u32 port)
   char **p = &M.log.ptr;
   u16 val;
 
-  if(!M.io.inw) return 0xffff;
+  if(!M.log.io || !M.io.inw) return 0xffff;
 
   val = (*M.io.inw)(port);
 
@@ -618,7 +671,7 @@ u32 fetch_io_long(u32 port)
 
   val = (*M.io.inl)(port);
 
-  if(!p || !LOG_SPACE) return val;
+  if(!M.log.io || !p || !LOG_SPACE) return val;
 
   LOG_STR("* in [");
   decode_hex4(p, port);
@@ -640,7 +693,7 @@ void store_io_byte(u32 port, u8 val)
 
   (*M.io.outb)(port, val);
 
-  if(!p || !LOG_SPACE) return;
+  if(!M.log.io || !p || !LOG_SPACE) return;
 
   LOG_STR("* out [");
   decode_hex4(p, port);
@@ -660,7 +713,7 @@ void store_io_word(u32 port, u16 val)
 
   (*M.io.outw)(port, val);
 
-  if(!p || !LOG_SPACE) return;
+  if(!M.log.io || !p || !LOG_SPACE) return;
 
   LOG_STR("* out [");
   decode_hex4(p, port);
@@ -680,7 +733,7 @@ void store_io_long(u32 port, u32 val)
 
   (*M.io.outl)(port, val);
 
-  if(!p || !LOG_SPACE) return;
+  if(!M.log.io || !p || !LOG_SPACE) return;
 
   LOG_STR("* out [");
   decode_hex4(p, port);
@@ -1586,7 +1639,7 @@ u32 decode_sib_address(int sib, int mod)
 
 void x86emu_reset(x86emu_t *emu)
 {
-  X86EMU_regs *x86 = &emu->x86;
+  x86emu_regs_t *x86 = &emu->x86;
 
   memset(x86, 0, sizeof *x86);
 
@@ -1608,14 +1661,14 @@ void x86emu_reset(x86emu_t *emu)
 }
 
 
-void X86EMU_trace_code (void)
+void log_code()
 {
   unsigned u;
   char **p = &M.log.ptr;
 
-  if(!p || !LOG_SPACE) return;
+  if(!M.log.code || !p || !LOG_SPACE) return;
 
-  decode_hex(p, M.x86.msr_10);
+  decode_hex(p, M.x86.tsc);
   LOG_STR(" ");
   decode_hex4(p, M.x86.saved_cs);
   LOG_STR(":");
@@ -1642,11 +1695,11 @@ void X86EMU_trace_code (void)
 }
 
 
-void X86EMU_trace_regs (void)
+void log_regs()
 {
   char **p = &M.log.ptr;
 
-  if(!p || !LOG_SPACE) return;
+  if(!M.log.regs || !p || !LOG_SPACE) return;
 
   LOG_STR("\neax ");
   decode_hex8(p, M.x86.R_EAX);
@@ -1699,18 +1752,39 @@ void X86EMU_trace_regs (void)
 }
 
 
-void x86emu_check_sp_access (void)
+void check_data_access(sel_t *seg, u32 ofs, u32 size)
 {
-}
+  char **p = &M.log.ptr;
+  static char seg_name[7] = "ecsdfg?";
+  unsigned idx = seg - M.x86.seg;
 
-void x86emu_check_mem_access (u32 dummy)
-{
-	/*  check bounds, etc */
-}
+  if(M.log.acc && p && LOG_SPACE) {
+    LOG_STR("* acc ");
+    switch(size) {
+      case 1:
+        LOG_STR("byte ");
+        break;
+      case 2:
+        LOG_STR("word ");
+        break;
+      case 4:
+        LOG_STR("dword ");
+        break;
+    }
+    if(idx > 6) idx = 6;
+    *(*p)++ = seg_name[idx];
+    LOG_STR("s:");
+    decode_hex8(p, ofs);
+    LOG_STR("\n");
 
-void x86emu_check_data_access (uint dummy1, uint dummy2)
-{
-	/*  check bounds, etc */
+    **p = 0;
+  }
+
+  if(ofs + size - 1 > seg->limit) {
+    INTR_RAISE_GP(seg->sel);
+  }
+
+  return;
 }
 
 
@@ -1748,8 +1822,8 @@ void decode_set_seg_register(sel_t *seg, u16 val)
       err = 0;
     }
     else if(ofs + 7 <= dt_limit) {
-      dl = (*sys_rdl)(dt_base + ofs);
-      dh = (*sys_rdl)(dt_base + ofs + 4);
+      dl = (*M.mem.rdl)(dt_base + ofs);
+      dh = (*M.mem.rdl)(dt_base + ofs + 4);
 
       acc = ((dh >> 8) & 0xff) + ((dh >> 12) & 0xf00);
       base = ((dl >> 16) & 0xffff) + ((dh & 0xff) << 16) + (dh & 0xff000000);
@@ -1774,8 +1848,8 @@ void decode_set_seg_register(sel_t *seg, u16 val)
 void idt_lookup(u8 nr, u32 *new_cs, u32 *new_eip)
 {
   if(MODE_REAL) {
-    *new_eip = (*sys_rdw)(M.x86.R_IDT_BASE + nr * 4);
-    *new_cs = (*sys_rdw)(M.x86.R_IDT_BASE + nr * 4 + 2);
+    *new_eip = (*M.mem.rdw)(M.x86.R_IDT_BASE + nr * 4);
+    *new_cs = (*M.mem.rdw)(M.x86.R_IDT_BASE + nr * 4 + 2);
   }
   else {
   }

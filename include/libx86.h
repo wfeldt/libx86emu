@@ -47,21 +47,18 @@ extern "C" {            			/* Use "C" linkage when in C++ mode */
 
 #include <inttypes.h>
 
-#define	X86API
-#define	X86APIP	*
-
-#define u8	uint8_t
-#define u16	uint16_t
-#define u32	uint32_t
-#define u64	uint64_t
-#define s8	int8_t
-#define s16	int16_t
-#define s32	int32_t
-#define s64	int64_t
-#define uint	uint32_t
-
 
 /*---------------------- Macros and type definitions ----------------------*/
+
+#define u8 uint8_t
+#define u16 uint16_t
+#define u32 uint32_t
+#define u64 uint64_t
+#define s8 int8_t
+#define s16 int16_t
+#define s32 int32_t
+#define s64 int64_t
+
 
 /****************************************************************************
 REMARKS:
@@ -114,15 +111,16 @@ wrw    	- Function to write a word to an address
 wrl    	- Function to write a dword to an address
 ****************************************************************************/
 typedef struct {
-	u8  	(X86APIP rdb)(u32 addr);
-	u16 	(X86APIP rdw)(u32 addr);
-	u32 	(X86APIP rdl)(u32 addr);
-	void 	(X86APIP wrb)(u32 addr, u8 val);
-	void 	(X86APIP wrw)(u32 addr, u16 val);
-	void	(X86APIP wrl)(u32 addr, u32 val);
-	} X86EMU_memFuncs;
+  u8 (* rdb)(u32 addr);
+  u16 (* rdw)(u32 addr);
+  u32 (* rdl)(u32 addr);
+  void (* wrb)(u32 addr, u8 val);
+  void (* wrw)(u32 addr, u16 val);
+  void (* wrl)(u32 addr, u32 val);
+} x86emu_mem_funcs_t;
 
-
+typedef int (* x86emu_intr_func_t)(u8 num, unsigned type);
+typedef int (* x86emu_code_check_t)(void);
 
 /*
  * General EAX, EBX, ECX, EDX type registers.  Note that for
@@ -399,49 +397,32 @@ typedef struct {
 
 typedef struct {
   struct i386_general_regs gen;
-    struct i386_special_regs spc;
-    sel_t seg[8];
-    sel_t ldt;
-    sel_t tr;
-    u32 crx[8];
-    u32 drx[8];
-    struct {
-      u32 base, limit;
-    } gdt;
-    struct {
-      u32 base, limit;
-    } idt;
-    u32				msr_10;		/* TSC */
-    /*
-     * MODE contains information on:
-     *  REPE prefix             2 bits  repe,repne
-     *  SEGMENT overrides       5 bits  normal,DS,SS,CS,ES
-     *  Delayed flag set        3 bits  (zero, signed, parity)
-     *  reserved                6 bits
-     *  interrupt #             8 bits  instruction raised interrupt
-     *  BIOS video segregs      4 bits  
-     *  Interrupt Pending       1 bits  
-     *  Extern interrupt        1 bits
-     *  Halted                  1 bits
-     */
-    u32                         mode;
-    sel_t                       *default_seg;
-    int                         debug;
-    int                         check;
-    u32                         saved_eip;
-    u16                         saved_cs;
-    char			decode_seg[4];
-    unsigned char               instr_buf[32];		/* instruction bytes */
-    unsigned                    instr_len;		/* bytes in instr_buf */
-    char			disasm_buf[256];
-    char			*disasm_ptr;
-    u8                          intr_nr;
-    unsigned                    intr_type;
-    unsigned                    intr_errcode;
-} X86EMU_regs;
-
-typedef int (* x86emu_intr_handler_t)(u8 num, unsigned type);
-typedef int (* x86emu_instr_check_t)(void);
+  struct i386_special_regs spc;
+  sel_t seg[8];
+  sel_t ldt;
+  sel_t tr;
+  u32 crx[8];
+  u32 drx[8];
+  struct {
+    u32 base, limit;
+  } gdt;
+  struct {
+    u32 base, limit;
+  } idt;
+  u32 tsc;			/* TSC */
+  u32 mode;
+  sel_t *default_seg;
+  u32 saved_eip;
+  u16 saved_cs;
+  char decode_seg[4];
+  unsigned char instr_buf[32];	/* instruction bytes */
+  unsigned instr_len;		/* bytes in instr_buf */
+  char disasm_buf[256];
+  char *disasm_ptr;
+  u8 intr_nr;
+  unsigned intr_type;
+  unsigned intr_errcode;
+} x86emu_regs_t;
 
 /****************************************************************************
 REMARKS:
@@ -454,18 +435,25 @@ private			- private data pointer
 x86			- X86 registers
 ****************************************************************************/
 typedef struct {
-  unsigned long	mem_base;
-  unsigned long	mem_size;
+  x86emu_regs_t x86;
+  x86emu_code_check_t code_check;
   x86emu_io_funcs_t io;
-  void *private;
+  x86emu_mem_funcs_t mem;
+  x86emu_intr_func_t intr_table[256];
+  unsigned char *mem_base;
+  u32 mem_size;
   struct {
     unsigned size;
-    char *data;
+    char *buf;
     char *ptr;
+    unsigned regs:1;
+    unsigned code:1;
+    unsigned data:1;
+    unsigned acc:1;
+    unsigned io:1;
+    unsigned intr:1;
   } log;
-  x86emu_intr_handler_t intr_table[256];
-  x86emu_instr_check_t instr_check;
-  X86EMU_regs x86;
+  void *private;
 } x86emu_t;
 
 /*----------------------------- Global Variables --------------------------*/
@@ -479,56 +467,19 @@ extern x86emu_t x86emu;
 
 /*-------------------------- Function Prototypes --------------------------*/
 
-
-/*---------------------- Macros and type definitions ----------------------*/
-
-/****************************************************************************
-  Here are the default memory read and write
-  function in case they are needed as fallbacks.
-***************************************************************************/
-extern u8 X86API rdb(u32 addr);
-extern u16 X86API rdw(u32 addr);
-extern u32 X86API rdl(u32 addr);
-extern void X86API wrb(u32 addr, u8 val);
-extern void X86API wrw(u32 addr, u16 val);
-extern void X86API wrl(u32 addr, u32 val);
- 
-
-/*-------------------------- Function Prototypes --------------------------*/
-
-#define	HALT_SYS()	X86EMU_halt_sys()
-
-/* checks to be enabled for "runtime" */
-
-#define CHECK_IP_FETCH_F                0x1
-#define CHECK_SP_ACCESS_F               0x2
-#define CHECK_MEM_ACCESS_F              0x4 /*using regular linear pointer */
-#define CHECK_DATA_ACCESS_F             0x8 /*using segment:offset*/
-
-/* debug options */
-
-#define DEBUG_DECODE_F          0x000001 /* print decoded instruction  */
-#define DEBUG_TRACE_F           0x000002 /* dump regs before/after execution */
-#define DEBUG_MEM_TRACE_F       0x001000 
-#define DEBUG_IO_TRACE_F        0x002000 
-
+void x86emu_set_mem_funcs(x86emu_t *emu, x86emu_mem_funcs_t *funcs);
 void x86emu_set_io_funcs(x86emu_t *emu, x86emu_io_funcs_t *funcs);
-void x86emu_set_intr_handler(x86emu_t *emu, unsigned num, x86emu_intr_handler_t handler);
-void x86emu_set_instr_check(x86emu_t *emu, x86emu_instr_check_t instr_check);
+void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handler);
+void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
 void x86emu_set_log(x86emu_t *emu, char *buffer, unsigned buffer_size);
-
 char *x86emu_get_log();
 void x86emu_clear_log();
 void x86emu_log(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 void x86emu_reset(x86emu_t *emu);
 void x86emu_exec(void);
+void x86emu_stop(void);
 
-void	X86EMU_setupMemFuncs(X86EMU_memFuncs *funcs);
-
-void	X86EMU_trace_code(void);
-void	X86EMU_trace_regs(void);
-
-void X86EMU_halt_sys(void);
+void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/

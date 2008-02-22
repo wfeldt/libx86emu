@@ -2643,8 +2643,6 @@ Pushes a word onto the stack.
 ****************************************************************************/
 void push_word(u16 w)
 {
-  if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
-
   if(MODE_STACK32) {
     M.x86.R_ESP -= 2;
     store_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP, w);
@@ -2661,8 +2659,6 @@ Pushes a long onto the stack.
 ****************************************************************************/
 void push_long(u32 w)
 {
-  if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
-
   if(MODE_STACK32) {
     M.x86.R_ESP -= 4;
     store_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP, w);
@@ -2680,8 +2676,6 @@ Pops a word from the stack.
 u16 pop_word(void)
 {
   u16 res;
-
-  if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
 
   if(MODE_STACK32) {
     res = fetch_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP);
@@ -2702,8 +2696,6 @@ Pops a long from the stack.
 u32 pop_long(void)
 {
   u32 res;
-
-  if(CHECK_SP_ACCESS()) x86emu_check_sp_access();
 
   if(MODE_STACK32) {
     res = fetch_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP);

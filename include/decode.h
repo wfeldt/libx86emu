@@ -60,25 +60,14 @@
 #define DECODE_HEX8S(ofs) decode_hex8s(&M.x86.disasm_ptr, ofs)
 #define DECODE_HEX_ADDR(ofs) decode_hex_addr(&M.x86.disasm_ptr, ofs)
 
-# define CHECK_IP_FETCH()              	(M.x86.check & CHECK_IP_FETCH_F)
-# define CHECK_SP_ACCESS()             	(M.x86.check & CHECK_SP_ACCESS_F)
-# define CHECK_MEM_ACCESS()            	(M.x86.check & CHECK_MEM_ACCESS_F)
-# define CHECK_DATA_ACCESS()           	(M.x86.check & CHECK_DATA_ACCESS_F)
-
-# define DEBUG_DECODE()        	(M.x86.debug & DEBUG_DECODE_F)
-# define DEBUG_TRACE()         	(M.x86.debug & DEBUG_TRACE_F)
-# define DEBUG_MEM_TRACE()     	(M.x86.debug & DEBUG_MEM_TRACE_F)
-# define DEBUG_IO_TRACE()      	(M.x86.debug & DEBUG_IO_TRACE_F)
-
 /*-------------------------- Function Prototypes --------------------------*/
 
 #ifdef  __cplusplus
 extern "C" {            			/* Use "C" linkage when in C++ mode */
 #endif
 
-void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err);
-void fetch_decode_modrm (int *mod, int *regh, int *regl);
-u8 fetch_byte (void);
+void fetch_decode_modrm(int *mod, int *regh, int *regl);
+u8 fetch_byte(void);
 u16 fetch_word(void);
 u32 fetch_long(void);
 u8 fetch_data_byte(u32 offset);
@@ -120,11 +109,6 @@ void decode_hex4s(char **p, s32 ofs);
 void decode_hex8s(char **p, s32 ofs);
 
 void decode_set_seg_register(sel_t *sel, u16 val);
-void generate_int(u8 nr, unsigned type, unsigned errcode);
-
-void x86emu_check_sp_access (void);
-void x86emu_check_mem_access (u32 p);
-void x86emu_check_data_access (uint s, uint o);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/
