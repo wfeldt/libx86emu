@@ -38,8 +38,8 @@
 *
 ****************************************************************************/
 
-#ifndef __X86EMU_LIBX86_H
-#define __X86EMU_LIBX86_H
+#ifndef __X86EMU_X86EMU_H
+#define __X86EMU_X86EMU_H
 
 #ifdef  __cplusplus
 extern "C" {            			/* Use "C" linkage when in C++ mode */
@@ -485,5 +485,5 @@ void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err);
 }                       			/* End of "C" linkage for C++   	*/
 #endif
 
-#endif /* __X86EMU_LIBX86_H */
+#endif /* __X86EMU_X86EMU_H */
 

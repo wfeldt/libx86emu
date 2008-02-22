@@ -49,7 +49,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "libx86.h"
+#include "x86emu.h"
 #include "decode.h"
 #include "ops.h"
 #include "prim_ops.h"
