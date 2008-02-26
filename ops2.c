@@ -170,7 +170,7 @@ static void x86emuOp2_opc_01(u8 op2)
 
   fetch_decode_modrm(&mod, &rh, &rl);
 
-  if(mod == 3 && rh != 5 && rh != 6) {
+  if(mod == 3 && rh != 4 && rh != 6) {
     INTR_RAISE_UD;
   }
   else {
@@ -214,10 +214,6 @@ static void x86emuOp2_opc_01(u8 op2)
         break;
 
       case 4:
-        INTR_RAISE_UD;
-        break;
-
-      case 5:
         OP_DECODE("smsw ");
         if(mod == 3) {
           reg16 = decode_rm_word_register(rl);
@@ -227,6 +223,10 @@ static void x86emuOp2_opc_01(u8 op2)
           addr = decode_rm_address(mod, rl);
           store_data_word(addr, M.x86.R_CR0);
         }
+        break;
+
+      case 5:
+        INTR_RAISE_UD;
         break;
 
       case 6:
