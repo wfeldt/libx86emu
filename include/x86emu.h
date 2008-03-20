@@ -410,6 +410,7 @@ typedef struct {
     u32 base, limit;
   } idt;
   u32 tsc;			/* TSC */
+  u64 real_tsc;
   u32 mode;
   sel_t *default_seg;
   u32 saved_eip;

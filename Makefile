@@ -1,5 +1,5 @@
 CC	= gcc
-CFLAGS	= -g -O2 -fPIC -Wall
+CFLAGS	= -g -O2 -fPIC -fomit-frame-pointer -Wall
 LIBDIR	= /usr/lib
 LIBX86	= libx86emu
 VERSION	= 1

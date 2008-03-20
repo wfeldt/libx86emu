@@ -54,6 +54,16 @@ static void log_code(void);
 void check_data_access(sel_t *seg, u32 ofs, u32 size);
 
 
+static inline u64 tsc()
+{
+  register u64 tsc asm ("%eax");
+
+  asm ("rdtsc" : "=r" (tsc));
+
+  return tsc;
+}
+
+
 /****************************************************************************
 REMARKS:
 Main execution loop for the emulator. We return from here when the system
@@ -69,6 +79,8 @@ void x86emu_exec(void)
     [0x64 ... 0x67] = 1,
     [0xf0] = 1, [0xf2 ... 0xf3] = 1
   };
+
+  M.x86.real_tsc = tsc();
 
   for(;;) {
     *(M.x86.disasm_ptr = M.x86.disasm_buf) = 0;
@@ -1667,10 +1679,15 @@ void log_code()
 {
   unsigned u;
   char **p = &M.log.ptr;
+  u64 new_tsc;
 
   if(!M.log.code || !p || !LOG_SPACE) return;
 
+  new_tsc = tsc();
+
   decode_hex(p, M.x86.tsc);
+  LOG_STR(" +");
+  decode_hex(p, new_tsc - M.x86.real_tsc);
   LOG_STR(" ");
   decode_hex4(p, M.x86.saved_cs);
   LOG_STR(":");
@@ -1694,6 +1711,8 @@ void log_code()
   LOG_STR("\n");
 
   **p = 0;
+
+  M.x86.real_tsc = new_tsc;
 }
 
 
