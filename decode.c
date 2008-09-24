@@ -656,11 +656,11 @@ u16 fetch_io_word(u32 port)
   char **p = &M.log.ptr;
   u16 val;
 
-  if(!M.log.io || !M.io.inw) return 0xffff;
+  if(!M.io.inw) return 0xffff;
 
   val = (*M.io.inw)(port);
 
-  if(!p || !LOG_SPACE) return val;
+  if(!M.log.io || !p || !LOG_SPACE) return val;
 
   LOG_STR("* in [");
   decode_hex4(p, port);
