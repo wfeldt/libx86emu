@@ -53,7 +53,7 @@ static void log_regs(void);
 static void log_code(void);
 void check_data_access(sel_t *seg, u32 ofs, u32 size);
 
-
+#if WITH_TSC
 static inline u64 tsc()
 {
   register u64 tsc asm ("%eax");
@@ -62,7 +62,7 @@ static inline u64 tsc()
 
   return tsc;
 }
-
+#endif
 
 /****************************************************************************
 REMARKS:
@@ -80,7 +80,9 @@ void x86emu_exec(void)
     [0xf0] = 1, [0xf2 ... 0xf3] = 1
   };
 
+#if WITH_TSC
   M.x86.real_tsc = tsc();
+#endif
 
   for(;;) {
     *(M.x86.disasm_ptr = M.x86.disasm_buf) = 0;
@@ -1679,15 +1681,21 @@ void log_code()
 {
   unsigned u;
   char **p = &M.log.ptr;
+#if WITH_TSC
   u64 new_tsc;
+#endif
 
   if(!M.log.code || !p || !LOG_SPACE) return;
 
+#if WITH_TSC
   new_tsc = tsc();
+#endif
 
   decode_hex(p, M.x86.tsc);
+#if WITH_TSC
   LOG_STR(" +");
   decode_hex(p, new_tsc - M.x86.real_tsc);
+#endif
   LOG_STR(" ");
   decode_hex4(p, M.x86.saved_cs);
   LOG_STR(":");
@@ -1712,7 +1720,9 @@ void log_code()
 
   **p = 0;
 
+#if WITH_TSC
   M.x86.real_tsc = new_tsc;
+#endif
 }
 
 

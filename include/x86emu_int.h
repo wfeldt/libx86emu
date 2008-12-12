@@ -54,5 +54,11 @@
 #include "ops.h"
 #include "prim_ops.h"
 
+#if defined(__i386__) || defined (__x86_64__)
+#define WITH_TSC 1
+#else
+#define WITH_TSC 0
+#endif
+
 #endif /* __X86EMU_X86EMU_INT_H */
 

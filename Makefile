@@ -2,27 +2,32 @@ CC	= gcc
 CFLAGS	= -g -O2 -fPIC -fomit-frame-pointer -Wall
 LIBDIR	= /usr/lib
 LIBX86	= libx86emu
-VERSION	= 1
+
+VERSION		:= $(shell cat VERSION)
+MINOR_VERSION	:= $(shell cut -d . -f 2 VERSION)
+MAJOR_VERSION	:= $(shell cut -d . -f 1 VERSION)
 
 CFILES	= $(wildcard *.c)
 OBJS	= $(CFILES:.c=.o)
 
-LIB_SO	= $(LIBX86).so.$(VERSION)
+LIB_NAME	= $(LIBX86).so.$(VERSION)
+LIB_SONAME	= $(LIBX86).so.$(MAJOR_VERSION)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
 
 all: shared
 
-shared: $(LIB_SO)
+shared: $(LIB_NAME)
 
 install: shared
-	install -D $(LIB_SO) $(DESTDIR)$(LIBDIR)/$(LIB_SO)
-	ln -snf $(LIB_SO) $(DESTDIR)$(LIBDIR)/$(LIBX86).so
-	install -D include/x86emu.h $(DESTDIR)/usr/include/x86emu.h
+	install -D $(LIB_NAME) $(DESTDIR)$(LIBDIR)/$(LIB_NAME)
+	ln -snf $(LIB_NAME) $(DESTDIR)$(LIBDIR)/$(LIB_SONAME)
+	ln -snf $(LIB_SONAME) $(DESTDIR)$(LIBDIR)/$(LIBX86).so
+	install -m 644 -D include/x86emu.h $(DESTDIR)/usr/include/x86emu.h
 
-$(LIB_SO): .depend $(OBJS)
-	$(CC) -shared -Wl,-soname,$(LIB_SO) $(OBJS) -o $(LIB_SO)
+$(LIB_NAME): .depend $(OBJS)
+	$(CC) -shared -Wl,-soname,$(LIB_SONAME) $(OBJS) -o $(LIB_NAME)
 
 clean:
 	rm -f *.o *~ include/*~ *.so.* .depend
