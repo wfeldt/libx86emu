@@ -409,6 +409,7 @@ typedef struct {
   struct {
     u32 base, limit;
   } idt;
+  u64 msr[0x800];		/* MSRs */
   u32 tsc;			/* TSC */
   u64 real_tsc;
   u32 mode;

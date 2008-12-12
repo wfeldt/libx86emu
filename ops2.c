@@ -253,6 +253,38 @@ static void x86emuOp2_opc_01(u8 op2)
 
 /****************************************************************************
 REMARKS:
+Handles opcode 0x0f,0x06
+****************************************************************************/
+static void x86emuOp2_clts(u8 op2)
+{
+  OP_DECODE("clts");
+
+  M.x86.R_CR0 &= ~8;
+}
+
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x08
+****************************************************************************/
+static void x86emuOp2_invd(u8 op2)
+{
+  OP_DECODE("invd");
+}
+
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x09
+****************************************************************************/
+static void x86emuOp2_wbinvd(u8 op2)
+{
+  OP_DECODE("wbinvd");
+}
+
+
+/****************************************************************************
+REMARKS:
 Handles opcode 0x0f,0x20
 ****************************************************************************/
 static void x86emuOp2_mov_word_RM_CRx(u8 op2)
@@ -345,6 +377,27 @@ static void x86emuOp2_mov_word_DRx_RM(u8 op2)
 
 /****************************************************************************
 REMARKS:
+Handles opcode 0x0f,0x30
+****************************************************************************/
+static void x86emuOp2_wrmsr(u8 op2)
+{
+  unsigned u;
+
+  OP_DECODE("wrmsr");
+
+  u = M.x86.R_ECX;
+
+  if(u >= sizeof M.x86.msr / sizeof *M.x86.msr) {
+    INTR_RAISE_UD;
+  }
+  else {
+    M.x86.msr[u] = ((u64) M.x86.R_EDX << 32) + M.x86.R_EAX;
+  }
+}
+
+
+/****************************************************************************
+REMARKS:
 Handles opcode 0x0f,0x31
 ****************************************************************************/
 static void x86emuOp2_rdtsc(u8 op2)
@@ -353,6 +406,75 @@ static void x86emuOp2_rdtsc(u8 op2)
 
   M.x86.R_EAX = M.x86.tsc;
   M.x86.R_EDX = 0;
+}
+
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x32
+****************************************************************************/
+static void x86emuOp2_rdmsr(u8 op2)
+{
+  unsigned u;
+
+  OP_DECODE("rdmsr");
+
+  u = M.x86.R_ECX;
+
+  if(u >= sizeof M.x86.msr / sizeof *M.x86.msr) {
+    INTR_RAISE_UD;
+  }
+  else {
+    M.x86.R_EDX = M.x86.msr[u] >> 32;
+    M.x86.R_EAX = M.x86.msr[u];
+  }
+}
+
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x33
+****************************************************************************/
+static void x86emuOp2_rdpmc(u8 op2)
+{
+  unsigned u;
+
+  OP_DECODE("rdpmc");
+
+  u = M.x86.R_ECX;		// counter index
+
+  // not implemented
+
+  M.x86.R_EDX = 0;
+  M.x86.R_EAX = 0;
+}
+
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x34
+****************************************************************************/
+static void x86emuOp2_sysenter(u8 op2)
+{
+  OP_DECODE("sysenter");
+
+  // not implemented
+
+  INTR_RAISE_UD;
+}
+
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x35
+****************************************************************************/
+static void x86emuOp2_sysexit(u8 op2)
+{
+  OP_DECODE("sysexit");
+
+  // not implemented
+
+  INTR_RAISE_UD;
 }
 
 
@@ -1506,10 +1628,10 @@ void (*x86emu_optab2[256])(u8) =
   /*  0x03 */ x86emuOp2_illegal_op,  /* lsl (ring 0 PM)          */
   /*  0x04 */ x86emuOp2_illegal_op,
   /*  0x05 */ x86emuOp2_illegal_op,  /* loadall (undocumented)   */
-  /*  0x06 */ x86emuOp2_illegal_op,  /* clts (ring 0 PM)         */
+  /*  0x06 */ x86emuOp2_clts,        /* clts (ring 0 PM)         */
   /*  0x07 */ x86emuOp2_illegal_op,  /* loadall (undocumented)   */
-  /*  0x08 */ x86emuOp2_illegal_op,  /* invd (ring 0 PM)         */
-  /*  0x09 */ x86emuOp2_illegal_op,  /* wbinvd (ring 0 PM)       */
+  /*  0x08 */ x86emuOp2_invd,        /* invd (ring 0 PM)         */
+  /*  0x09 */ x86emuOp2_wbinvd,      /* wbinvd (ring 0 PM)       */
   /*  0x0a */ x86emuOp2_illegal_op,
   /*  0x0b */ x86emuOp2_illegal_op,
   /*  0x0c */ x86emuOp2_illegal_op,
@@ -1551,12 +1673,12 @@ void (*x86emu_optab2[256])(u8) =
   /*  0x2e */ x86emuOp2_illegal_op,
   /*  0x2f */ x86emuOp2_illegal_op,
 
-  /*  0x30 */ x86emuOp2_illegal_op,
+  /*  0x30 */ x86emuOp2_wrmsr,
   /*  0x31 */ x86emuOp2_rdtsc,
-  /*  0x32 */ x86emuOp2_illegal_op,
-  /*  0x33 */ x86emuOp2_illegal_op,
-  /*  0x34 */ x86emuOp2_illegal_op,
-  /*  0x35 */ x86emuOp2_illegal_op,
+  /*  0x32 */ x86emuOp2_rdmsr,
+  /*  0x33 */ x86emuOp2_rdpmc,
+  /*  0x34 */ x86emuOp2_sysenter,
+  /*  0x35 */ x86emuOp2_sysexit,
   /*  0x36 */ x86emuOp2_illegal_op,
   /*  0x37 */ x86emuOp2_illegal_op,
   /*  0x38 */ x86emuOp2_illegal_op,
