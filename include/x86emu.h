@@ -122,6 +122,17 @@ typedef struct {
 typedef int (* x86emu_intr_func_t)(u8 num, unsigned type);
 typedef int (* x86emu_code_check_t)(void);
 
+#define X86EMU_MEMIO_8	0
+#define X86EMU_MEMIO_16	1
+#define X86EMU_MEMIO_32	2
+#define X86EMU_MEMIO_R	(0 << 8)
+#define X86EMU_MEMIO_W	(1 << 8)
+#define X86EMU_MEMIO_X	(2 << 8)
+#define X86EMU_MEMIO_I	(3 << 8)
+#define X86EMU_MEMIO_O	(4 << 8)
+
+typedef unsigned (* x86emu_memio_func_t)(u32 addr, u32 *val, unsigned type);
+
 /*
  * General EAX, EBX, ECX, EDX type registers.  Note that for
  * portability, and speed, the issue of byte swapping is not addressed
@@ -439,8 +450,7 @@ x86			- X86 registers
 typedef struct {
   x86emu_regs_t x86;
   x86emu_code_check_t code_check;
-  x86emu_io_funcs_t io;
-  x86emu_mem_funcs_t mem;
+  x86emu_memio_func_t memio;
   x86emu_intr_func_t intr_table[256];
   unsigned char *mem_base;
   u32 mem_size;
@@ -471,6 +481,7 @@ extern x86emu_t x86emu;
 
 void x86emu_set_mem_funcs(x86emu_t *emu, x86emu_mem_funcs_t *funcs);
 void x86emu_set_io_funcs(x86emu_t *emu, x86emu_io_funcs_t *funcs);
+void x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func);
 void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handler);
 void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
 void x86emu_set_log(x86emu_t *emu, char *buffer, unsigned buffer_size);

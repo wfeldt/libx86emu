@@ -190,14 +190,6 @@ and hook them out as necessary for their application.
 ****************************************************************************/
 void x86emu_set_mem_funcs(x86emu_t *emu, x86emu_mem_funcs_t *funcs)
 {
-  if(!funcs) return;
-
-  emu->mem.rdb = funcs->rdb;
-  emu->mem.rdw = funcs->rdw;
-  emu->mem.rdl = funcs->rdl;
-  emu->mem.wrb = funcs->wrb;
-  emu->mem.wrw = funcs->wrw;
-  emu->mem.wrl = funcs->wrl;
 }
 
 /****************************************************************************
@@ -211,14 +203,11 @@ and hook them out as necessary for their application.
 ****************************************************************************/
 void x86emu_set_io_funcs(x86emu_t *emu, x86emu_io_funcs_t *funcs)
 {
-  if(!funcs) return;
+}
 
-  emu->io.inb = funcs->inb;
-  emu->io.inw = funcs->inw;
-  emu->io.inl = funcs->inl;
-  emu->io.outb = funcs->outb;
-  emu->io.outw = funcs->outw;
-  emu->io.outl = funcs->outl;
+void x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func)
+{
+  emu->memio = func;
 }
 
 /****************************************************************************

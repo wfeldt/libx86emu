@@ -52,6 +52,7 @@ static void generate_int(u8 nr, unsigned type, unsigned errcode);
 static void log_regs(void);
 static void log_code(void);
 void check_data_access(sel_t *seg, u32 ofs, u32 size);
+static unsigned decode_memio(u32 addr, u32 *val, unsigned type);
 
 #if WITH_TSC
 static inline u64 tsc()
@@ -254,9 +255,10 @@ moves the instruction pointer to the next value.
 ****************************************************************************/
 u8 fetch_byte(void)
 {
-  u8 fetched;
+  u32 val;
+  unsigned err;
 
-  fetched = (*M.mem.rdb)(M.x86.R_CS_BASE + M.x86.R_EIP);
+  err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_X);
 
   if(MODE_CODE32) {
     M.x86.R_EIP++;
@@ -266,10 +268,10 @@ u8 fetch_byte(void)
   }
 
   if(M.x86.instr_len < sizeof M.x86.instr_buf) {
-    M.x86.instr_buf[M.x86.instr_len++] = fetched;
+    M.x86.instr_buf[M.x86.instr_len++] = val;
   }
 
-  return fetched;
+  return val;
 }
 
 /****************************************************************************
@@ -282,9 +284,10 @@ moves the instruction pointer to the next value.
 ****************************************************************************/
 u16 fetch_word(void)
 {
-  u16 fetched;
+  u32 val;
+  unsigned err;
 
-  fetched = (*M.mem.rdw)(M.x86.R_CS_BASE + M.x86.R_EIP);
+  err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_X);
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 2;
@@ -294,11 +297,11 @@ u16 fetch_word(void)
   }
 
   if(M.x86.instr_len + 1 < sizeof M.x86.instr_buf) {
-    M.x86.instr_buf[M.x86.instr_len++] = fetched;
-    M.x86.instr_buf[M.x86.instr_len++] = fetched >> 8;
+    M.x86.instr_buf[M.x86.instr_len++] = val;
+    M.x86.instr_buf[M.x86.instr_len++] = val >> 8;
   }
 
-  return fetched;
+  return val;
 }
 
 /****************************************************************************
@@ -311,9 +314,10 @@ moves the instruction pointer to the next value.
 ****************************************************************************/
 u32 fetch_long(void)
 {
-  u32 fetched;
+  u32 val;
+  unsigned err;
 
-  fetched = (*M.mem.rdl)(M.x86.R_CS_BASE + M.x86.R_EIP);
+  err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_X);
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 4;
@@ -323,14 +327,15 @@ u32 fetch_long(void)
   }
 
   if(M.x86.instr_len + 3 < sizeof M.x86.instr_buf) {
-    M.x86.instr_buf[M.x86.instr_len++] = fetched;
-    M.x86.instr_buf[M.x86.instr_len++] = fetched >> 8;
-    M.x86.instr_buf[M.x86.instr_len++] = fetched >> 16;
-    M.x86.instr_buf[M.x86.instr_len++] = fetched >> 24;
+    M.x86.instr_buf[M.x86.instr_len++] = val;
+    M.x86.instr_buf[M.x86.instr_len++] = val >> 8;
+    M.x86.instr_buf[M.x86.instr_len++] = val >> 16;
+    M.x86.instr_buf[M.x86.instr_len++] = val >> 24;
   }
 
-  return fetched;
+  return val;
 }
+
 
 /****************************************************************************
 RETURNS:
@@ -418,23 +423,12 @@ Byte value read from the absolute memory location.
 ****************************************************************************/
 u8 fetch_data_byte_abs(sel_t *seg, u32 ofs)
 {
-  u8 val;
-  u32 addr;
-  char **p = &M.log.ptr;
+  u32 val;
+  unsigned err;
 
   check_data_access(seg, ofs, 1);
 
-  val = (*M.mem.rdb)(addr = seg->base + ofs);
-
-  if(!M.log.data || !p || !LOG_SPACE) return val;
-
-  LOG_STR("* r [");
-  decode_hex8(p, addr);
-  LOG_STR("] = ");
-  decode_hex2(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  err = decode_memio(seg->base + ofs, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_R);
 
   return val;
 }
@@ -449,23 +443,12 @@ Word value read from the absolute memory location.
 ****************************************************************************/
 u16 fetch_data_word_abs(sel_t *seg, u32 ofs)
 {
-  u16 val;
-  u32 addr;
-  char **p = &M.log.ptr;
+  u32 val;
+  unsigned err;
 
   check_data_access(seg, ofs, 2);
 
-  val = (*M.mem.rdw)(addr = seg->base + ofs);
-
-  if(!M.log.data || !p || !LOG_SPACE) return val;
-
-  LOG_STR("* r [");
-  decode_hex8(p, addr);
-  LOG_STR("] = ");
-  decode_hex4(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  err = decode_memio(seg->base + ofs, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_R);
 
   return val;
 }
@@ -480,22 +463,12 @@ Long value read from the absolute memory location.
 ****************************************************************************/
 u32 fetch_data_long_abs(sel_t *seg, u32 ofs)
 {
-  u32 val, addr;
-  char **p = &M.log.ptr;
+  u32 val;
+  unsigned err;
 
   check_data_access(seg, ofs, 4);
 
-  val = (*M.mem.rdl)(addr = seg->base + ofs);
-
-  if(!M.log.data || !p || !LOG_SPACE) return val;
-
-  LOG_STR("* r [");
-  decode_hex8(p, addr);
-  LOG_STR("] = ");
-  decode_hex8(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  err = decode_memio(seg->base + ofs, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_R);
 
   return val;
 }
@@ -553,22 +526,11 @@ Writes a byte value to an absolute memory location.
 ****************************************************************************/
 void store_data_byte_abs(sel_t *seg, u32 ofs, u8 val)
 {
-  u32 addr;
-  char **p = &M.log.ptr;
+  u32 val32 = val;
 
   check_data_access(seg, ofs, 1);
 
-  (*M.mem.wrb)(addr = seg->base + ofs, val);
-
-  if(!M.log.data || !p || !LOG_SPACE) return;
-
-  LOG_STR("* w [");
-  decode_hex8(p, addr);
-  LOG_STR("] = ");
-  decode_hex2(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  decode_memio(seg->base + ofs, &val32, X86EMU_MEMIO_8 + X86EMU_MEMIO_W);
 }
 
 /****************************************************************************
@@ -582,22 +544,11 @@ Writes a word value to an absolute memory location.
 ****************************************************************************/
 void store_data_word_abs(sel_t *seg, u32 ofs, u16 val)
 {
-  u32 addr;
-  char **p = &M.log.ptr;
+  u32 val32 = val;
 
   check_data_access(seg, ofs, 2);
 
-  (*M.mem.wrw)(addr = seg->base + ofs, val);
-
-  if(!M.log.data || !p || !LOG_SPACE) return;
-
-  LOG_STR("* w [");
-  decode_hex8(p, addr);
-  LOG_STR("] = ");
-  decode_hex4(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  decode_memio(seg->base + ofs, &val32, X86EMU_MEMIO_16 + X86EMU_MEMIO_W);
 }
 
 /****************************************************************************
@@ -611,43 +562,17 @@ Writes a long value to an absolute memory location.
 ****************************************************************************/
 void store_data_long_abs(sel_t *seg, u32 ofs, u32 val)
 {
-  u32 addr;
-  char **p = &M.log.ptr;
-
   check_data_access(seg, ofs, 4);
 
-  (*M.mem.wrl)(addr = seg->base + ofs, val);
-
-  if(!M.log.data || !p || !LOG_SPACE) return;
-
-  LOG_STR("* w [");
-  decode_hex8(p, addr);
-  LOG_STR("] = ");
-  decode_hex8(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  decode_memio(seg->base + ofs, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_W);
 }
 
 
 u8 fetch_io_byte(u32 port)
 {
-  char **p = &M.log.ptr;
-  u8 val;
+  u32 val;
 
-  if(!M.io.inb) return 0xff;
-
-  val = (*M.io.inb)(port);
-
-  if(!M.log.io || !p || !LOG_SPACE) return val;
-
-  LOG_STR("* in [");
-  decode_hex4(p, port);
-  LOG_STR("] = ");
-  decode_hex2(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  decode_memio(port, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_I);
 
   return val;
 }
@@ -655,22 +580,9 @@ u8 fetch_io_byte(u32 port)
 
 u16 fetch_io_word(u32 port)
 {
-  char **p = &M.log.ptr;
-  u16 val;
+  u32 val;
 
-  if(!M.io.inw) return 0xffff;
-
-  val = (*M.io.inw)(port);
-
-  if(!M.log.io || !p || !LOG_SPACE) return val;
-
-  LOG_STR("* in [");
-  decode_hex4(p, port);
-  LOG_STR("] = ");
-  decode_hex4(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  decode_memio(port, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_I);
 
   return val;
 }
@@ -678,22 +590,9 @@ u16 fetch_io_word(u32 port)
 
 u32 fetch_io_long(u32 port)
 {
-  char **p = &M.log.ptr;
   u32 val;
 
-  if(!M.io.inl) return 0xffffffff;
-
-  val = (*M.io.inl)(port);
-
-  if(!M.log.io || !p || !LOG_SPACE) return val;
-
-  LOG_STR("* in [");
-  decode_hex4(p, port);
-  LOG_STR("] = ");
-  decode_hex8(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  decode_memio(port, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_I);
 
   return val;
 }
@@ -701,61 +600,23 @@ u32 fetch_io_long(u32 port)
 
 void store_io_byte(u32 port, u8 val)
 {
-  char **p = &M.log.ptr;
+  u32 val32 = val;
 
-  if(!M.io.outb) return;
-
-  (*M.io.outb)(port, val);
-
-  if(!M.log.io || !p || !LOG_SPACE) return;
-
-  LOG_STR("* out [");
-  decode_hex4(p, port);
-  LOG_STR("] = ");
-  decode_hex2(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  decode_memio(port, &val32, X86EMU_MEMIO_8 + X86EMU_MEMIO_O);
 }
 
 
 void store_io_word(u32 port, u16 val)
 {
-  char **p = &M.log.ptr;
+  u32 val32 = val;
 
-  if(!M.io.outw) return;
-
-  (*M.io.outw)(port, val);
-
-  if(!M.log.io || !p || !LOG_SPACE) return;
-
-  LOG_STR("* out [");
-  decode_hex4(p, port);
-  LOG_STR("] = ");
-  decode_hex4(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  decode_memio(port, &val32, X86EMU_MEMIO_16 + X86EMU_MEMIO_O);
 }
 
 
 void store_io_long(u32 port, u32 val)
 {
-  char **p = &M.log.ptr;
-
-  if(!M.io.outl) return;
-
-  (*M.io.outl)(port, val);
-
-  if(!M.log.io || !p || !LOG_SPACE) return;
-
-  LOG_STR("* out [");
-  decode_hex4(p, port);
-  LOG_STR("] = ");
-  decode_hex8(p, val);
-
-  LOG_STR("\n");
-  **p = 0;
+  decode_memio(port, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_O);
 }
 
 
@@ -1853,21 +1714,26 @@ void decode_set_seg_register(sel_t *seg, u16 val)
       err = 0;
     }
     else if(ofs + 7 <= dt_limit) {
-      dl = (*M.mem.rdl)(dt_base + ofs);
-      dh = (*M.mem.rdl)(dt_base + ofs + 4);
+      err =
+        decode_memio(dt_base + ofs, &dl, X86EMU_MEMIO_32 + X86EMU_MEMIO_R) |
+        decode_memio(dt_base + ofs + 4, &dh, X86EMU_MEMIO_32 + X86EMU_MEMIO_R);
 
-      acc = ((dh >> 8) & 0xff) + ((dh >> 12) & 0xf00);
-      base = ((dl >> 16) & 0xffff) + ((dh & 0xff) << 16) + (dh & 0xff000000);
-      limit = (dl & 0xffff) + (dh & 0xf0000);
-      if(ACC_G(acc)) limit = (limit << 12) + 0xfff;
+      if(!err) {
+        err = 1;
 
-      if(ACC_P(acc) && ACC_S(acc)) {
-        seg->sel = val;
-        seg->base = base;
-        seg->limit = limit;
-        seg->acc = acc;
+        acc = ((dh >> 8) & 0xff) + ((dh >> 12) & 0xf00);
+        base = ((dl >> 16) & 0xffff) + ((dh & 0xff) << 16) + (dh & 0xff000000);
+        limit = (dl & 0xffff) + (dh & 0xf0000);
+        if(ACC_G(acc)) limit = (limit << 12) + 0xfff;
 
-        err = 0;
+        if(ACC_P(acc) && ACC_S(acc)) {
+          seg->sel = val;
+          seg->base = base;
+          seg->limit = limit;
+          seg->acc = acc;
+
+          err = 0;
+        }
       }
     }
   }
@@ -1878,9 +1744,12 @@ void decode_set_seg_register(sel_t *seg, u16 val)
 
 void idt_lookup(u8 nr, u32 *new_cs, u32 *new_eip)
 {
+  unsigned err;
+
   if(MODE_REAL) {
-    *new_eip = (*M.mem.rdw)(M.x86.R_IDT_BASE + nr * 4);
-    *new_cs = (*M.mem.rdw)(M.x86.R_IDT_BASE + nr * 4 + 2);
+    err =
+      decode_memio(M.x86.R_IDT_BASE + nr * 4, new_eip, X86EMU_MEMIO_16 + X86EMU_MEMIO_R) |
+      decode_memio(M.x86.R_IDT_BASE + nr * 4 + 2, new_cs, X86EMU_MEMIO_16 + X86EMU_MEMIO_R);
   }
   else {
   }
@@ -1928,6 +1797,73 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
     decode_set_seg_register(M.x86.seg + R_CS_INDEX, new_cs);
     M.x86.R_EIP = new_eip;
   }
+}
+
+
+unsigned decode_memio(u32 addr, u32 *val, unsigned type)
+{
+  unsigned err, bits = type & 0xff;
+  char **p = &M.log.ptr;
+
+  err = M.memio(addr, val, type);
+
+  if(!M.log.data || !p || !LOG_SPACE) return err;
+
+  type &= ~0xff;
+
+  switch(type) {
+    case X86EMU_MEMIO_R:
+      LOG_STR("* r [");
+      break;
+    case X86EMU_MEMIO_W:
+      LOG_STR("* w [");
+      break;
+    case X86EMU_MEMIO_X:
+      LOG_STR("* x [");
+      break;
+    case X86EMU_MEMIO_I:
+      LOG_STR("* i [");
+      break;
+    case X86EMU_MEMIO_O:
+      LOG_STR("* o [");
+      break;
+  }
+
+  decode_hex8(p, addr);
+
+  LOG_STR("] = ");
+
+  switch(bits) {
+    case X86EMU_MEMIO_8:
+      if(err) {
+        LOG_STR("??");
+      }
+      else {
+        decode_hex2(p, *val);
+      }
+      break;
+    case X86EMU_MEMIO_16:
+      if(err) {
+        LOG_STR("????");
+      }
+      else {
+        decode_hex4(p, *val);
+      }
+      break;
+    case X86EMU_MEMIO_32:
+      if(err) {
+        LOG_STR("????????");
+      }
+      else {
+        decode_hex8(p, *val);
+      }
+      break;
+  }
+
+  LOG_STR("\n");
+  **p = 0;
+
+  return err;
 }
 
 #undef LOG_STR
