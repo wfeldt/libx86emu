@@ -42,6 +42,9 @@
 
 #include "include/x86emu_int.h"
 
+#define LOG_STR(a) memcpy(*p, a, sizeof a - 1), *p += sizeof a - 1
+#define LOG_SPACE(a) (M.log.ptr - M.log.buf + a < M.log.size)
+
 /*----------------------------- Implementation ----------------------------*/
 
 /****************************************************************************
@@ -179,32 +182,6 @@ void wrl(u32 addr, u32 val)
 
 /*----------------------------- Setup -------------------------------------*/
 
-/****************************************************************************
-PARAMETERS:
-funcs	- New memory function pointers to make active
-
-REMARKS:
-This function is used to set the pointers to functions which access
-memory space, allowing the user application to override these functions
-and hook them out as necessary for their application.
-****************************************************************************/
-void x86emu_set_mem_funcs(x86emu_t *emu, x86emu_mem_funcs_t *funcs)
-{
-}
-
-/****************************************************************************
-PARAMETERS:
-funcs	- New programmed I/O function pointers to make active
-
-REMARKS:
-This function is used to set the pointers to functions which access
-I/O space, allowing the user application to override these functions
-and hook them out as necessary for their application.
-****************************************************************************/
-void x86emu_set_io_funcs(x86emu_t *emu, x86emu_io_funcs_t *funcs)
-{
-}
-
 void x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func)
 {
   emu->memio = func;
@@ -248,11 +225,21 @@ void x86emu_clear_log()
 {
   M.log.ptr = M.log.buf;
   *M.log.ptr = 0;
+  M.log.full = 0;
 }
 
 
 char *x86emu_get_log()
 {
+  char **p = &M.log.ptr;
+
+  if(p && M.log.full) {
+    M.log.full = 0;
+    if(LOG_SPACE(32)) {
+      LOG_STR("*** LOG FULL ***\n");
+    }
+  }
+
   return M.log.buf;
 }
 

@@ -458,6 +458,8 @@ typedef struct {
     unsigned size;
     char *buf;
     char *ptr;
+    unsigned full:1;
+
     unsigned regs:1;
     unsigned code:1;
     unsigned data:1;

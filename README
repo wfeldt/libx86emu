@@ -1,1 +1,114 @@
 x86 emulation library
+=====================
+
+
+Global Variables
+----------------
+
+- emulator state
+
+  x86emu_t x86emu;
+
+
+Interface Functions
+-------------------
+
+- set callback function that handles memory and io accesses
+
+  void x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func);
+
+  typedef unsigned (* x86emu_memio_func_t)(u32 addr, u32 *val, unsigned type);
+
+  - type: one of
+    X86EMU_MEMIO_8
+    X86EMU_MEMIO_16
+    X86EMU_MEMIO_32
+
+    + one of
+
+    X86EMU_MEMIO_R
+    X86EMU_MEMIO_W
+    X86EMU_MEMIO_X
+    X86EMU_MEMIO_I
+    X86EMU_MEMIO_O
+
+
+- set interrupt handler
+
+  void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handler);
+
+  typedef int (* x86emu_intr_func_t)(u8 num, unsigned type);
+
+  - type:
+    INTR_TYPE_SOFT
+    INTR_TYPE_FAULT
+
+    + bitmask of
+
+    INTR_MODE_RESTART
+    INTR_MODE_ERRCODE
+
+
+If defined, the interrupt handler is called at the start of the interrupt
+handling procedure. The handler should return 1 to indicate the interrupt
+handling is complete and the emulator can skip its own interrupt processing
+or 0 to indicate the emulator should start the normmal interrupt processing.
+
+
+- execution hook
+
+  void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
+  typedef int (* x86emu_code_check_t)(void);
+
+If defined, the function is called before a new instruction is decoded and
+emulated. If logging is enambled the current cpu state has been logged. If
+the function returns a value != 0, the emulation is stopped.
+
+
+- set log buffer
+
+  void x86emu_set_log(x86emu_t *emu, char *buffer, unsigned buffer_size);
+
+If the log buffer is full, a '*** LOG FULL ***' message is logged at the
+end. It is up to the application to clear the log regularly.
+
+
+- return log buffer
+
+  char *x86emu_get_log();
+
+
+- clear log
+  void x86emu_clear_log();
+
+
+- append to the log buffer
+  void x86emu_log(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+
+
+- reset cpu state
+  void x86emu_reset(x86emu_t *emu);
+
+Does a normal cpu reset (clear registers, set cs:eip).
+
+
+- start emulation
+  void x86emu_exec(void);
+
+
+- stop emulation
+  void x86emu_stop(void);
+
+Use this function in callbacks (e.g. interrupt handler) to tell the emulator
+to stop. The result is that the emulator returns from x86emu_exec().
+
+
+- raise an interrupt
+
+  void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err);
+
+The interrupt is handled before the next instruction. For type see
+x86emu_set_intr_func() above; if INTR_MODE_ERRCODE is set, err is the error
+code pushed to the stack.
+
+

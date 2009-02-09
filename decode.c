@@ -41,7 +41,7 @@
 #include "include/x86emu_int.h"
 
 #define LOG_STR(a) memcpy(*p, a, sizeof a - 1), *p += sizeof a - 1
-#define LOG_SPACE (M.log.ptr - M.log.buf + 512 < M.log.size)
+#define LOG_SPACE(a) (M.log.ptr - M.log.buf + a < M.log.size)
 
 /*----------------------------- Implementation ----------------------------*/
 
@@ -189,16 +189,21 @@ void handle_interrupt()
   char **p = &M.log.ptr;
 
   if(M.x86.intr_type) {
-    if(M.log.intr && p && LOG_SPACE) {
-      if((M.x86.intr_type & 0xff) == INTR_TYPE_FAULT) {
-        LOG_STR("* fault ");
+    if(M.log.intr && p) {
+      if(LOG_SPACE(128)) {
+        if((M.x86.intr_type & 0xff) == INTR_TYPE_FAULT) {
+          LOG_STR("* fault ");
+        }
+        else {
+          LOG_STR("* int ");
+        }
+        decode_hex2(p, M.x86.intr_nr & 0xff);
+        LOG_STR("\n");
+        **p = 0;
       }
       else {
-        LOG_STR("* int ");
+        M.log.full = 1;
       }
-      decode_hex2(p, M.x86.intr_nr & 0xff);
-      LOG_STR("\n");
-      **p = 0;
     }
 
     generate_int(M.x86.intr_nr, M.x86.intr_type, M.x86.intr_errcode);
@@ -1546,7 +1551,11 @@ void log_code()
   u64 new_tsc;
 #endif
 
-  if(!M.log.code || !p || !LOG_SPACE) return;
+  if(!M.log.code || !p) return;
+  if(!LOG_SPACE(512)) {
+    M.log.full = 1;
+    return;
+  }
 
 #if WITH_TSC
   new_tsc = tsc();
@@ -1591,7 +1600,11 @@ void log_regs()
 {
   char **p = &M.log.ptr;
 
-  if(!M.log.regs || !p || !LOG_SPACE) return;
+  if(!M.log.regs || !p) return;
+  if(!LOG_SPACE(512)) {
+    M.log.full = 1;
+    return;
+  }
 
   LOG_STR("\neax ");
   decode_hex8(p, M.x86.R_EAX);
@@ -1650,26 +1663,31 @@ void check_data_access(sel_t *seg, u32 ofs, u32 size)
   static char seg_name[7] = "ecsdfg?";
   unsigned idx = seg - M.x86.seg;
 
-  if(M.log.acc && p && LOG_SPACE) {
-    LOG_STR("* acc ");
-    switch(size) {
-      case 1:
-        LOG_STR("byte ");
-        break;
-      case 2:
-        LOG_STR("word ");
-        break;
-      case 4:
-        LOG_STR("dword ");
-        break;
-    }
-    if(idx > 6) idx = 6;
-    *(*p)++ = seg_name[idx];
-    LOG_STR("s:");
-    decode_hex8(p, ofs);
-    LOG_STR("\n");
+  if(M.log.acc && p) {
+    if(LOG_SPACE(512)) {
+      LOG_STR("acc ");
+      switch(size) {
+        case 1:
+          LOG_STR("byte ");
+          break;
+        case 2:
+          LOG_STR("word ");
+          break;
+        case 4:
+          LOG_STR("dword ");
+          break;
+      }
+      if(idx > 6) idx = 6;
+      *(*p)++ = seg_name[idx];
+      LOG_STR("s:");
+      decode_hex8(p, ofs);
+      LOG_STR("\n");
 
-    **p = 0;
+      **p = 0;
+    }
+    else {
+      M.log.full = 1;
+    }
   }
 
   if(ofs + size - 1 > seg->limit) {
@@ -1807,25 +1825,29 @@ unsigned decode_memio(u32 addr, u32 *val, unsigned type)
 
   err = M.memio(addr, val, type);
 
-  if(!M.log.data || !p || !LOG_SPACE) return err;
+  if(!M.log.data || !p) return err;
+  if(!LOG_SPACE(1024)) {
+    M.log.full = 1;
+    return err;
+  }
 
   type &= ~0xff;
 
   switch(type) {
     case X86EMU_MEMIO_R:
-      LOG_STR("* r [");
+      LOG_STR("r [");
       break;
     case X86EMU_MEMIO_W:
-      LOG_STR("* w [");
+      LOG_STR("w [");
       break;
     case X86EMU_MEMIO_X:
-      LOG_STR("* x [");
+      LOG_STR("x [");
       break;
     case X86EMU_MEMIO_I:
-      LOG_STR("* i [");
+      LOG_STR("i [");
       break;
     case X86EMU_MEMIO_O:
-      LOG_STR("* o [");
+      LOG_STR("o [");
       break;
   }
 
