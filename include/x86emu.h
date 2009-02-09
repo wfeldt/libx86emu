@@ -60,20 +60,6 @@ extern "C" {            			/* Use "C" linkage when in C++ mode */
 #define s64 int64_t
 
 
-typedef int (* x86emu_intr_func_t)(u8 num, unsigned type);
-typedef int (* x86emu_code_check_t)(void);
-
-#define X86EMU_MEMIO_8	0
-#define X86EMU_MEMIO_16	1
-#define X86EMU_MEMIO_32	2
-#define X86EMU_MEMIO_R	(0 << 8)
-#define X86EMU_MEMIO_W	(1 << 8)
-#define X86EMU_MEMIO_X	(2 << 8)
-#define X86EMU_MEMIO_I	(3 << 8)
-#define X86EMU_MEMIO_O	(4 << 8)
-
-typedef unsigned (* x86emu_memio_func_t)(u32 addr, u32 *val, unsigned type);
-
 /*
  * General EAX, EBX, ECX, EDX type registers.  Note that for
  * portability, and speed, the issue of byte swapping is not addressed
@@ -346,6 +332,20 @@ typedef struct {
 #define INTR_RAISE_SOFT(n)	x86emu_intr_raise(n, INTR_TYPE_SOFT, 0)
 #define INTR_RAISE_GP(err)	x86emu_intr_raise(0x0d, INTR_TYPE_FAULT | INTR_MODE_RESTART | INTR_MODE_ERRCODE, err)
 #define INTR_RAISE_UD		x86emu_intr_raise(0x06, INTR_TYPE_FAULT | INTR_MODE_RESTART, 0)
+
+
+#define X86EMU_MEMIO_8	0
+#define X86EMU_MEMIO_16	1
+#define X86EMU_MEMIO_32	2
+#define X86EMU_MEMIO_R	(0 << 8)
+#define X86EMU_MEMIO_W	(1 << 8)
+#define X86EMU_MEMIO_X	(2 << 8)
+#define X86EMU_MEMIO_I	(3 << 8)
+#define X86EMU_MEMIO_O	(4 << 8)
+
+typedef unsigned (* x86emu_memio_func_t)(u32 addr, u32 *val, unsigned type);
+typedef int (* x86emu_intr_func_t)(u8 num, unsigned type);
+typedef int (* x86emu_code_check_t)(void);
 
 typedef struct {
   struct i386_general_regs gen;
