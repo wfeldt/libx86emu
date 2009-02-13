@@ -283,11 +283,11 @@ typedef struct {
 #define F_DF 0x0400             /* DIR flag    */
 #define F_OF 0x0800             /* OVERFLOW flag */
 
-#define TOGGLE_FLAG(flag)     	(M.x86.R_FLG ^= (flag))
-#define SET_FLAG(flag)        	(M.x86.R_FLG |= (flag))
-#define CLEAR_FLAG(flag)      	(M.x86.R_FLG &= ~(flag))
-#define ACCESS_FLAG(flag)     	(M.x86.R_FLG & (flag))
-#define CLEARALL_FLAG(m)    	(M.x86.R_FLG = 0)
+#define TOGGLE_FLAG(flag)     	(x86emu.x86.R_FLG ^= (flag))
+#define SET_FLAG(flag)        	(x86emu.x86.R_FLG |= (flag))
+#define CLEAR_FLAG(flag)      	(x86emu.x86.R_FLG &= ~(flag))
+#define ACCESS_FLAG(flag)     	(x86emu.x86.R_FLG & (flag))
+#define CLEARALL_FLAG(m)    	(x86emu.x86.R_FLG = 0)
 
 #define CONDITIONAL_SET_FLAG(COND,FLAG) \
   if(COND) SET_FLAG(FLAG); else CLEAR_FLAG(FLAG)
@@ -311,16 +311,16 @@ typedef struct {
 #define _MODE_CODE32            0x00000040
 #define _MODE_HALTED            0x00000080
 
-#define MODE_REPE		(M.x86.mode & _MODE_REPE)
-#define MODE_REPNE		(M.x86.mode & _MODE_REPNE)
-#define MODE_REP		(M.x86.mode & (_MODE_REPE | _MODE_REPNE))
-#define MODE_DATA32		(M.x86.mode & _MODE_DATA32)
-#define MODE_ADDR32		(M.x86.mode & _MODE_ADDR32)
-#define MODE_STACK32		(M.x86.mode & _MODE_STACK32)
-#define MODE_CODE32		(M.x86.mode & _MODE_CODE32)
-#define MODE_HALTED		(M.x86.mode & _MODE_HALTED)
+#define MODE_REPE		(x86emu.x86.mode & _MODE_REPE)
+#define MODE_REPNE		(x86emu.x86.mode & _MODE_REPNE)
+#define MODE_REP		(x86emu.x86.mode & (_MODE_REPE | _MODE_REPNE))
+#define MODE_DATA32		(x86emu.x86.mode & _MODE_DATA32)
+#define MODE_ADDR32		(x86emu.x86.mode & _MODE_ADDR32)
+#define MODE_STACK32		(x86emu.x86.mode & _MODE_STACK32)
+#define MODE_CODE32		(x86emu.x86.mode & _MODE_CODE32)
+#define MODE_HALTED		(x86emu.x86.mode & _MODE_HALTED)
 
-#define MODE_PROTECTED		(M.x86.R_CR0 & 1)
+#define MODE_PROTECTED		(x86emu.x86.R_CR0 & 1)
 #define MODE_REAL		(!MODE_PROTECTED)
 
 #define INTR_TYPE_SOFT		1
@@ -346,6 +346,7 @@ typedef struct {
 typedef unsigned (* x86emu_memio_func_t)(u32 addr, u32 *val, unsigned type);
 typedef int (* x86emu_intr_func_t)(u8 num, unsigned type);
 typedef int (* x86emu_code_check_t)(void);
+typedef void (* x86emu_flush_func_t)(char *buf, unsigned size);
 
 typedef struct {
   struct i386_general_regs gen;
@@ -363,6 +364,7 @@ typedef struct {
   } idt;
   u64 msr[0x800];		/* MSRs */
   u32 tsc;			/* TSC */
+  u32 tsc_max;			/* max. instructions */
   u64 real_tsc;
   u32 mode;
   sel_t *default_seg;
@@ -378,13 +380,46 @@ typedef struct {
   unsigned intr_errcode;
 } x86emu_regs_t;
 
+
+
+#define MEM2_R		(1 << 0)
+#define MEM2_W		(1 << 1)
+#define MEM2_X		(1 << 2)
+#define MEM2_WAS_R	(1 << 3)
+#define MEM2_WAS_W	(1 << 4)
+#define MEM2_WAS_X	(1 << 5)
+#define MEM2_INV_R	(1 << 6)
+#define MEM2_RES_1	(1 << 7)
+
+#define MEM2_DEF_ATTR	(MEM2_R + MEM2_W + MEM2_X)
+
+#define MEM2_PDIR_BITS		10
+#define MEM2_PTABLE_BITS	10
+#define MEM2_PAGE_BITS		(32 - MEM2_PDIR_BITS - MEM2_PTABLE_BITS)
+
+/* 4k pages */
+#define MEM2_PAGE_SIZE	(1 << MEM2_PAGE_BITS)
+
+typedef struct {
+  unsigned char *attr;	// malloc'ed
+  unsigned char *data;	// NOT malloc'ed
+} mem2_page_t;
+
+typedef mem2_page_t mem2_ptable_t[1 << MEM2_PTABLE_BITS];
+typedef mem2_ptable_t *mem2_pdir_t[1 << MEM2_PDIR_BITS];
+
+typedef struct {
+  mem2_pdir_t *pdir;
+  unsigned invalid_read:1;
+  unsigned invalid_write:1;
+} x86emu_mem_t;
+
+
 /****************************************************************************
 REMARKS:
 Structure maintaining the emulator machine state.
 
 MEMBERS:
-mem_base		- Base real mode memory for the emulator
-mem_size		- Size of the real mode memory block for the emulator
 private			- private data pointer
 x86			- X86 registers
 ****************************************************************************/
@@ -393,13 +428,12 @@ typedef struct {
   x86emu_code_check_t code_check;
   x86emu_memio_func_t memio;
   x86emu_intr_func_t intr_table[256];
-  unsigned char *mem_base;
-  u32 mem_size;
+  x86emu_mem_t *mem;
   struct {
+    x86emu_flush_func_t flush;
     unsigned size;
     char *buf;
     char *ptr;
-    unsigned full:1;
 
     unsigned regs:1;
     unsigned code:1;
@@ -422,16 +456,31 @@ extern x86emu_t x86emu;
 
 /*-------------------------- Function Prototypes --------------------------*/
 
+x86emu_mem_t *x86emu_mem_new(void);
+x86emu_mem_t *x86emu_mem_free(x86emu_mem_t *mem);
+
+unsigned vm_read_byte(x86emu_mem_t *vm, unsigned addr);
+unsigned vm_read_byte_noerr(x86emu_mem_t *vm, unsigned addr);
+unsigned vm_read_word(x86emu_mem_t *vm, unsigned addr);
+unsigned vm_read_dword(x86emu_mem_t *vm, unsigned addr);
+uint64_t vm_read_qword(x86emu_mem_t *vm, unsigned addr);
+unsigned vm_read_segofs16(x86emu_mem_t *vm, unsigned addr);
+void vm_write_byte(x86emu_mem_t *vm, unsigned addr, unsigned val);
+void vm_write_word(x86emu_mem_t *vm, unsigned addr, unsigned val);
+void vm_write_dword(x86emu_mem_t *vm, unsigned addr, unsigned val);
+void vm_write_qword(x86emu_mem_t *vm, unsigned addr, uint64_t val);
+
 void x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func);
 void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handler);
 void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
-void x86emu_set_log(x86emu_t *emu, char *buffer, unsigned buffer_size);
-char *x86emu_get_log();
-void x86emu_clear_log();
+void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush);
+unsigned x86emu_clear_log(x86emu_t *emu, int flush);
 void x86emu_log(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 void x86emu_reset(x86emu_t *emu);
-void x86emu_exec(void);
+void x86emu_exec(x86emu_t *emu);
 void x86emu_stop(void);
+x86emu_t *x86emu_new(void);
+x86emu_t *x86emu_done(x86emu_t *emu);
 
 void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err);
 

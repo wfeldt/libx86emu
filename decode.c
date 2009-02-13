@@ -41,7 +41,7 @@
 #include "include/x86emu_int.h"
 
 #define LOG_STR(a) memcpy(*p, a, sizeof a - 1), *p += sizeof a - 1
-#define LOG_SPACE(a) (M.log.ptr - M.log.buf + a < M.log.size)
+#define LOG_FREE (M.log.size + M.log.buf - M.log.ptr)
 
 /*----------------------------- Implementation ----------------------------*/
 
@@ -71,15 +71,18 @@ Main execution loop for the emulator. We return from here when the system
 halts, which is normally caused by a stack fault when we return from the
 original real mode call.
 ****************************************************************************/
-void x86emu_exec(void)
+void x86emu_exec(x86emu_t *emu)
 {
   u8 op1;
+  char **p = &M.log.ptr;
 
   static unsigned char is_prefix[0x100] = {
     [0x26] = 1, [0x2e] = 1, [0x36] = 1, [0x3e] = 1,
     [0x64 ... 0x67] = 1,
     [0xf0] = 1, [0xf2 ... 0xf3] = 1
   };
+
+  if(emu) x86emu = *emu;
 
 #if WITH_TSC
   M.x86.real_tsc = tsc();
@@ -108,6 +111,14 @@ void x86emu_exec(void)
     log_regs();
 
     if(M.code_check && (*M.code_check)()) break;
+
+    if(M.x86.tsc_max && M.x86.tsc >= M.x86.tsc_max) {
+      if(!*p) {
+        LOG_STR("* too many instructions\n");
+        **p = 0;
+      }
+      break;
+    }
 
     memcpy(M.x86.decode_seg, "[", 1);
 
@@ -169,6 +180,8 @@ void x86emu_exec(void)
 
     if(MODE_HALTED) break;
   }
+
+  if(emu) *emu = x86emu;
 }
 
 /****************************************************************************
@@ -187,10 +200,13 @@ Handles any pending asychronous interrupts.
 void handle_interrupt()
 {
   char **p = &M.log.ptr;
+  unsigned lf;
 
   if(M.x86.intr_type) {
-    if(M.log.intr && p) {
-      if(LOG_SPACE(128)) {
+    if(M.log.intr && *p) {
+      lf = LOG_FREE;
+      if(lf < 128) lf = x86emu_clear_log(&M, 1);
+      if(lf < 128) {
         if((M.x86.intr_type & 0xff) == INTR_TYPE_FAULT) {
           LOG_STR("* fault ");
         }
@@ -200,9 +216,6 @@ void handle_interrupt()
         decode_hex2(p, M.x86.intr_nr & 0xff);
         LOG_STR("\n");
         **p = 0;
-      }
-      else {
-        M.log.full = 1;
       }
     }
 
@@ -1545,17 +1558,16 @@ void x86emu_reset(x86emu_t *emu)
 
 void log_code()
 {
-  unsigned u;
+  unsigned u, lf;
   char **p = &M.log.ptr;
 #if WITH_TSC
   u64 new_tsc;
 #endif
 
-  if(!M.log.code || !p) return;
-  if(!LOG_SPACE(512)) {
-    M.log.full = 1;
-    return;
-  }
+  if(!M.log.code || !*p) return;
+  lf = LOG_FREE;
+  if(lf < 512) lf = x86emu_clear_log(&M, 1);
+  if(lf < 512) return;
 
 #if WITH_TSC
   new_tsc = tsc();
@@ -1599,12 +1611,12 @@ void log_code()
 void log_regs()
 {
   char **p = &M.log.ptr;
+  unsigned lf;
 
-  if(!M.log.regs || !p) return;
-  if(!LOG_SPACE(512)) {
-    M.log.full = 1;
-    return;
-  }
+  if(!M.log.regs || !*p) return;
+  lf = LOG_FREE;
+  if(lf < 512) lf = x86emu_clear_log(&M, 1);
+  if(lf < 512) return;
 
   LOG_STR("\neax ");
   decode_hex8(p, M.x86.R_EAX);
@@ -1661,10 +1673,12 @@ void check_data_access(sel_t *seg, u32 ofs, u32 size)
 {
   char **p = &M.log.ptr;
   static char seg_name[7] = "ecsdfg?";
-  unsigned idx = seg - M.x86.seg;
+  unsigned idx = seg - M.x86.seg, lf;
 
-  if(M.log.acc && p) {
-    if(LOG_SPACE(512)) {
+  if(M.log.acc && *p) {
+    lf = LOG_FREE;
+    if(lf < 512) lf = x86emu_clear_log(&M, 1);
+    if(lf >= 512) {
       LOG_STR("acc ");
       switch(size) {
         case 1:
@@ -1684,9 +1698,6 @@ void check_data_access(sel_t *seg, u32 ofs, u32 size)
       LOG_STR("\n");
 
       **p = 0;
-    }
-    else {
-      M.log.full = 1;
     }
   }
 
@@ -1820,16 +1831,15 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
 
 unsigned decode_memio(u32 addr, u32 *val, unsigned type)
 {
-  unsigned err, bits = type & 0xff;
+  unsigned err, bits = type & 0xff, lf;
   char **p = &M.log.ptr;
 
   err = M.memio(addr, val, type);
 
-  if(!M.log.data || !p) return err;
-  if(!LOG_SPACE(1024)) {
-    M.log.full = 1;
-    return err;
-  }
+  if(!M.log.data || !*p) return err;
+  lf = LOG_FREE;
+  if(lf < 1024) lf = x86emu_clear_log(&M, 1);
+  if(lf < 1024) return err;
 
   type &= ~0xff;
 
@@ -1889,4 +1899,5 @@ unsigned decode_memio(u32 addr, u32 *val, unsigned type)
 }
 
 #undef LOG_STR
+#undef LOG_FREE
 

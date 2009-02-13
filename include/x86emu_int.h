@@ -53,6 +53,7 @@
 #include "decode.h"
 #include "ops.h"
 #include "prim_ops.h"
+#include "mem.h"
 
 #if defined(__i386__) || defined (__x86_64__)
 #define WITH_TSC 1
