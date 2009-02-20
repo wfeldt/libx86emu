@@ -403,6 +403,7 @@ typedef struct {
 typedef struct {
   unsigned char *attr;	// malloc'ed
   unsigned char *data;	// NOT malloc'ed
+  unsigned char def_attr;
 } mem2_page_t;
 
 typedef mem2_page_t mem2_ptable_t[1 << MEM2_PTABLE_BITS];
@@ -412,6 +413,7 @@ typedef struct {
   mem2_pdir_t *pdir;
   unsigned invalid_read:1;
   unsigned invalid_write:1;
+  unsigned char def_attr;
 } x86emu_mem_t;
 
 
@@ -458,6 +460,7 @@ extern x86emu_t x86emu;
 
 x86emu_mem_t *x86emu_mem_new(void);
 x86emu_mem_t *x86emu_mem_free(x86emu_mem_t *mem);
+void x86emu_mem_dump(x86emu_t *emu);
 
 unsigned vm_read_byte(x86emu_mem_t *vm, unsigned addr);
 unsigned vm_read_byte_noerr(x86emu_mem_t *vm, unsigned addr);
@@ -475,7 +478,7 @@ void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handle
 void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
 void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush);
 unsigned x86emu_clear_log(x86emu_t *emu, int flush);
-void x86emu_log(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+void x86emu_log(x86emu_t *emu, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 void x86emu_reset(x86emu_t *emu);
 void x86emu_exec(x86emu_t *emu);
 void x86emu_stop(void);

@@ -43,35 +43,34 @@ unsigned x86emu_clear_log(x86emu_t *emu, int flush)
 {
   if(!emu) emu = &x86emu;
 
-  if(!flush || (flush && emu->log.flush)) {
-    if(emu->log.ptr && emu->log.ptr != emu->log.buf && flush && emu->log.flush) {
+  if(flush && emu->log.flush) {
+    if(emu->log.ptr && emu->log.ptr != emu->log.buf) {
       emu->log.flush(emu->log.buf, emu->log.ptr - emu->log.buf);
     }
-
-    if((emu->log.ptr = emu->log.buf)) *emu->log.ptr = 0;
   }
+  if((emu->log.ptr = emu->log.buf)) *emu->log.ptr = 0;
 
   return emu->log.ptr ? LOG_FREE(emu) : 0;
 }
 
 
-void x86emu_log(const char *format, ...)
+void x86emu_log(x86emu_t *emu, const char *format, ...)
 {
   va_list args;
   int size;
 
-  if(!M.log.ptr) return;
+  if(!emu || !emu->log.ptr) return;
 
-  size = M.log.size - (M.log.ptr - M.log.buf);
+  size = emu->log.size - (emu->log.ptr - emu->log.buf);
 
   va_start(args, format);
   if(size > 0) {
-    size = vsnprintf(M.log.ptr, size, format, args);
+    size = vsnprintf(emu->log.ptr, size, format, args);
     if(size > 0) {
-      M.log.ptr += size;
+      emu->log.ptr += size;
     }
     else {
-      *M.log.ptr = 0;
+      *emu->log.ptr = 0;
     }
   }
   va_end(args);  
