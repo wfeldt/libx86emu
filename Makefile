@@ -13,6 +13,8 @@ OBJS	= $(CFILES:.c=.o)
 LIB_NAME	= $(LIBX86).so.$(VERSION)
 LIB_SONAME	= $(LIBX86).so.$(MAJOR_VERSION)
 
+.PHONY: all shared install test clean
+
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
 
@@ -29,9 +31,12 @@ install: shared
 $(LIB_NAME): .depend $(OBJS)
 	$(CC) -shared -Wl,-soname,$(LIB_SONAME) $(OBJS) -o $(LIB_NAME)
 
-clean:
-	rm -f *.o *~ include/*~ *.so.* .depend
+test:
+	make -C test
 
+clean:
+	make -C test clean
+	rm -f *.o *~ include/*~ *.so.* .depend
 
 ifneq "$(MAKECMDGOALS)" "clean"
 .depend: $(CFILES)

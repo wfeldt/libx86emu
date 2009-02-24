@@ -1,0 +1,18 @@
+[init mode=pm]
+
+gdt.base=0x2000
+gdt[0]=0
+gdt[0x08]=descr(base=0x1000,limit=0x8fff,acc=0x49b)
+gdt[0x10]=descr(base=0x3000,limit=0xa0000fff,acc=0xc93)
+gdt[0x18]=descr(base=0,limit=0x77,acc=0x013)
+
+ebx=0x10
+ecx=0x18
+
+[code start=8:0 bits=32]
+
+	mov es,ebx
+	mov dword [es:0x50],0x12345678
+	mov fs,ecx
+	nop
+

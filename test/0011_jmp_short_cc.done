@@ -1,0 +1,33 @@
+;           0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
+00001000:  38  cf  70  02  b0  01  fe  c4  38  d1  71  02  b0  01  fe  c4
+00001010:  38  d1  72  02  b0  01  fe  c4  38  ca  73  02  b0  01  fe  c4
+00001020:  38  d2  73  02  b0  01  fe  c4  38  c9  74  02  b0  01  fe  c4
+00001030:  38  d1  75  02  b0  01  fe  c4  38  d1  76  02  b0  01  fe  c4
+00001040:  38  c9  76  02  b0  01  fe  c4  38  ca  77  02  b0  01  fe  c4
+00001050:  38  d1  78  02  b0  01  fe  c4  38  ca  79  02  b0  01  fe  c4
+00001060:  38  c9  7a  02  b0  01  fe  c4  38  ca  7b  02  b0  01  fe  c4
+00001070:  38  d1  7c  02  b0  01  fe  c4  38  cd  7c  02  b0  01  fe  c4
+00001080:  38  ca  7d  02  b0  01  fe  c4  38  f2  7d  02  b0  01  fe  c4
+00001090:  38  d1  7e  02  b0  01  fe  c4  38  cd  7e  02  b0  01  fe  c4
+000010a0:  38  ed  7e  02  b0  01  fe  c4  38  ca  7f  02  b0  01  fe  c4
+000010b0:  38  e9  7f  02  b0  01  fe  c4  f4
+
+cr0=00000000 cr1=00000000 cr2=00000000 cr3=00000000 cr4=00000000
+dr0=00000000 dr1=00000000 dr2=00000000 dr3=00000000 dr6=00000000 dr7=00000000
+
+gdt.base=00000000 gdt.limit=ffff
+idt.base=00000000 idt.limit=ffff
+tr=0000 tr.base=00000000 tr.limit=00000000 tr.acc=0000
+ldt=0000 ldt.base=00000000 ldt.limit=00000000 ldt.acc=0000
+
+cs=0100 cs.base=00001000 cs.limit=0000ffff cs.acc=009b
+ss=0000 ss.base=00000000 ss.limit=0000ffff ss.acc=0093
+ds=0000 ds.base=00000000 ds.limit=0000ffff ds.acc=0093
+es=0000 es.base=00000000 es.limit=0000ffff es.acc=0093
+fs=0000 fs.base=00000000 fs.limit=0000ffff fs.acc=0093
+gs=0000 gs.base=00000000 gs.limit=0000ffff gs.acc=0093
+
+eax=00001700 ebx=0000807f ecx=0000ff01 edx=0000fe02
+esi=00000000 edi=00000000 ebp=00000000 esp=00000000
+eip=000000b9 eflags=00000007 ; pf cf
+

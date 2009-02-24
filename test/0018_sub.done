@@ -1,0 +1,28 @@
+;           0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
+00001000:  28  0d  9c  28  ea  9c  2a  6d  01  9c  2a  f1  9c  29  5d  02
+00001010:  9c  29  f5  9c  2b  75  04  9c  2b  d3  9c  66  29  5d  06  9c
+00001020:  66  29  f5  9c  66  2b  75  0a  9c  66  2b  d3  9c  2c  97  9c
+00001030:  2d  57  12  9c  66  2d  52  30  49  87  9c  f4
+00020100:  b9  ab  d6  d8  fd  8e  e1  65  f3  dc  7d  b9  35  50
+0003ffe0:          83  08  82  00  93  08  16  08  16  00  93  00  87  00
+0003fff0:  02  00  97  08  83  00  93  08  83  00  87  08  92  00  83  00
+
+cr0=00000000 cr1=00000000 cr2=00000000 cr3=00000000 cr4=00000000
+dr0=00000000 dr1=00000000 dr2=00000000 dr3=00000000 dr6=00000000 dr7=00000000
+
+gdt.base=00000000 gdt.limit=ffff
+idt.base=00000000 idt.limit=ffff
+tr=0000 tr.base=00000000 tr.limit=00000000 tr.acc=0000
+ldt=0000 ldt.base=00000000 ldt.limit=00000000 ldt.acc=0000
+
+cs=0100 cs.base=00001000 cs.limit=0000ffff cs.acc=009b
+ss=3000 ss.base=00030000 ss.limit=0000ffff ss.acc=0093
+ds=2000 ds.base=00020000 ds.limit=0000ffff ds.acc=0093
+es=0000 es.base=00000000 es.limit=0000ffff es.acc=0093
+fs=0000 fs.base=00000000 fs.limit=0000ffff fs.acc=0093
+gs=0000 gs.base=00000000 gs.limit=0000ffff gs.acc=0093
+
+eax=821666e0 ebx=7cd996fb ecx=62738162 edx=069b96b8
+esi=147b286a edi=00000100 ebp=b5d71b0d esp=0000ffe2
+eip=0000003c eflags=00000883 ; of sf cf
+

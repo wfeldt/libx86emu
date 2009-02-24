@@ -1,0 +1,21 @@
+[init]
+
+0x1700: 1 2
+
+ecx=0x6789
+edx=0x5555
+esp=0x9000
+
+[code start=0x100:0x0]
+
+	mov es,cx
+	mov fs,edx
+	mov gs,[cs:0x700]
+	push gs
+	mov [0x1704],gs
+
+	jmp 0xc0:foo+0x400
+	mov cx,0x1111
+foo:
+	mov bx,0x9999
+

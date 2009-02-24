@@ -1,0 +1,26 @@
+;           0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
+00001000:  69  d9  9a  52  9c  69  d6  79  bd  9c  69  05  03  09  9c  66
+00001010:  69  ee  61  0a  b2  79  9c  66  69  f3  1c  2d  fa  d6  9c  66
+00001020:  69  4d  02  a6  cf  af  94  9c  f4
+00020100:  f0  fc  99  1d  d4  7d
+0003fff0:                  03  08  03  08  03  08  03  08  03  08  03  08
+
+cr0=00000000 cr1=00000000 cr2=00000000 cr3=00000000 cr4=00000000
+dr0=00000000 dr1=00000000 dr2=00000000 dr3=00000000 dr6=00000000 dr7=00000000
+
+gdt.base=00000000 gdt.limit=ffff
+idt.base=00000000 idt.limit=ffff
+tr=0000 tr.base=00000000 tr.limit=00000000 tr.acc=0000
+ldt=0000 ldt.base=00000000 ldt.limit=00000000 ldt.acc=0000
+
+cs=0100 cs.base=00001000 cs.limit=0000ffff cs.acc=009b
+ss=3000 ss.base=00030000 ss.limit=0000ffff ss.acc=0093
+ds=2000 ds.base=00020000 ds.limit=0000ffff ds.acc=0093
+es=0000 es.base=00000000 es.limit=0000ffff es.acc=0093
+fs=0000 fs.base=00000000 fs.limit=0000ffff fs.acc=0093
+gs=0000 gs.base=00000000 gs.limit=0000ffff gs.acc=0093
+
+eax=555766d0 ebx=f82012b2 ecx=cb10e836 edx=71a3da1f
+esi=d49f5578 edi=00000100 ebp=e37c6cf7 esp=0000fff4
+eip=00000029 eflags=00000803 ; of cf
+

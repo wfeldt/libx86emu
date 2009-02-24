@@ -460,7 +460,7 @@ extern x86emu_t x86emu;
 
 x86emu_mem_t *x86emu_mem_new(void);
 x86emu_mem_t *x86emu_mem_free(x86emu_mem_t *mem);
-void x86emu_mem_dump(x86emu_t *emu);
+void x86emu_mem_dump(x86emu_t *emu, int flags);
 
 unsigned vm_read_byte(x86emu_mem_t *vm, unsigned addr);
 unsigned vm_read_byte_noerr(x86emu_mem_t *vm, unsigned addr);

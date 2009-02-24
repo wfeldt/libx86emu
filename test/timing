@@ -1,0 +1,11 @@
+#! /usr/bin/perl
+
+while(<>) {
+  if(/^\S+\s+\+(\S+)\s+\S+:\S+\s+/) {
+    $t = hex $1;
+    $total += $t;
+    $count++;
+  }
+}
+
+printf "%.2f\n", $total/$count if $count;

@@ -249,13 +249,14 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
 
 
   for(u = 0; u < LINE_LEN; u++) {
+    *str_data++ = (attr[u] & MEM2_INV_R) ? '*' : ' ';
     if((attr[u] & MEM2_WAS_W)) {
       ok = 1;
       decode_hex2(&str_data, data[u]);
 
       c = (attr[u] & MEM2_R) ? (attr[u] & MEM2_WAS_R) ? 'R' : 'r' : ' ';
       *str_attr++ = c;
-      c = (attr[u] & MEM2_W) ? (attr[u] & MEM2_WAS_W) ? 'W' : 'w' : ' ';
+      c = (attr[u] & MEM2_W) ? (attr[u] & MEM2_WAS_W) ? 'w' : 'w' : ' ';
       *str_attr++ = c;
       c = (attr[u] & MEM2_X) ? (attr[u] & MEM2_WAS_X) ? 'X' : 'x' : ' ';
       *str_attr++ = c;
@@ -268,7 +269,7 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
       *str_attr++ = ' ';
       *str_attr++ = ' ';
     }
-    *str_data++ = (attr[u] & MEM2_INV_R) ? '*' : ' ';
+    // *str_data++ = (attr[u] & MEM2_INV_R) ? '*' : ' ';
     *str_data++ = ' ';
 
     *str_attr++ = ' ';
@@ -280,10 +281,13 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
   }
 
   *str_data = *str_attr = 0;
+
+  while(str_data > sd && str_data[-1] == ' ') *--str_data = 0;
+  while(str_attr > sa && str_attr[-1] == ' ') *--str_attr = 0;
 }
 
 
-void x86emu_mem_dump(x86emu_t *emu)
+void x86emu_mem_dump(x86emu_t *emu, int flags)
 {
   x86emu_mem_t *mem = emu->mem;
 
@@ -292,19 +296,14 @@ void x86emu_mem_dump(x86emu_t *emu)
   mem2_page_t page;
   unsigned pdir_idx, u1, u2, addr;
   char str_data[LINE_LEN * 8], str_attr[LINE_LEN * 8];
-  char last_data[LINE_LEN * 8], last_attr[LINE_LEN * 8];
   unsigned char def_data[LINE_LEN], def_attr[LINE_LEN];
-  int repeat;
 
   if(!mem || !mem->pdir) return;
 
-  x86emu_log(emu, "; - - - memory dump - - -\n");
-  x86emu_log(emu, ";       ");
+  // x86emu_log(emu, "; - - - memory dump - - -\n");
+  x86emu_log(emu, ";        ");
   for(u1 = 0; u1 < 16; u1++) x86emu_log(emu, "%4x", u1);
   x86emu_log(emu, "\n");
-
-  *last_data = *last_attr = 0;
-  repeat = 0;
 
   pdir = mem->pdir;
   for(pdir_idx = 0; pdir_idx < (1 << MEM2_PDIR_BITS); pdir_idx++) {
@@ -322,28 +321,17 @@ void x86emu_mem_dump(x86emu_t *emu)
             memset(def_attr, page.def_attr, LINE_LEN);
           }
           dump_data(def_data, def_attr, str_data, str_attr);
-          if(!strcmp(str_data, last_data) && !strcmp(str_attr, last_attr)) {
-            if(!repeat && *str_data) {
-              x86emu_log(emu, "*\n");
-              repeat = 1;
-            }
-          }
-          else {
+          if(*str_data) {
             addr = (((pdir_idx << MEM2_PTABLE_BITS) + u1) << MEM2_PAGE_BITS) + u2;
             x86emu_log(emu, "%08x: %s\n", addr, str_data);
-            x86emu_log(emu, "          %s\n", str_attr);
+            if((flags & 1)) x86emu_log(emu, "          %s\n", str_attr);
           }
-          strcpy(last_data, str_data);
-          strcpy(last_attr, str_attr);
         }
       }
     }
-
-
   }
 
-  x86emu_log(emu, "; - - - memory dump end - - -\n");
-
+  x86emu_log(emu, "\n");
 }
 
 

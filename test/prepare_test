@@ -1,0 +1,489 @@
+#! /usr/bin/perl
+
+use Getopt::Long;
+
+sub prepare;
+sub add_interrupt_table;
+sub print_listing;
+sub print_mem;
+sub print_regs;
+sub nr;
+sub seg_ofs;
+sub decode_descr;
+sub new_tmp_file;
+sub cleanup;
+
+END { cleanup }     
+$SIG{INT} = \&cleanup;
+$SIG{TERM} = \&cleanup;
+
+$opt_save_temp = 0;
+
+GetOptions(
+  'save-temp' => \$opt_save_temp
+);
+
+
+for $name (@ARGV) {
+  prepare $name;
+}
+
+sub prepare
+{
+  $file_name = shift;
+  my ($section_name, $section, $line, $addr, $v, @i, $i);
+  my ($asm, $bin, $start_cs, $start_eip, $bits, $listing);
+
+  if(!open(F, $file_name)) {
+    print STDERR "$file_name: $!\n";
+    return;
+  }
+
+  while(1) {
+    $_ = <F>;
+    chomp;
+    next if /^\s*;/;
+    $line = $_;
+    if(/^\s*\[(\S*)(\s+(.*?))?\]/ || !defined($_)) {
+      if(defined $_) {
+        $section_name = $1;
+        map { $section->{$section_name}{args}{$1} = $2 if /(.*)=(.*)/ } split ' ', $3;
+
+        srand $section->{$section_name}{args}{srand} if exists $section->{$section_name}{args}{srand};
+
+        if($section_name eq 'init') {
+          if(
+            $section->{$section_name}{args}{mode} eq 'pm' ||
+            $section->{$section_name}{args}{mode} eq 'protected'
+          ) {
+            $section->{$section_name}{args}{mode} = 'protected';
+            $section->{$section_name}{regs}{cr0} = 1; 
+          }
+          else {
+            $section->{$section_name}{args}{mode} = 'real'; 
+          }
+        }
+      }
+
+      if($asm) {
+        print A "\n\thlt\n";
+        close A;
+        $bin = new_tmp_file;
+        $lst = new_tmp_file;
+        $i = system "nasm -f bin -O99 -o $bin -l $lst $asm";
+        die "nasm failed\n" if $i;
+        @{$section->{init}{listing}} = `ndisasm -o $start_eip -b $bits $bin`;
+        # map { s/^(0000|    )// } @{$section->{init}{listing}} if $bits == 16;
+        map { s/^(.)/($1 eq ' ' ? "   " : "cs:") . $1/e } @{$section->{init}{listing}};
+        add_interrupt_table $section, $lst;
+        $i = `cat $bin`;
+        if($section->{init}{regs}{cr0} & 1) {
+          $addr = decode_descr($section, $start_cs)->{base};
+        }
+        else {
+          $addr = $start_cs << 4;
+        }
+        $addr += $start_eip;
+        for $v (unpack "C*", $i) {
+          $section->{init}{mem}{$addr++} = $v;
+        }
+      }
+
+      last unless defined $_;
+
+      next;
+    }
+
+    if($section_name eq 'init') {
+      if(s/^\s*(\d\S+?)\s*-\s*(\d\S+?)\s*:\s*//) {
+        undef $v;
+        @i = split ' ';
+        for ($addr = nr $1; $addr <= nr $2; $addr++) {
+          $v = $i[0];
+          shift @i if @i > 1;
+          $section->{$section_name}{mem}{$addr} = nr($v) & 0xff;
+        }
+        # print "$1 $2 >$_<\n";
+      }
+      elsif(s/^\s*(\d\S*?)\s*:\s*//) {
+        $addr = nr $1;
+        map { $section->{$section_name}{mem}{$addr++} = nr($_) & 0xff } split ' ';
+        # print "$1 >$_<\n";
+      }
+      else {
+        map {
+          if(/(.+?)=(.*)/) {
+            $r = $1;
+            $v = $2;
+            if($r =~ /^gdt\[(\S+)\]$/) {
+              die "$file_name:$.: no gdb base set\n" unless exists $section->{$section_name}{regs}{'gdt.base'};
+              my $gdt_base = $section->{$section_name}{regs}{'gdt.base'};
+              $idx = nr $1;
+              die "$file_name:$.: $idx: invalid gdt index\n" if $idx & 7;
+              $gdt_base += $idx;
+              if($v eq '0') {
+                for ($i = 0; $i < 8; $i++) {
+                  $section->{$section_name}{mem}{$gdt_base + $i} = 0;
+                }
+              }
+              else {
+                die "$file_name:$.: invalid data: \"$_\"\n$line\n" unless $v =~ /^descr\((\S+)\)/;
+                $v = $1;
+                my $base = 0;
+                my $limit = 0;
+                my $acc = 0;
+                for $vv (split /,/, $v) {
+                  if($vv =~ /(.+?)=(.*)/) {
+                    $base = nr $2 if $1 eq 'base';
+                    $limit = nr $2 if $1 eq 'limit';
+                    $acc = nr $2 if $1 eq 'acc';
+                  }
+                }
+                die "$file_name:$.: invalid access rights\n" if ($acc & ~0xcff);
+                if(($acc & 0x800)) {
+                  die "$file_name:$.: invalid limit\n" unless ($limit & 0xfff) == 0xfff;
+                  $limit >>= 12;
+                  $limit &= 0xfffff;
+                }
+                die "$file_name:$.: invalid limit\n" unless $limit <= 0xfffff;
+                $section->{$section_name}{mem}{$gdt_base} = $limit & 0xff;
+                $section->{$section_name}{mem}{$gdt_base + 1} = ($limit >> 8) & 0xff;
+                $section->{$section_name}{mem}{$gdt_base + 2} = $base & 0xff;
+                $section->{$section_name}{mem}{$gdt_base + 3} = ($base >> 8) & 0xff;
+                $section->{$section_name}{mem}{$gdt_base + 4} = ($base >> 16) & 0xff;
+                $section->{$section_name}{mem}{$gdt_base + 5} = $acc & 0xff;
+                $section->{$section_name}{mem}{$gdt_base + 6} = (($acc >> 4) & 0xf0) + (($limit >> 16) & 0xf);
+                $section->{$section_name}{mem}{$gdt_base + 7} = ($base >> 24) & 0xff;
+              }
+            }
+            else {
+              $section->{$section_name}{regs}{$r} = nr $v;
+            }
+          }
+          else {
+            die "$file_name:$.: invalid data: \"$_\"\n$line\n";
+          }
+        } split ' ';
+      }
+    }
+    elsif($section_name eq 'code') {
+      if(! $asm) {
+        ($start_cs, $start_eip) = seg_ofs $section->{$section_name}{args}{start};
+        $bits = nr $section->{$section_name}{args}{bits};
+        $bits = 16 if $bits != 16 && $bits != 32;
+        $section->{init}{regs}{bits} = $bits;
+        $section->{init}{args}{bits} = $bits;
+        $section->{init}{regs}{eip} = $start_eip;
+        $section->{init}{regs}{cs} = $start_cs;
+        $asm = new_tmp_file;
+        open A, ">$asm";
+        print A "\tsection .text\n\n";
+        print A "\tbits $bits\n\n";
+        print A "\torg $start_eip\n\n";
+      }
+      print A "$_\n";
+    }
+  }
+  close F;
+
+  ($i = $file_name) =~ s/\.tst$/.init/;
+  open W, ">$i";
+
+  $section_name = 'init';
+
+  if(%{$section->{$section_name}{args}}) {
+    print W "; " .
+      join(', ', map "$_=$section->{$section_name}{args}{$_}", sort keys %{$section->{$section_name}{args}}) .
+      "\n";
+    print W "\n";
+  }
+
+  if($section->{$section_name}{listing}) {
+    print_listing $section->{$section_name}{listing};
+    print W "\n";
+  }
+
+  if($section->{$section_name}{mem}) {
+    print_mem $section->{$section_name}{mem};
+    print W "\n";
+  }
+
+  if($section->{$section_name}{regs}) {
+    print_regs $section, $section->{$section_name}{regs};
+    print W "\n";
+  }
+
+  close W;
+}
+
+
+sub add_interrupt_table
+{
+  local $_;
+  my (%int, $i, $eip, $org, $idt_base, $cs, $addr);
+  my $section = shift;
+  my $file = shift;
+
+  open L, $file;
+
+  while(<L>) {
+    if(/^\s*(\S+)\s+interrupt_([0-9a-f]{2})(:|\s)/) { 
+      $i = $2;
+      $_ = <L>;
+      $int{$i} = $2 if(/^\s*(\S+)\s+(\S+)/);  
+    }
+    elsif(/^\s*(\S+)\s+(\S+)\s+\S+\s+interrupt_([0-9a-f]{2})(:|\s)/) {
+      $int{$3} = $2;
+    }
+  }
+
+  close L;
+
+  $idt_base = $section->{init}{regs}{'idt.base'};
+  $cs = $section->{init}{regs}{cs};
+  $org = $section->{init}{regs}{eip};
+ 
+  for (sort keys %int) {
+    $i = nr "0x$_";
+    $eip = $org + nr "0x$int{$_}";
+
+    if($section->{init}{regs}{cr0} & 1) {
+      $addr = 8*$i + $idt_base;
+
+    }
+    else {
+      $addr = 4*$i + $idt_base;
+
+      $section->{init}{mem}{$addr} = $eip & 0xff;
+      $section->{init}{mem}{$addr+1} = ($eip >> 8) & 0xff;
+      $section->{init}{mem}{$addr+2} = $cs & 0xff;
+      $section->{init}{mem}{$addr+3} = ($cs >> 8) & 0xff;
+    }
+  }
+}
+
+
+sub print_listing
+{
+  my $l = shift;
+  local $_;
+
+  for (@$l) {
+    print W "; \L$1\E$2\n" if /^(\S+\s+\S+|\s+\-\S+)(.*)/;
+  }
+}
+
+
+sub print_mem
+{
+  my $mem = shift;
+  my ($base_addr, $last_addr, $i);
+  local $_;
+
+  print W ";        ";
+  printf W "   %x", $_ for (0..15);
+  print W "\n";
+
+  for (sort { $a <=> $b } keys %{$mem}) {
+    $i = $_ & ~0xf;
+    if($i != $base_addr || !defined $base_addr) {
+      print W "\n" if defined $base_addr;
+      $base_addr = $i;
+      $last_addr = $base_addr - 1;
+      printf W "%08x:", $base_addr;
+    }
+
+    $i = $_ - $last_addr - 1;
+    print W "    " x $i;
+    printf W "  %02x", $mem->{$_};
+
+    $last_addr = $_;
+  }
+  print W "\n" if defined $last_addr;
+
+}
+
+
+sub print_regs
+{
+  my $section = shift;
+  my $regs = shift;
+  my ($i, $rl, $w, $v);
+  local $_;
+  my @reg_list = (
+    'cr0 cr1 cr2 cr3 cr4',
+    'dr0 dr1 dr2 dr3 dr6 dr7',
+    '',
+    'gdt.base gdt.limit',
+    'idt.base idt.limit',
+    'tr ldt',
+    '',
+    'cs ss ds es fs gs',
+    '',
+    'eax ebx ecx edx',
+    'esi edi ebp esp',
+    'eip eflags'
+  );
+
+  $regs->{'gdt.limit'} = 0xffff unless defined $regs->{'gdt.limit'};
+  $regs->{'idt.limit'} = 0xffff unless defined $regs->{'idt.limit'};
+  $regs->{'eflags'} = 2 unless defined $regs->{'eflags'};
+
+  for (qw (cs ss ds es fs gs)) {
+    if($regs->{cr0} & 1) {
+      $x = decode_descr $section, $regs->{$_};
+      $regs->{"$_.base"} = $x->{base} unless defined $regs->{"$_.base"};
+      $regs->{"$_.limit"} = $x->{limit} unless defined $regs->{"$_.limit"};
+      $regs->{"$_.acc"} = $x->{acc} unless defined $regs->{"$_.acc"};
+
+      if(
+        $regs->{"$_.base"} != $x->{base} ||
+        $regs->{"$_.limit"} != $x->{limit} ||
+        $regs->{"$_.acc"} != $x->{acc}
+      ) {
+        die "$file_name: $_: selector cache does not match gdt\n";
+      }
+
+    }
+    else {
+      $regs->{"$_.base"} = $regs->{$_} << 4 unless defined $regs->{"$_.base"};
+      $regs->{"$_.limit"} = 0xffff unless defined $regs->{"$_.limit"};
+      if(!defined $regs->{"$_.acc"}) {
+        $regs->{"$_.acc"} = $_ eq 'cs' ? 0x9b : 0x93;
+        $regs->{"$_.acc"} |= 0x400 if ($_ eq 'cs' || $_ eq 'ss') && $regs->{bits} == 32;
+        if($regs->{"$_.limit"} & ~0xfffff) {
+          $regs->{"$_.limit"} |= 0xfff;
+          $regs->{"$_.acc"} |= 0x800;
+        }
+      }
+    }
+  }
+
+  for $rl (@reg_list) {
+    $i = 0;
+    if($rl eq '') {
+      print W "\n";
+      next;
+    }
+    for (split ' ', $rl) {
+      $v = $regs->{$_} + 0;
+      if(/^(cs|ds|es|fs|gs|ss|tr|ldt)$/) {
+        print W "\n" if $i;
+        printf W "%s=%04x %s.base=%08x %s.limit=%08x %s.acc=%04x",
+          $_, $regs->{$_},
+          $_, $regs->{"$_.base"},
+          $_, $regs->{"$_.limit"},
+          $_, $regs->{"$_.acc"};
+      }
+      else {
+        $w = /^(gdt\.limit|idt\.limit)$/ ? 4 : 8;
+        printf W "%s%s=%0${w}x", $i ? ' ' : '', $_, $regs->{$_};
+        if($_ eq 'eflags') {
+          my $f = $regs->{$_};
+          my $d;
+
+          $d .= " of" if $f & 0x800;
+          $d .= " df" if $f & 0x400;
+          $d .= " if" if $f & 0x200;
+          $d .= " sf" if $f & 0x080;
+          $d .= " zf" if $f & 0x040;
+          $d .= " af" if $f & 0x010;
+          $d .= " pf" if $f & 0x004;
+          $d .= " cf" if $f & 0x001;
+
+          printf W " ;$d" if $d;
+        }
+      }
+      $i++;
+    }
+    print W "\n" if $i;
+  }
+}
+
+
+sub nr
+{
+  my $n = shift;
+  my $foo;
+
+  if($n ne 'rand') {
+    $n = oct $n if $n =~ /^0/;
+    return $n + 0;
+  }
+
+  $n = ((int rand 0x1000000) & 0xffff00) << 8;
+  $n += int((rand 0x1000000) / 11);
+
+  return $n;
+}
+
+
+sub seg_ofs
+{
+  my @n = split /:/, $_[0];
+
+  $n[0] = nr $n[0];
+  $n[1] = nr $n[1] if @n > 1;
+
+  unshift @n, undef if @n <= 1;
+
+  return @n;
+}
+
+
+sub decode_descr
+{
+  my ($i, $gdt, $base, $limit, $acc);
+  my $section = shift;
+  my $sel = shift;
+
+  die "$file_name: no gdt\n" unless exists $section->{init}{regs}{'gdt.base'};
+  $gdt = $section->{init}{regs}{'gdt.base'} + ($sel & ~7);
+
+  die "$file_name: selector $sel not in gdt\n" if $sel & 4;
+
+  for ($i = 0; $i < 8; $i++) {
+    die "$file_name: selector $sel not found\n" unless defined $section->{init}{mem}{$gdt + $i};
+  }
+
+  $base =
+    $section->{init}{mem}{$gdt + 2} +
+    ($section->{init}{mem}{$gdt + 3} << 8) +
+    ($section->{init}{mem}{$gdt + 4} << 16) +
+    ($section->{init}{mem}{$gdt + 7} << 24);
+
+  $limit =
+    $section->{init}{mem}{$gdt} +
+    ($section->{init}{mem}{$gdt + 1} << 8) +
+    (($section->{init}{mem}{$gdt + 6} & 0xf) << 16);
+
+  $acc =
+    $section->{init}{mem}{$gdt + 5} +
+    (($section->{init}{mem}{$gdt + 6} & 0xf0) << 4);
+
+  $limit = ($limit << 12) + 0xfff if $acc & 0x800;
+
+  return { base => $base, limit => $limit, acc => $acc };
+}
+
+
+sub new_tmp_file
+{
+  local $_;
+
+  chomp ($_ = `mktemp /tmp/x86test.XXXXXXXXXX`);
+  die "error: mktemp failed\n" if $?;
+
+  push @tmp_files, $_;
+
+  return $_;
+}
+
+
+sub cleanup
+{
+  unlink @tmp_files unless $opt_save_temp;
+  undef @tmp_files;
+}
+
+
