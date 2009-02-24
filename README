@@ -48,7 +48,6 @@ Interface Functions
     INTR_MODE_RESTART
     INTR_MODE_ERRCODE
 
-
 If defined, the interrupt handler is called at the start of the interrupt
 handling procedure. The handler should return 1 to indicate the interrupt
 handling is complete and the emulator can skip its own interrupt processing
@@ -67,23 +66,20 @@ the function returns a value != 0, the emulation is stopped.
 
 - set log buffer
 
-  void x86emu_set_log(x86emu_t *emu, char *buffer, unsigned buffer_size);
+  void x86emu_set_log(x86emu_t *emu, char *buffer, unsigned buffer_size, x86emu_flush_func_t flush);
+  typedef void (* x86emu_flush_func_t)(char *buf, unsigned size);
 
-If the log buffer is full, a '*** LOG FULL ***' message is logged at the
-end. It is up to the application to clear the log regularly.
-
-
-- return log buffer
-
-  char *x86emu_get_log();
+If the log buffer is full, flush() is called (if not NULL).
 
 
 - clear log
-  void x86emu_clear_log();
+  void x86emu_clear_log(x86emu_t *emu, int flush);
+
+Clear log buffer. If flush != 0, write current log via flush() function (see x86emu_set_log()).
 
 
-- append to the log buffer
-  void x86emu_log(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+- write to log
+  void x86emu_log(x86emu_t *emu, const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 
 
 - reset cpu state
@@ -93,7 +89,9 @@ Does a normal cpu reset (clear registers, set cs:eip).
 
 
 - start emulation
-  void x86emu_exec(void);
+  void x86emu_exec(x86emu_t *emu);
+
+Note: copies emu to the global variable x86emu during execution!
 
 
 - stop emulation
@@ -101,6 +99,18 @@ Does a normal cpu reset (clear registers, set cs:eip).
 
 Use this function in callbacks (e.g. interrupt handler) to tell the emulator
 to stop. The result is that the emulator returns from x86emu_exec().
+
+
+- create new emulation object
+  x86emu_t *x86emu_new(void);
+
+Free memory later with x86emu_done().
+
+
+- delete emulation object
+  x86emu_t *x86emu_done(x86emu_t *emu);
+
+Returns NULL.
 
 
 - raise an interrupt
@@ -111,4 +121,14 @@ The interrupt is handled before the next instruction. For type see
 x86emu_set_intr_func() above; if INTR_MODE_ERRCODE is set, err is the error
 code pushed to the stack.
 
+
+- dump emulator state
+  void x86emu_dump(x86emu_t *emu, int flags);
+
+  - flags:
+  X86EMU_DUMP_MEM
+  X86EMU_DUMP_ATTR
+  X86EMU_DUMP_REGS
+
+Writes emulator state to log.
 

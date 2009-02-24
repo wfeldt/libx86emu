@@ -381,6 +381,9 @@ typedef struct {
 } x86emu_regs_t;
 
 
+#define X86EMU_DUMP_MEM		(1 << 0)
+#define X86EMU_DUMP_ATTR	(1 << 1)
+#define X86EMU_DUMP_REGS	(1 << 2)
 
 #define MEM2_R		(1 << 0)
 #define MEM2_W		(1 << 1)
@@ -460,7 +463,6 @@ extern x86emu_t x86emu;
 
 x86emu_mem_t *x86emu_mem_new(void);
 x86emu_mem_t *x86emu_mem_free(x86emu_mem_t *mem);
-void x86emu_mem_dump(x86emu_t *emu, int flags);
 
 unsigned vm_read_byte(x86emu_mem_t *vm, unsigned addr);
 unsigned vm_read_byte_noerr(x86emu_mem_t *vm, unsigned addr);
@@ -484,6 +486,7 @@ void x86emu_exec(x86emu_t *emu);
 void x86emu_stop(void);
 x86emu_t *x86emu_new(void);
 x86emu_t *x86emu_done(x86emu_t *emu);
+void x86emu_dump(x86emu_t *emu, int flags);
 
 void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err);
 

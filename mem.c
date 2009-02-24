@@ -1,5 +1,6 @@
 #include "include/x86emu_int.h"
 
+
 x86emu_mem_t *x86emu_mem_new(void)
 {
   x86emu_mem_t *mem;
@@ -237,101 +238,4 @@ unsigned vm_memio(u32 addr, u32 *val, unsigned type)
 
   return err;
 }
-
-#define LINE_LEN 16
-
-static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, char *str_attr)
-{
-  unsigned u;
-  char c;
-  int ok = 0;
-  char *sd = str_data, *sa = str_attr;
-
-
-  for(u = 0; u < LINE_LEN; u++) {
-    *str_data++ = (attr[u] & MEM2_INV_R) ? '*' : ' ';
-    if((attr[u] & MEM2_WAS_W)) {
-      ok = 1;
-      decode_hex2(&str_data, data[u]);
-
-      c = (attr[u] & MEM2_R) ? (attr[u] & MEM2_WAS_R) ? 'R' : 'r' : ' ';
-      *str_attr++ = c;
-      c = (attr[u] & MEM2_W) ? (attr[u] & MEM2_WAS_W) ? 'w' : 'w' : ' ';
-      *str_attr++ = c;
-      c = (attr[u] & MEM2_X) ? (attr[u] & MEM2_WAS_X) ? 'X' : 'x' : ' ';
-      *str_attr++ = c;
-    }
-    else {
-      *str_data++ = ' ';
-      *str_data++ = ' ';
-
-      *str_attr++ = ' ';
-      *str_attr++ = ' ';
-      *str_attr++ = ' ';
-    }
-    // *str_data++ = (attr[u] & MEM2_INV_R) ? '*' : ' ';
-    *str_data++ = ' ';
-
-    *str_attr++ = ' ';
-  }
-
-  if(!ok) {
-    str_data = sd;
-    str_attr = sa;
-  }
-
-  *str_data = *str_attr = 0;
-
-  while(str_data > sd && str_data[-1] == ' ') *--str_data = 0;
-  while(str_attr > sa && str_attr[-1] == ' ') *--str_attr = 0;
-}
-
-
-void x86emu_mem_dump(x86emu_t *emu, int flags)
-{
-  x86emu_mem_t *mem = emu->mem;
-
-  mem2_pdir_t *pdir;
-  mem2_ptable_t *ptable;
-  mem2_page_t page;
-  unsigned pdir_idx, u1, u2, addr;
-  char str_data[LINE_LEN * 8], str_attr[LINE_LEN * 8];
-  unsigned char def_data[LINE_LEN], def_attr[LINE_LEN];
-
-  if(!mem || !mem->pdir) return;
-
-  // x86emu_log(emu, "; - - - memory dump - - -\n");
-  x86emu_log(emu, ";        ");
-  for(u1 = 0; u1 < 16; u1++) x86emu_log(emu, "%4x", u1);
-  x86emu_log(emu, "\n");
-
-  pdir = mem->pdir;
-  for(pdir_idx = 0; pdir_idx < (1 << MEM2_PDIR_BITS); pdir_idx++) {
-    ptable = (*pdir)[pdir_idx];
-    if(!ptable) continue;
-    for(u1 = 0; u1 < (1 << MEM2_PTABLE_BITS); u1++) {
-      page = (*ptable)[u1];
-      if(page.data) {
-        for(u2 = 0; u2 < (1 << MEM2_PAGE_BITS); u2 += LINE_LEN) {
-          memcpy(def_data, page.data + u2, LINE_LEN);
-          if(page.attr) {
-            memcpy(def_attr, page.attr + u2, LINE_LEN);
-          }
-          else {
-            memset(def_attr, page.def_attr, LINE_LEN);
-          }
-          dump_data(def_data, def_attr, str_data, str_attr);
-          if(*str_data) {
-            addr = (((pdir_idx << MEM2_PTABLE_BITS) + u1) << MEM2_PAGE_BITS) + u2;
-            x86emu_log(emu, "%08x: %s\n", addr, str_data);
-            if((flags & 1)) x86emu_log(emu, "          %s\n", str_attr);
-          }
-        }
-      }
-    }
-  }
-
-  x86emu_log(emu, "\n");
-}
-
 

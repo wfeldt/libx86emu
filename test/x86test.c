@@ -19,7 +19,6 @@ void lprintf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 void flush_log(char *buf, unsigned size);
 
 void help(void);
-int check_ip(void);
 int do_int(u8 num, unsigned type);
 char *skip_spaces(char *s);
 vm_t *vm_new(void);
@@ -161,14 +160,6 @@ void help()
 }
 
 
-int check_ip()
-{
-  int abort = 0;
-
-  return abort;
-}
-
-
 int do_int(u8 num, unsigned type)
 {
   if((type & 0xff) == INTR_TYPE_FAULT) {
@@ -200,8 +191,6 @@ vm_t *vm_new()
   x86emu_set_log(vm->emu, 1000000, flush_log);
 
   for(u = 0; u < 0x100; u++) x86emu_set_intr_func(vm->emu, u, do_int);
-
-  x86emu_set_code_check(vm->emu, check_ip);
 
   return vm;
 }
@@ -376,94 +365,15 @@ int vm_run(vm_t *vm)
 void vm_dump(vm_t *vm, char *file)
 {
   FILE *old_log;
-  char fbuf[64];
 
   old_log = log_file;
 
-  if(file) {
-    FILE *f;
-    if(!(f = fopen(file, "w"))) return;
-    log_file = f;
+  if(file) log_file = fopen(file, "w");
+
+  if(log_file) {
+    x86emu_dump(vm->emu, X86EMU_DUMP_MEM | X86EMU_DUMP_REGS);
+    x86emu_clear_log(vm->emu, 1);
   }
-
-  x86emu_mem_dump(vm->emu, 0);
-  x86emu_clear_log(vm->emu, 1);
-
-  lprintf("cr0=%08x cr1=%08x cr2=%08x cr3=%08x cr4=%08x\n",
-    vm->emu->x86.R_CR0, vm->emu->x86.R_CR1, vm->emu->x86.R_CR2, vm->emu->x86.R_CR3, vm->emu->x86.R_CR4
-  );
-
-  lprintf("dr0=%08x dr1=%08x dr2=%08x dr3=%08x dr6=%08x dr7=%08x\n\n",
-    vm->emu->x86.R_DR0, vm->emu->x86.R_DR1, vm->emu->x86.R_DR2, vm->emu->x86.R_DR3,
-    vm->emu->x86.R_DR6, vm->emu->x86.R_DR7
-  );
-
-  lprintf(
-    "gdt.base=%08x gdt.limit=%04x\n",
-    vm->emu->x86.R_GDT_BASE, vm->emu->x86.R_GDT_LIMIT
-  );
-
-  lprintf(
-    "idt.base=%08x idt.limit=%04x\n",
-    vm->emu->x86.R_IDT_BASE, vm->emu->x86.R_IDT_LIMIT
-  );
-
-  lprintf(
-    "tr=%04x tr.base=%08x tr.limit=%08x tr.acc=%04x\n",
-    vm->emu->x86.R_TR, vm->emu->x86.R_TR_BASE, vm->emu->x86.R_TR_LIMIT, vm->emu->x86.R_TR_ACC
-  );
-  lprintf(
-    "ldt=%04x ldt.base=%08x ldt.limit=%08x ldt.acc=%04x\n\n",
-    vm->emu->x86.R_LDT, vm->emu->x86.R_LDT_BASE, vm->emu->x86.R_LDT_LIMIT, vm->emu->x86.R_LDT_ACC
-  );
-
-  lprintf(
-    "cs=%04x cs.base=%08x cs.limit=%08x cs.acc=%04x\n",
-    vm->emu->x86.R_CS, vm->emu->x86.R_CS_BASE, vm->emu->x86.R_CS_LIMIT, vm->emu->x86.R_CS_ACC
-  );
-  lprintf(
-    "ss=%04x ss.base=%08x ss.limit=%08x ss.acc=%04x\n",
-    vm->emu->x86.R_SS, vm->emu->x86.R_SS_BASE, vm->emu->x86.R_SS_LIMIT, vm->emu->x86.R_SS_ACC
-  );
-  lprintf(
-    "ds=%04x ds.base=%08x ds.limit=%08x ds.acc=%04x\n",
-    vm->emu->x86.R_DS, vm->emu->x86.R_DS_BASE, vm->emu->x86.R_DS_LIMIT, vm->emu->x86.R_DS_ACC
-  );
-  lprintf(
-    "es=%04x es.base=%08x es.limit=%08x es.acc=%04x\n",
-    vm->emu->x86.R_ES, vm->emu->x86.R_ES_BASE, vm->emu->x86.R_ES_LIMIT, vm->emu->x86.R_ES_ACC
-  );
-  lprintf(
-    "fs=%04x fs.base=%08x fs.limit=%08x fs.acc=%04x\n",
-    vm->emu->x86.R_FS, vm->emu->x86.R_FS_BASE, vm->emu->x86.R_FS_LIMIT, vm->emu->x86.R_FS_ACC
-  );
-  lprintf(
-    "gs=%04x gs.base=%08x gs.limit=%08x gs.acc=%04x\n\n",
-    vm->emu->x86.R_GS, vm->emu->x86.R_GS_BASE, vm->emu->x86.R_GS_LIMIT, vm->emu->x86.R_GS_ACC
-  );
-  lprintf("eax=%08x ebx=%08x ecx=%08x edx=%08x\n",
-    vm->emu->x86.R_EAX, vm->emu->x86.R_EBX, vm->emu->x86.R_ECX, vm->emu->x86.R_EDX
-  );
-  lprintf("esi=%08x edi=%08x ebp=%08x esp=%08x\n",
-    vm->emu->x86.R_ESI, vm->emu->x86.R_EDI, vm->emu->x86.R_EBP, vm->emu->x86.R_ESP
-  );
-  lprintf("eip=%08x eflags=%08x", vm->emu->x86.R_EIP, vm->emu->x86.R_EFLG);
-
-  *fbuf = 0;
-  if(vm->emu->x86.R_EFLG & 0x800) strcat(fbuf, " of");
-  if(vm->emu->x86.R_EFLG & 0x400) strcat(fbuf, " df");
-  if(vm->emu->x86.R_EFLG & 0x200) strcat(fbuf, " if");
-  if(vm->emu->x86.R_EFLG & 0x080) strcat(fbuf, " sf");
-  if(vm->emu->x86.R_EFLG & 0x040) strcat(fbuf, " zf");
-  if(vm->emu->x86.R_EFLG & 0x010) strcat(fbuf, " af");
-  if(vm->emu->x86.R_EFLG & 0x004) strcat(fbuf, " pf");
-  if(vm->emu->x86.R_EFLG & 0x001) strcat(fbuf, " cf");
-
-  if(*fbuf) lprintf(" ;%s", fbuf);
-
-  lprintf("\n\n");
-
-  x86emu_clear_log(vm->emu, 1);
 
   if(file) fclose(log_file);
 
