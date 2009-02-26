@@ -74,7 +74,7 @@ original real mode call.
 void x86emu_exec(x86emu_t *emu)
 {
   u8 op1;
-  char **p = &M.log.ptr;
+  char **p;
 
   static unsigned char is_prefix[0x100] = {
     [0x26] = 1, [0x2e] = 1, [0x36] = 1, [0x3e] = 1,
@@ -83,6 +83,8 @@ void x86emu_exec(x86emu_t *emu)
   };
 
   if(emu) x86emu = *emu;
+
+  p = &M.log.ptr;
 
 #if WITH_TSC
   M.x86.real_tsc = tsc();
@@ -113,7 +115,7 @@ void x86emu_exec(x86emu_t *emu)
     if(M.code_check && (*M.code_check)()) break;
 
     if(M.x86.tsc_max && M.x86.tsc >= M.x86.tsc_max) {
-      if(!*p) {
+      if(*p) {
         LOG_STR("* too many instructions\n");
         **p = 0;
       }
@@ -168,6 +170,16 @@ void x86emu_exec(x86emu_t *emu)
           break;
       }
     }
+
+    if(MODE_HALTED) {
+      if(*p) {
+        LOG_STR("* memory not executable\n");
+        **p = 0;
+      }
+      M.x86.R_EIP = M.x86.saved_eip;
+      break;
+    }
+
     (*x86emu_optab[op1])(op1);
 
     *M.x86.disasm_ptr = 0;
@@ -278,6 +290,8 @@ u8 fetch_byte(void)
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_X);
 
+  if(err) x86emu_stop();
+
   if(MODE_CODE32) {
     M.x86.R_EIP++;
   }
@@ -306,6 +320,8 @@ u16 fetch_word(void)
   unsigned err;
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_X);
+
+  if(err) x86emu_stop();
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 2;
@@ -336,6 +352,8 @@ u32 fetch_long(void)
   unsigned err;
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_X);
+
+  if(err) x86emu_stop();
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 4;
@@ -1789,6 +1807,8 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
 {
   u32 cs, eip, new_cs, new_eip;
   int i;
+
+  M.x86.intr_stats[nr]++;
 
   i = M.intr_table[nr] ? (*M.intr_table[nr])(nr, type) : 0;
 

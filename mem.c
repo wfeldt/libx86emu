@@ -1,5 +1,5 @@
 #include "include/x86emu_int.h"
-
+#include <sys/io.h>
 
 x86emu_mem_t *x86emu_mem_new(void)
 {
@@ -76,7 +76,7 @@ unsigned vm_read_byte(x86emu_mem_t *mem, unsigned addr)
   if(*attr & MEM2_R) {
     *attr |= MEM2_WAS_R;
     if(!(*attr & MEM2_WAS_W)) {
-      *attr |= MEM2_INV_R;
+      *attr |= MEM2_INVALID;
       mem->invalid_read = 1;
     }
     return page->data[page_idx];
@@ -110,9 +110,116 @@ void vm_write_byte(x86emu_mem_t *mem, unsigned addr, unsigned val)
   page = vm_get_page(mem, addr);
   attr = page->attr + page_idx;
 
-  if(*attr & MEM2_W) *attr |= MEM2_WAS_W;
+  if(*attr & MEM2_W) {
+    *attr |= MEM2_WAS_W;
+    page->data[page_idx] = val;
+  }
+  else {
+    *attr |= MEM2_INVALID;
+  }
+}
 
-  page->data[page_idx] = val;
+
+unsigned vm_x_byte(x86emu_mem_t *mem, unsigned addr)
+{
+  mem2_page_t *page;
+  unsigned page_idx = addr & ((1 << MEM2_PAGE_BITS) - 1);
+  unsigned char *attr;
+
+  page = vm_get_page(mem, addr);
+  attr = page->attr + page_idx;
+
+  if(*attr & MEM2_X) {
+    *attr |= MEM2_WAS_X;
+    if(!(*attr & MEM2_WAS_W)) {
+      *attr |= MEM2_INVALID;
+      mem->invalid_read = mem->invalid_exec = 1;
+    }
+    return page->data[page_idx];
+  }
+
+  mem->invalid_exec = 1;
+
+  return 0xff;
+}
+
+
+unsigned vm_i_byte(unsigned addr)
+{
+  unsigned char *perm;
+
+  addr &= 0xffff;
+  perm = x86emu.io.map + addr;
+
+  if(*perm & MEM2_R) {
+    *perm |= MEM2_WAS_R;
+
+    return inb(addr);
+  }
+  else {
+    *perm |= MEM2_INVALID;
+  }
+
+  return 0xff;
+}
+
+
+unsigned vm_i_word(unsigned addr)
+{
+  unsigned char *perm;
+
+  addr &= 0xffff;
+
+  if(addr == 0xffff) return vm_i_byte(addr) + (vm_i_byte(addr + 1) << 8);
+
+  perm = x86emu.io.map + addr;
+
+  if((perm[0] & MEM2_R) && (perm[1] & MEM2_R)) {
+    perm[0] |= MEM2_WAS_R;
+    perm[1] |= MEM2_WAS_R;
+
+    return inw(addr);
+  }
+  else {
+    perm[0] |= MEM2_INVALID;
+    perm[1] |= MEM2_INVALID;
+  }
+
+  return 0xffff;
+}
+
+
+unsigned vm_i_dword(unsigned addr)
+{
+  unsigned char *perm;
+
+  addr &= 0xffff;
+
+  if(addr >= 0xfffd) return vm_i_word(addr) + (vm_i_word(addr + 2) << 16);
+
+  perm = x86emu.io.map + addr;
+
+  if(
+    (perm[0] & MEM2_R) &&
+    (perm[1] & MEM2_R) &&
+    (perm[2] & MEM2_R) &&
+    (perm[3] & MEM2_R)
+  ) {
+    perm[0] |= MEM2_WAS_R;
+    perm[1] |= MEM2_WAS_R;
+    perm[2] |= MEM2_WAS_R;
+    perm[3] |= MEM2_WAS_R;
+
+    return inl(addr);
+  }
+  else {
+    perm[0] |= MEM2_INVALID;
+    perm[1] |= MEM2_INVALID;
+    perm[2] |= MEM2_INVALID;
+    perm[3] |= MEM2_INVALID;
+  }
+
+  return 0xffffffff;
 }
 
 
@@ -138,6 +245,18 @@ uint64_t vm_read_qword(x86emu_mem_t *mem, unsigned addr)
 unsigned vm_read_segofs16(x86emu_mem_t *mem, unsigned addr)
 {
   return vm_read_word(mem, addr) + (vm_read_word(mem, addr + 2) << 4);
+}
+
+
+unsigned vm_x_word(x86emu_mem_t *mem, unsigned addr)
+{
+  return vm_x_byte(mem, addr) + (vm_x_byte(mem, addr + 1) << 8);
+}
+
+
+unsigned vm_x_dword(x86emu_mem_t *mem, unsigned addr)
+{
+  return vm_x_word(mem, addr) + (vm_x_word(mem, addr + 2) << 16);
 }
 
 
@@ -203,31 +322,31 @@ unsigned vm_memio(u32 addr, u32 *val, unsigned type)
       break;
 
     case X86EMU_MEMIO_X:
-      mem->invalid_read = 0;
+      mem->invalid_exec = 0;
       switch(bits) {
         case X86EMU_MEMIO_8:
-          *val = vm_read_byte(mem, addr);
+          *val = vm_x_byte(mem, addr);
           break;
         case X86EMU_MEMIO_16:
-          *val = vm_read_word(mem, addr);
+          *val = vm_x_word(mem, addr);
           break;
         case X86EMU_MEMIO_32:
-          *val = vm_read_dword(mem, addr);
+          *val = vm_x_dword(mem, addr);
           break;
       }
-      err = mem->invalid_read;
+      err = mem->invalid_exec;
       break;
 
     case X86EMU_MEMIO_I:
       switch(bits) {
         case X86EMU_MEMIO_8:
-          *val = 0xff;
+          *val = vm_i_byte(addr);
           break;
         case X86EMU_MEMIO_16:
-          *val = 0xffff;
+          *val = vm_i_word(addr);
           break;
         case X86EMU_MEMIO_32:
-          *val = 0xffffffff;
+          *val = vm_i_dword(addr);
           break;
       }
       break;

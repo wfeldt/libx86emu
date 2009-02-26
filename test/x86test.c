@@ -37,12 +37,13 @@ struct option options[] = {
   { "verbose",    0, NULL, 'v'  },
   { "code",       0, NULL, 1001 },
   { "regs",       0, NULL, 1002 },
-  { "max-inst",   1, NULL, 1003 },
+  { "max",        1, NULL, 1003 },
   { "stderr",     0, NULL, 1004 },
   { "data",       0, NULL, 1005 },
   { "io",         0, NULL, 1006 },
   { "intr",       0, NULL, 1007 },
   { "acc",        0, NULL, 1008 },
+  { "attr",       0, NULL, 1009 },
   { }
 };
 
@@ -57,6 +58,7 @@ struct {
     unsigned intr:1;
     unsigned acc:1;
     unsigned stderr:1;
+    unsigned attr:1;
   } show;
 } opt;
 
@@ -107,6 +109,10 @@ int main(int argc, char **argv)
 
       case 1008:
         opt.show.acc = 1;
+        break;
+
+      case 1009:
+        opt.show.attr = 1;
         break;
 
       default:
@@ -371,7 +377,7 @@ void vm_dump(vm_t *vm, char *file)
   if(file) log_file = fopen(file, "w");
 
   if(log_file) {
-    x86emu_dump(vm->emu, X86EMU_DUMP_MEM | X86EMU_DUMP_REGS);
+    x86emu_dump(vm->emu, X86EMU_DUMP_MEM | X86EMU_DUMP_REGS | (!file && opt.show.attr ? X86EMU_DUMP_ATTR : 0));
     x86emu_clear_log(vm->emu, 1);
   }
 

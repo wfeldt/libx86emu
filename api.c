@@ -29,6 +29,22 @@ void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func)
 }
 
 
+void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm)
+{
+  if(!emu) return;
+
+  for(; len && start < sizeof emu->io.map / sizeof *emu->io.map; start++, len--) {
+    emu->io.map[start] = perm;
+  }
+
+  for(start = perm = 0; start < sizeof emu->io.map / sizeof *emu->io.map; start++) {
+    perm |= emu->io.map[start];
+  }
+
+  emu->io.iopl_needed = (perm & (MEM2_R | MEM2_W)) ? 1 : 0;
+}
+
+
 void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush)
 {
   if(emu) {
@@ -114,14 +130,14 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
 
 
   for(u = 0; u < LINE_LEN; u++) {
-    *str_data++ = (attr[u] & MEM2_INV_R) ? '*' : ' ';
+    *str_data++ = (attr[u] & MEM2_INVALID) ? '*' : ' ';
     if((attr[u] & MEM2_WAS_W)) {
       ok = 1;
       decode_hex2(&str_data, data[u]);
 
       c = (attr[u] & MEM2_R) ? (attr[u] & MEM2_WAS_R) ? 'R' : 'r' : ' ';
       *str_attr++ = c;
-      c = (attr[u] & MEM2_W) ? (attr[u] & MEM2_WAS_W) ? 'w' : 'w' : ' ';
+      c = (attr[u] & MEM2_W) ? (attr[u] & MEM2_WAS_W) ? 'W' : 'w' : ' ';
       *str_attr++ = c;
       c = (attr[u] & MEM2_X) ? (attr[u] & MEM2_WAS_X) ? 'X' : 'x' : ' ';
       *str_attr++ = c;
@@ -134,9 +150,7 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
       *str_attr++ = ' ';
       *str_attr++ = ' ';
     }
-    // *str_data++ = (attr[u] & MEM2_INV_R) ? '*' : ' ';
     *str_data++ = ' ';
-
     *str_attr++ = ' ';
   }
 
@@ -194,6 +208,9 @@ void x86emu_dump(x86emu_t *emu, int flags)
     }
 
     x86emu_log(emu, "\n");
+  }
+
+  if((flags & X86EMU_DUMP_IO)) {
   }
 
   if((flags & X86EMU_DUMP_REGS)) {
@@ -271,6 +288,16 @@ void x86emu_dump(x86emu_t *emu, int flags)
 
     x86emu_log(emu, "\n\n");
   }
+
+  if((flags & X86EMU_DUMP_INTS)) {
+    x86emu_log(emu, "; - - interrupt statistics\n");
+    for(u1 = 0; u1 < 0x100; u1++) {
+      if(emu->x86.intr_stats[u1]) x86emu_log(emu, "int %02x: %08x\n", u1, emu->x86.intr_stats[u1]);
+    }
+
+    x86emu_log(emu, "\n");
+  }
+
 }
 
 
