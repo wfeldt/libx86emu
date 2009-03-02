@@ -41,7 +41,13 @@ void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned pe
     perm |= emu->io.map[start];
   }
 
-  emu->io.iopl_needed = (perm & (MEM2_R | MEM2_W)) ? 1 : 0;
+  emu->io.iopl_needed = (perm & (X86EMU_PERM_R | X86EMU_PERM_W)) ? 1 : 0;
+
+#if WITH_IOPL 
+  emu->io.iopl_ok = emu->io.iopl_needed && getiopl() != 3 ? 0 : 1;
+#else 
+  emu->io.iopl_ok = 1;
+#endif
 }
 
 
@@ -95,11 +101,13 @@ void x86emu_log(x86emu_t *emu, const char *format, ...)
 }
 
 
-x86emu_t *x86emu_new()
+x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm)
 {
   x86emu_t *emu = calloc(1, sizeof *emu);
 
-  emu->mem = x86emu_mem_new();
+  emu->mem = x86emu_mem_new(def_mem_perm);
+
+  if(def_io_perm) x86emu_set_io_perm(emu, 0, 1 << 16, def_io_perm);
 
   x86emu_set_memio_func(emu, vm_memio);
 
@@ -109,15 +117,13 @@ x86emu_t *x86emu_new()
 }
 
 
-x86emu_t *x86emu_done(x86emu_t *emu)
+void x86emu_done(x86emu_t *emu)
 {
   if(emu) {
     if(emu->log.buf) free(emu->log.buf);
 
     free(emu);
   }
-
-  return NULL;
 }
 
 
@@ -128,18 +134,17 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
   int ok = 0;
   char *sd = str_data, *sa = str_attr;
 
-
   for(u = 0; u < LINE_LEN; u++) {
-    *str_data++ = (attr[u] & MEM2_INVALID) ? '*' : ' ';
-    if((attr[u] & MEM2_WAS_W)) {
+    *str_data++ = (attr[u] & X86EMU_ACC_INVALID) ? '*' : ' ';
+    if((attr[u] & X86EMU_ACC_W)) {
       ok = 1;
       decode_hex2(&str_data, data[u]);
 
-      c = (attr[u] & MEM2_R) ? (attr[u] & MEM2_WAS_R) ? 'R' : 'r' : ' ';
+      c = (attr[u] & X86EMU_PERM_R) ? (attr[u] & X86EMU_ACC_R) ? 'R' : 'r' : ' ';
       *str_attr++ = c;
-      c = (attr[u] & MEM2_W) ? (attr[u] & MEM2_WAS_W) ? 'W' : 'w' : ' ';
+      c = (attr[u] & X86EMU_PERM_W) ? (attr[u] & X86EMU_ACC_W) ? 'W' : 'w' : ' ';
       *str_attr++ = c;
-      c = (attr[u] & MEM2_X) ? (attr[u] & MEM2_WAS_X) ? 'X' : 'x' : ' ';
+      c = (attr[u] & X86EMU_PERM_X) ? (attr[u] & X86EMU_ACC_X) ? 'X' : 'x' : ' ';
       *str_attr++ = c;
     }
     else {
@@ -172,7 +177,7 @@ void x86emu_dump(x86emu_t *emu, int flags)
   mem2_pdir_t *pdir;
   mem2_ptable_t *ptable;
   mem2_page_t page;
-  unsigned pdir_idx, u1, u2, addr;
+  unsigned pdir_idx, u, u1, u2, addr;
   char str_data[LINE_LEN * 8], str_attr[LINE_LEN * 8], fbuf[64];
   unsigned char def_data[LINE_LEN], def_attr[LINE_LEN];
 
@@ -211,6 +216,22 @@ void x86emu_dump(x86emu_t *emu, int flags)
   }
 
   if((flags & X86EMU_DUMP_IO)) {
+    x86emu_log(emu, "; - - io accesses\n");
+
+    for(u = 0; u < sizeof emu->io.map / sizeof *emu->io.map; u++) {
+      if(emu->io.map[u] & (X86EMU_ACC_R | X86EMU_ACC_W | X86EMU_ACC_INVALID)) {
+        x86emu_log(emu,
+          "%04x: %c%c%c in=%08x out=%08x\n",
+          u,
+          (emu->io.map[u] & X86EMU_ACC_INVALID) ? '*' : ' ',
+          (emu->io.map[u] & X86EMU_PERM_R) ? 'r' : ' ',
+          (emu->io.map[u] & X86EMU_PERM_W) ? 'w' : ' ',
+          emu->io.stats_i[u], emu->io.stats_o[u]
+        );
+      }
+    }
+
+    x86emu_log(emu, "\n");
   }
 
   if((flags & X86EMU_DUMP_REGS)) {
@@ -297,7 +318,6 @@ void x86emu_dump(x86emu_t *emu, int flags)
 
     x86emu_log(emu, "\n");
   }
-
 }
 
 

@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include <inttypes.h>
 #include <x86emu.h>
+#include <sys/io.h>
 
 typedef struct {
   x86emu_t *emu;
@@ -24,7 +25,7 @@ char *skip_spaces(char *s);
 vm_t *vm_new(void);
 void vm_free(vm_t *vm);
 int vm_init(vm_t *vm, char *file);
-int vm_run(vm_t *vm);
+void vm_run(vm_t *vm);
 void vm_dump(vm_t *vm, char *file);
 
 char *build_file_name(char *file, char *suffix);
@@ -191,7 +192,7 @@ vm_t *vm_new()
 
   vm = calloc(1, sizeof *vm);
 
-  vm->emu = x86emu_new();
+  vm->emu = x86emu_new(X86EMU_PERM_R | X86EMU_PERM_W | X86EMU_PERM_X, 0);
   vm->emu->private = vm;
 
   x86emu_set_log(vm->emu, 1000000, flush_log);
@@ -344,10 +345,8 @@ int vm_init(vm_t *vm, char *file)
 }
 
 
-int vm_run(vm_t *vm)
+void vm_run(vm_t *vm)
 {
-  int ok = 1;
-
   if(opt.show.regs) vm->emu->log.regs = 1;
   if(opt.show.code) vm->emu->log.code = 1;
   if(opt.show.data) vm->emu->log.data = 1;
@@ -358,13 +357,13 @@ int vm_run(vm_t *vm)
   vm->emu->x86.tsc = 0;
   vm->emu->x86.tsc_max = opt.inst_max;
 
+  // x86emu_set_perm(vm->emu, 0x1004, 1, X86EMU_ACC_W | X86EMU_PERM_R);
+
+  // x86emu_set_io_perm(vm->emu, 0, 0x400, X86EMU_PERM_R | X86EMU_PERM_W);
+  // iopl(3);
   x86emu_exec(vm->emu);
 
   x86emu_clear_log(vm->emu, 1);
-
-  if(vm->emu->mem->invalid_write) ok = 0;
-
-  return ok;
 }
 
 
@@ -463,7 +462,7 @@ int run_test(char *file)
   if(ok) {
     lprintf("%s: starting test\n", file);
 
-    ok = vm_run(vm);
+    vm_run(vm);
 
     lprintf("\n- - - - - - - -  final vm state  - - - - - - - -\n");
     vm_dump(vm, NULL);

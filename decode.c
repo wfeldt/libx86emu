@@ -54,16 +54,6 @@ static void log_code(void);
 void check_data_access(sel_t *seg, u32 ofs, u32 size);
 static unsigned decode_memio(u32 addr, u32 *val, unsigned type);
 
-#if WITH_TSC
-static inline u64 tsc()
-{
-  register u64 tsc asm ("%eax");
-
-  asm ("rdtsc" : "=r" (tsc));
-
-  return tsc;
-}
-#endif
 
 /****************************************************************************
 REMARKS:
@@ -88,6 +78,12 @@ void x86emu_exec(x86emu_t *emu)
 
 #if WITH_TSC
   M.x86.real_tsc = tsc();
+#endif
+
+#if WITH_IOPL
+  M.io.iopl_ok = M.io.iopl_needed && getiopl() != 3 ? 0 : 1;
+#else
+  M.io.iopl_ok = 1;
 #endif
 
   for(;;) {
@@ -652,7 +648,7 @@ void store_io_word(u32 port, u16 val)
 
 void store_io_long(u32 port, u32 val)
 {
-  decode_memio(port, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_O);
+  decode_memio(port, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_O);
 }
 
 

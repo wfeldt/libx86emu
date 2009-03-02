@@ -388,16 +388,14 @@ typedef struct {
 #define X86EMU_DUMP_REGS	(1 << 3)
 #define X86EMU_DUMP_INTS	(1 << 4)
 
-#define MEM2_R		(1 << 0)
-#define MEM2_W		(1 << 1)
-#define MEM2_X		(1 << 2)
-#define MEM2_WAS_R	(1 << 3)
-#define MEM2_WAS_W	(1 << 4)
-#define MEM2_WAS_X	(1 << 5)
-#define MEM2_INVALID	(1 << 6)
-#define MEM2_RES_1	(1 << 7)
-
-#define MEM2_DEF_ATTR	(MEM2_R + MEM2_W + MEM2_X)
+#define X86EMU_PERM_R		(1 << 0)
+#define X86EMU_PERM_W		(1 << 1)
+#define X86EMU_PERM_X		(1 << 2)
+#define X86EMU_ACC_R		(1 << 3)
+#define X86EMU_ACC_W		(1 << 4)
+#define X86EMU_ACC_X		(1 << 5)
+#define X86EMU_ACC_INVALID	(1 << 6)
+#define X86EMU_PERM_RES		(1 << 7)
 
 #define MEM2_PDIR_BITS		10
 #define MEM2_PTABLE_BITS	10
@@ -417,9 +415,7 @@ typedef mem2_ptable_t *mem2_pdir_t[1 << MEM2_PDIR_BITS];
 
 typedef struct {
   mem2_pdir_t *pdir;
-  unsigned invalid_read:1;
-  unsigned invalid_write:1;
-  unsigned invalid_exec:1;
+  unsigned invalid:1;
   unsigned char def_attr;
 } x86emu_mem_t;
 
@@ -440,6 +436,8 @@ typedef struct {
   x86emu_mem_t *mem;
   struct {
     unsigned char map[1 << 16];
+    unsigned stats_i[1 << 16];
+    unsigned stats_o[1 << 16];
     unsigned iopl_needed:1;
     unsigned iopl_ok:1;
   } io;
@@ -470,7 +468,7 @@ extern x86emu_t x86emu;
 
 /*-------------------------- Function Prototypes --------------------------*/
 
-x86emu_mem_t *x86emu_mem_new(void);
+x86emu_mem_t *x86emu_mem_new(unsigned perm);
 x86emu_mem_t *x86emu_mem_free(x86emu_mem_t *mem);
 
 unsigned vm_read_byte(x86emu_mem_t *vm, unsigned addr);
@@ -487,6 +485,7 @@ void vm_write_qword(x86emu_mem_t *vm, unsigned addr, uint64_t val);
 void x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func);
 void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handler);
 void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
+void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm);
 void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm);
 
 void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush);
@@ -495,8 +494,8 @@ void x86emu_log(x86emu_t *emu, const char *format, ...) __attribute__ ((format (
 void x86emu_reset(x86emu_t *emu);
 void x86emu_exec(x86emu_t *emu);
 void x86emu_stop(void);
-x86emu_t *x86emu_new(void);
-x86emu_t *x86emu_done(x86emu_t *emu);
+x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm);
+void x86emu_done(x86emu_t *emu);
 void x86emu_dump(x86emu_t *emu, int flags);
 
 void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err);

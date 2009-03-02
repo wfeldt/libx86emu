@@ -1,6 +1,15 @@
+ARCH	:= $(shell uname -m)
+ifneq ($(filter i386 i486 i586 i686, $(ARCH)),)
+ARCH	:= i386
+endif
+
 CC	= gcc
 CFLAGS	= -g -O2 -fPIC -fomit-frame-pointer -Wall
+ifneq ($(filter x86_64, $(ARCH)),)
+LIBDIR	= /usr/lib64
+else
 LIBDIR	= /usr/lib
+endif
 LIBX86	= libx86emu
 
 VERSION		:= $(shell cat VERSION)

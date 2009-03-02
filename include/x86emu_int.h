@@ -56,10 +56,88 @@
 #include "mem.h"
 
 #if defined(__i386__) || defined (__x86_64__)
-#define WITH_TSC 1
+#define WITH_TSC	1
+#define WITH_IOPL	1
 #else
-#define WITH_TSC 0
+#define WITH_TSC	0
+#define WITH_IOPL	0
 #endif
+
+
+#if WITH_TSC
+#if defined(__i386__)
+static inline u64 tsc()
+{
+  register u64 tsc asm ("%eax");
+
+  asm (
+    "rdtsc"
+    : "=r" (tsc)
+  );
+
+  return tsc;
+}
+#endif
+
+#if defined (__x86_64__)
+static inline u64 tsc()
+{
+  register u64 tsc asm ("%rax");
+
+  asm (
+    "push %%rdx\n"
+    "rdtsc\n"
+    "xchg %%edx,%%eax\n"
+    "shl $32,%%rax\n"
+    "add %%rdx,%%rax\n"
+    "pop %%rdx"
+    : "=r" (tsc)
+  );
+
+  return tsc;
+}
+#endif
+
+#endif
+
+
+#if WITH_IOPL
+#if defined(__i386__)
+static inline unsigned getiopl() 
+{
+  register u32 i asm ("%eax");
+  
+  asm(
+    "pushf\n"
+    "pop %%eax"
+    : "=r" (i)
+  );
+
+  i = (i >> 12) & 3;
+
+  return i;
+}
+#endif
+
+#if defined (__x86_64__)
+static inline unsigned getiopl()
+{
+  register unsigned i asm ("%rax");
+
+  asm(
+    "pushf\n"
+    "pop %%rax"
+    : "=r" (i)
+  );
+
+  i = (i >> 12) & 3;
+
+  return i;
+}
+#endif
+
+#endif
+
 
 #endif /* __X86EMU_X86EMU_INT_H */
 
