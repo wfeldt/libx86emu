@@ -66,7 +66,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
   u8 op1, u_m1;
   s32 ofs32;
   char **p;
-  unsigned u, u1, rs = 0;
+  unsigned u, rs = 0;
   x86emu_mem_t *mem;
   time_t t0;
 
@@ -232,14 +232,11 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
     if((flags & X86EMU_RUN_NO_CODE) && mem) {
       u = M.x86.R_CS_BASE + M.x86.R_EIP;
 
-      if(op1 == 0xff) {
+      if(op1 == 0xff && vm_read_byte_noerr(mem, u) == 0xff) {
         rs |= X86EMU_RUN_NO_CODE;
       }
-      else if(op1 == 0x00) {
-        u1 = vm_read_byte_noerr(mem, u);
-        if(u1 == 0) {
-          rs |= X86EMU_RUN_NO_CODE;
-        }
+      else if(op1 == 0x00 && vm_read_byte_noerr(mem, u) == 0x00) {
+        rs |= X86EMU_RUN_NO_CODE;
       }
 
       if(rs) x86emu_stop(&M);
