@@ -405,7 +405,7 @@ static void x86emuOp2_rdtsc(u8 op2)
   OP_DECODE("rdtsc");
 
   M.x86.R_EAX = M.x86.tsc;
-  M.x86.R_EDX = 0;
+  M.x86.R_EDX = M.x86.tsc >> 32;
 }
 
 

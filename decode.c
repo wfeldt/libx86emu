@@ -58,13 +58,15 @@ static unsigned decode_memio(u32 addr, u32 *val, unsigned type);
 /****************************************************************************
 REMARKS:
 Main execution loop for the emulator. We return from here when the system
-halts, which is normally caused by a stack fault when we return from the
-original real mode call.
+halts, timeouts, or one of the conditions in flags are met.
 ****************************************************************************/
-void x86emu_exec(x86emu_t *emu)
+unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 {
   u8 op1;
+  s32 ofs32;
   char **p;
+  unsigned u, u1, u_m1, rs = 0;
+  x86emu_mem_t *mem;
 
   static unsigned char is_prefix[0x100] = {
     [0x26] = 1, [0x2e] = 1, [0x36] = 1, [0x3e] = 1,
@@ -75,6 +77,8 @@ void x86emu_exec(x86emu_t *emu)
   if(emu) x86emu = *emu;
 
   p = &M.log.ptr;
+
+  M.x86.tsc = 0;
 
 #if WITH_TSC
   M.x86.real_tsc = tsc();
@@ -108,15 +112,17 @@ void x86emu_exec(x86emu_t *emu)
 
     log_regs();
 
-    if(M.code_check && (*M.code_check)()) break;
-
-    if(M.x86.tsc_max && M.x86.tsc >= M.x86.tsc_max) {
-      if(*p) {
-        LOG_STR("* too many instructions\n");
-        **p = 0;
-      }
+    if((flags & X86EMU_RUN_MAX_INSTR) && M.max_instr && M.x86.tsc >= M.max_instr) {
+      rs |= X86EMU_RUN_MAX_INSTR;
       break;
     }
+
+    if((flags & X86EMU_RUN_TIMEOUT) && M.timeout) {
+      rs |= X86EMU_RUN_TIMEOUT;
+      break;
+    }
+
+    if(M.code_check && (*M.code_check)()) break;
 
     memcpy(M.x86.decode_seg, "[", 1);
 
@@ -168,12 +174,61 @@ void x86emu_exec(x86emu_t *emu)
     }
 
     if(MODE_HALTED) {
-      if(*p) {
-        LOG_STR("* memory not executable\n");
-        **p = 0;
-      }
+      rs |= X86EMU_RUN_NO_EXEC;
       M.x86.R_EIP = M.x86.saved_eip;
       break;
+    }
+
+    mem = M.mem;
+
+    if((flags & X86EMU_RUN_LOOP) && mem) {
+      u = M.x86.R_CS_BASE + M.x86.R_EIP;
+
+      if(op1 == 0xeb) {
+        ofs32 = (s8) vm_read_byte_noerr(mem, u);
+        if(M.x86.R_EIP + 1 + ofs32 == M.x86.saved_eip) {
+          rs |= X86EMU_RUN_LOOP;
+        }
+        else if(M.x86.R_EIP + 2 + ofs32 == M.x86.saved_eip && M.x86.saved_eip >= 1) {
+          u_m1 = vm_read_byte_noerr(mem, M.x86.R_CS_BASE + M.x86.saved_eip - 1);
+          if(u_m1 >= 0xf8 && u_m1 <= 0xfd) rs |= X86EMU_RUN_LOOP;
+        }
+      }
+      else if(op1 == 0xe9) {
+        if(MODE_DATA32) {
+          ofs32 = (vm_read_byte_noerr(mem, u) +
+            (vm_read_byte_noerr(mem, u + 1) << 8)) +
+            (vm_read_byte_noerr(mem, u + 2) << 16) +
+            (vm_read_byte_noerr(mem, u + 3) << 24);
+          if(M.x86.R_EIP + 4 + ofs32 == M.x86.saved_eip) {
+            rs |= X86EMU_RUN_LOOP;
+          }
+        }
+        else {
+          ofs32 = (s16) (vm_read_byte_noerr(mem, u) + (vm_read_byte_noerr(mem, u + 1) << 8));
+          if(M.x86.R_EIP + 2 + ofs32 == M.x86.saved_eip) {
+            rs |= X86EMU_RUN_LOOP;
+          }
+        }
+      }
+
+      if(rs) x86emu_stop();
+    }
+
+    if((flags & X86EMU_RUN_NO_CODE) && mem) {
+      u = M.x86.R_CS_BASE + M.x86.R_EIP;
+
+      if(op1 == 0xff) {
+        rs |= X86EMU_RUN_NO_CODE;
+      }
+      else if(op1 == 0x00) {
+        u1 = vm_read_byte_noerr(mem, u);
+        if(u1 == 0) {
+          rs |= X86EMU_RUN_NO_CODE;
+        }
+      }
+
+      if(rs) x86emu_stop();
     }
 
     (*x86emu_optab[op1])(op1);
@@ -189,7 +244,28 @@ void x86emu_exec(x86emu_t *emu)
     if(MODE_HALTED) break;
   }
 
+  if(*p) {
+    if((rs & X86EMU_RUN_TIMEOUT)) {
+      LOG_STR("* timeout\n");
+    }
+    if((rs & X86EMU_RUN_MAX_INSTR)) {
+      LOG_STR("* too many instructions\n");
+    }
+    if((rs & X86EMU_RUN_NO_EXEC)) {
+      LOG_STR("* memory not executable\n");
+    }
+    if((rs & X86EMU_RUN_NO_CODE)) {
+      LOG_STR("* no proper code\n");
+    }
+    if((rs & X86EMU_RUN_LOOP)) {
+      LOG_STR("* infinite loop\n");
+    }
+    **p = 0;
+  }
+
   if(emu) *emu = x86emu;
+
+  return rs;
 }
 
 /****************************************************************************

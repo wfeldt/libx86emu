@@ -187,13 +187,13 @@ void x86emu_dump(x86emu_t *emu, int flags)
     x86emu_log(emu, "\n");
 
     pdir = mem->pdir;
-    for(pdir_idx = 0; pdir_idx < (1 << MEM2_PDIR_BITS); pdir_idx++) {
+    for(pdir_idx = 0; pdir_idx < (1 << X86EMU_PDIR_BITS); pdir_idx++) {
       ptable = (*pdir)[pdir_idx];
       if(!ptable) continue;
-      for(u1 = 0; u1 < (1 << MEM2_PTABLE_BITS); u1++) {
+      for(u1 = 0; u1 < (1 << X86EMU_PTABLE_BITS); u1++) {
         page = (*ptable)[u1];
         if(page.data) {
-          for(u2 = 0; u2 < (1 << MEM2_PAGE_BITS); u2 += LINE_LEN) {
+          for(u2 = 0; u2 < (1 << X86EMU_PAGE_BITS); u2 += LINE_LEN) {
             memcpy(def_data, page.data + u2, LINE_LEN);
             if(page.attr) {
               memcpy(def_attr, page.attr + u2, LINE_LEN);
@@ -203,7 +203,7 @@ void x86emu_dump(x86emu_t *emu, int flags)
             }
             dump_data(def_data, def_attr, str_data, str_attr);
             if(*str_data) {
-              addr = (((pdir_idx << MEM2_PTABLE_BITS) + u1) << MEM2_PAGE_BITS) + u2;
+              addr = (((pdir_idx << X86EMU_PTABLE_BITS) + u1) << X86EMU_PAGE_BITS) + u2;
               x86emu_log(emu, "%08x: %s\n", addr, str_data);
               if((flags & X86EMU_DUMP_ATTR)) x86emu_log(emu, "          %s\n", str_attr);
             }

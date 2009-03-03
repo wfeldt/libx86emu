@@ -333,6 +333,11 @@ typedef struct {
 #define INTR_RAISE_GP(err)	x86emu_intr_raise(0x0d, INTR_TYPE_FAULT | INTR_MODE_RESTART | INTR_MODE_ERRCODE, err)
 #define INTR_RAISE_UD		x86emu_intr_raise(0x06, INTR_TYPE_FAULT | INTR_MODE_RESTART, 0)
 
+#define X86EMU_RUN_TIMEOUT	(1 << 0)
+#define X86EMU_RUN_MAX_INSTR	(1 << 1)
+#define X86EMU_RUN_NO_EXEC	(1 << 2)
+#define X86EMU_RUN_NO_CODE	(1 << 3)
+#define X86EMU_RUN_LOOP		(1 << 4)
 
 #define X86EMU_MEMIO_8	0
 #define X86EMU_MEMIO_16	1
@@ -363,8 +368,7 @@ typedef struct {
     u32 base, limit;
   } idt;
   u64 msr[0x800];		/* MSRs */
-  u32 tsc;			/* TSC */
-  u32 tsc_max;			/* max. instructions */
+  u64 tsc;			/* TSC */
   u64 real_tsc;
   u32 mode;
   sel_t *default_seg;
@@ -395,14 +399,13 @@ typedef struct {
 #define X86EMU_ACC_W		(1 << 4)
 #define X86EMU_ACC_X		(1 << 5)
 #define X86EMU_ACC_INVALID	(1 << 6)
-#define X86EMU_PERM_RES		(1 << 7)
-
-#define MEM2_PDIR_BITS		10
-#define MEM2_PTABLE_BITS	10
-#define MEM2_PAGE_BITS		(32 - MEM2_PDIR_BITS - MEM2_PTABLE_BITS)
+#define X86EMU_ACC_UNUSED	(1 << 7)
 
 /* 4k pages */
-#define MEM2_PAGE_SIZE	(1 << MEM2_PAGE_BITS)
+#define X86EMU_PAGE_BITS	12
+#define X86EMU_PTABLE_BITS	10
+#define X86EMU_PDIR_BITS	(32 - X86EMU_PTABLE_BITS - X86EMU_PAGE_BITS)
+#define X86EMU_PAGE_SIZE	(1 << X86EMU_PAGE_BITS)
 
 typedef struct {
   unsigned char *attr;	// malloc'ed
@@ -410,8 +413,8 @@ typedef struct {
   unsigned char def_attr;
 } mem2_page_t;
 
-typedef mem2_page_t mem2_ptable_t[1 << MEM2_PTABLE_BITS];
-typedef mem2_ptable_t *mem2_pdir_t[1 << MEM2_PDIR_BITS];
+typedef mem2_page_t mem2_ptable_t[1 << X86EMU_PTABLE_BITS];
+typedef mem2_ptable_t *mem2_pdir_t[1 << X86EMU_PDIR_BITS];
 
 typedef struct {
   mem2_pdir_t *pdir;
@@ -454,6 +457,8 @@ typedef struct {
     unsigned io:1;
     unsigned intr:1;
   } log;
+  unsigned timeout;
+  u64 max_instr;
   void *private;
 } x86emu_t;
 
@@ -487,12 +492,13 @@ void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handle
 void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
 void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm);
 void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm);
+void x86emu_set_page_address(x86emu_t *emu, unsigned page, void *address);
 
 void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush);
 unsigned x86emu_clear_log(x86emu_t *emu, int flush);
 void x86emu_log(x86emu_t *emu, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 void x86emu_reset(x86emu_t *emu);
-void x86emu_exec(x86emu_t *emu);
+unsigned x86emu_run(x86emu_t *emu, unsigned flags);
 void x86emu_stop(void);
 x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm);
 void x86emu_done(x86emu_t *emu);

@@ -29,8 +29,8 @@ mem2_page_t *vm_get_page(x86emu_mem_t *mem, unsigned addr, int create)
   mem2_pdir_t *pdir;
   mem2_ptable_t *ptable;
   mem2_page_t page;
-  unsigned pdir_idx = addr >> (32 - MEM2_PDIR_BITS);
-  unsigned ptable_idx = (addr >> MEM2_PAGE_BITS) & ((1 << MEM2_PTABLE_BITS) - 1);
+  unsigned pdir_idx = addr >> (32 - X86EMU_PDIR_BITS);
+  unsigned ptable_idx = (addr >> X86EMU_PAGE_BITS) & ((1 << X86EMU_PTABLE_BITS) - 1);
   unsigned u;
 
   pdir = mem->pdir;
@@ -43,7 +43,7 @@ mem2_page_t *vm_get_page(x86emu_mem_t *mem, unsigned addr, int create)
   if(!ptable) {
     ptable = (*pdir)[pdir_idx] = calloc(1, sizeof *ptable);
     // fprintf(stderr, "ptable = %p\n", ptable);
-    for(u = 0; u < (1 << MEM2_PTABLE_BITS); u++) {
+    for(u = 0; u < (1 << X86EMU_PTABLE_BITS); u++) {
       (*ptable)[u].def_attr = mem->def_attr;
       // fprintf(stderr, "ptable[%u] = %p\n", u, &((*ptable)[u].def_attr));
     }
@@ -53,10 +53,10 @@ mem2_page_t *vm_get_page(x86emu_mem_t *mem, unsigned addr, int create)
   if(create) {
     page = (*ptable)[ptable_idx];
     if(!page.attr) {
-      page.attr = calloc(1, 2 * MEM2_PAGE_SIZE);
-      page.data = page.attr + MEM2_PAGE_SIZE;
+      page.attr = calloc(1, 2 * X86EMU_PAGE_SIZE);
+      page.data = page.attr + X86EMU_PAGE_SIZE;
       // fprintf(stderr, "page = %p, page.def_attr = %p\n", page, &page.def_attr);
-      memset(page.attr, page.def_attr, MEM2_PAGE_SIZE);
+      memset(page.attr, page.def_attr, X86EMU_PAGE_SIZE);
       (*ptable)[ptable_idx] = page;
       // fprintf(stderr, "page.attr[%d] = %p\n", ptable_idx, page.attr);
     }
@@ -74,21 +74,21 @@ void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm)
 
   if(!emu || !(mem = emu->mem)) return;
 
-  if((idx = start & (MEM2_PAGE_SIZE - 1))) {
+  if((idx = start & (X86EMU_PAGE_SIZE - 1))) {
     page = vm_get_page(mem, start, 1);
-    for(; idx < MEM2_PAGE_SIZE && len; len--) {
+    for(; idx < X86EMU_PAGE_SIZE && len; len--) {
       page->attr[idx++] = perm;
     }
-    start |= MEM2_PAGE_SIZE - 1;
+    start |= X86EMU_PAGE_SIZE - 1;
     start++;
   }
 
   if(!len || !start) return;
 
-  for(; start && len >= MEM2_PAGE_SIZE; start += MEM2_PAGE_SIZE, len -= MEM2_PAGE_SIZE) {
+  for(; start && len >= X86EMU_PAGE_SIZE; start += X86EMU_PAGE_SIZE, len -= X86EMU_PAGE_SIZE) {
     page = vm_get_page(mem, start, 0);
     page->def_attr = perm;
-    if(page->attr) memset(page->attr, page->def_attr, MEM2_PAGE_SIZE);
+    if(page->attr) memset(page->attr, page->def_attr, X86EMU_PAGE_SIZE);
   }
 
   if(!len || !start) return;
@@ -100,10 +100,34 @@ void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm)
 }
 
 
+void x86emu_set_page_address(x86emu_t *emu, unsigned page, void *address)
+{
+  x86emu_mem_t *mem;
+  mem2_page_t *p;
+  unsigned u;
+
+  if(!emu || !(mem = emu->mem)) return;
+
+  p = vm_get_page(mem, page, 1);
+
+  if(address) {
+    p->data = address;
+
+    // tag memory as initialized
+    for(u = 0; u < X86EMU_PAGE_SIZE; u++) {
+      p->attr[u] |= X86EMU_ACC_W;
+    }
+  }
+  else {
+    p->data = p->attr + X86EMU_PAGE_SIZE;
+  }
+}
+
+
 unsigned vm_read_byte(x86emu_mem_t *mem, unsigned addr)
 {
   mem2_page_t *page;
-  unsigned page_idx = addr & (MEM2_PAGE_SIZE - 1);
+  unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
   unsigned char *attr;
 
   page = vm_get_page(mem, addr, 1);
@@ -127,7 +151,7 @@ unsigned vm_read_byte(x86emu_mem_t *mem, unsigned addr)
 unsigned vm_read_byte_noerr(x86emu_mem_t *mem, unsigned addr)
 {
   mem2_page_t *page;
-  unsigned page_idx = addr & (MEM2_PAGE_SIZE - 1);
+  unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
   unsigned char *attr;
 
   page = vm_get_page(mem, addr, 1);
@@ -140,7 +164,7 @@ unsigned vm_read_byte_noerr(x86emu_mem_t *mem, unsigned addr)
 void vm_write_byte(x86emu_mem_t *mem, unsigned addr, unsigned val)
 {
   mem2_page_t *page;
-  unsigned page_idx = addr & (MEM2_PAGE_SIZE - 1);
+  unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
   unsigned char *attr;
 
   page = vm_get_page(mem, addr, 1);
@@ -161,7 +185,7 @@ void vm_write_byte(x86emu_mem_t *mem, unsigned addr, unsigned val)
 unsigned vm_x_byte(x86emu_mem_t *mem, unsigned addr)
 {
   mem2_page_t *page;
-  unsigned page_idx = addr & (MEM2_PAGE_SIZE - 1);
+  unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
   unsigned char *attr;
 
   page = vm_get_page(mem, addr, 1);
