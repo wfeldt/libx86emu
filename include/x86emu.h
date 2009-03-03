@@ -348,9 +348,11 @@ typedef struct {
 #define X86EMU_MEMIO_I	(3 << 8)
 #define X86EMU_MEMIO_O	(4 << 8)
 
+struct x86emu_s;
+
 typedef unsigned (* x86emu_memio_func_t)(u32 addr, u32 *val, unsigned type);
-typedef int (* x86emu_intr_func_t)(u8 num, unsigned type);
-typedef int (* x86emu_code_check_t)(void);
+typedef int (* x86emu_intr_func_t)(struct x86emu_s *, u8 num, unsigned type);
+typedef int (* x86emu_code_check_t)(struct x86emu_s *);
 typedef void (* x86emu_flush_func_t)(char *buf, unsigned size);
 
 typedef struct {
@@ -431,7 +433,7 @@ MEMBERS:
 private			- private data pointer
 x86			- X86 registers
 ****************************************************************************/
-typedef struct {
+typedef struct x86emu_s {
   x86emu_regs_t x86;
   x86emu_code_check_t code_check;
   x86emu_memio_func_t memio;
@@ -499,7 +501,7 @@ unsigned x86emu_clear_log(x86emu_t *emu, int flush);
 void x86emu_log(x86emu_t *emu, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 void x86emu_reset(x86emu_t *emu);
 unsigned x86emu_run(x86emu_t *emu, unsigned flags);
-void x86emu_stop(void);
+void x86emu_stop(x86emu_t *emu);
 x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm);
 void x86emu_done(x86emu_t *emu);
 void x86emu_dump(x86emu_t *emu, int flags);

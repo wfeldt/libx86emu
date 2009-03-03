@@ -20,7 +20,7 @@ void lprintf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 void flush_log(char *buf, unsigned size);
 
 void help(void);
-int do_int(u8 num, unsigned type);
+int do_int(x86emu_t *emu, u8 num, unsigned type);
 char *skip_spaces(char *s);
 vm_t *vm_new(void);
 void vm_free(vm_t *vm);
@@ -167,10 +167,10 @@ void help()
 }
 
 
-int do_int(u8 num, unsigned type)
+int do_int(x86emu_t *emu, u8 num, unsigned type)
 {
   if((type & 0xff) == INTR_TYPE_FAULT) {
-    x86emu_stop();
+    x86emu_stop(emu);
   }
 
   return 0;
@@ -347,6 +347,8 @@ int vm_init(vm_t *vm, char *file)
 
 void vm_run(vm_t *vm)
 {
+  unsigned flags;
+
   if(opt.show.regs) vm->emu->log.regs = 1;
   if(opt.show.code) vm->emu->log.code = 1;
   if(opt.show.data) vm->emu->log.data = 1;
@@ -359,8 +361,13 @@ void vm_run(vm_t *vm)
   // x86emu_set_io_perm(vm->emu, 0, 0x400, X86EMU_PERM_R | X86EMU_PERM_W);
   // iopl(3);
 
-  vm->emu->max_instr = opt.inst_max;
-  x86emu_run(vm->emu, X86EMU_RUN_MAX_INSTR | X86EMU_RUN_LOOP | X86EMU_RUN_NO_CODE);
+  flags = X86EMU_RUN_LOOP | X86EMU_RUN_NO_CODE;
+
+  if(opt.inst_max) {
+    vm->emu->max_instr = opt.inst_max;
+    flags |= X86EMU_RUN_MAX_INSTR;
+  }
+  x86emu_run(vm->emu, flags);
 
   x86emu_clear_log(vm->emu, 1);
 }

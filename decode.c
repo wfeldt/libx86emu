@@ -39,6 +39,7 @@
 
 
 #include "include/x86emu_int.h"
+#include <time.h>
 
 #define LOG_STR(a) memcpy(*p, a, sizeof a - 1), *p += sizeof a - 1
 #define LOG_FREE (M.log.size + M.log.buf - M.log.ptr)
@@ -62,11 +63,12 @@ halts, timeouts, or one of the conditions in flags are met.
 ****************************************************************************/
 unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 {
-  u8 op1;
+  u8 op1, u_m1;
   s32 ofs32;
   char **p;
-  unsigned u, u1, u_m1, rs = 0;
+  unsigned u, u1, rs = 0;
   x86emu_mem_t *mem;
+  time_t t0;
 
   static unsigned char is_prefix[0x100] = {
     [0x26] = 1, [0x2e] = 1, [0x36] = 1, [0x3e] = 1,
@@ -79,6 +81,8 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
   p = &M.log.ptr;
 
   M.x86.tsc = 0;
+
+  t0 = time(NULL);
 
 #if WITH_TSC
   M.x86.real_tsc = tsc();
@@ -112,17 +116,26 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 
     log_regs();
 
-    if((flags & X86EMU_RUN_MAX_INSTR) && M.max_instr && M.x86.tsc >= M.max_instr) {
+    if(
+      (flags & X86EMU_RUN_MAX_INSTR) &&
+      M.max_instr &&
+      M.x86.tsc >= M.max_instr
+    ) {
       rs |= X86EMU_RUN_MAX_INSTR;
       break;
     }
 
-    if((flags & X86EMU_RUN_TIMEOUT) && M.timeout) {
+    if(
+      (flags & X86EMU_RUN_TIMEOUT) &&
+      M.timeout &&
+      !(M.x86.tsc & 0xffff) &&
+      time(NULL) - t0 > M.timeout
+    ) {
       rs |= X86EMU_RUN_TIMEOUT;
       break;
     }
 
-    if(M.code_check && (*M.code_check)()) break;
+    if(M.code_check && (*M.code_check)(&M)) break;
 
     memcpy(M.x86.decode_seg, "[", 1);
 
@@ -184,35 +197,36 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
     if((flags & X86EMU_RUN_LOOP) && mem) {
       u = M.x86.R_CS_BASE + M.x86.R_EIP;
 
+      ofs32  = 0;
+
       if(op1 == 0xeb) {
-        ofs32 = (s8) vm_read_byte_noerr(mem, u);
-        if(M.x86.R_EIP + 1 + ofs32 == M.x86.saved_eip) {
-          rs |= X86EMU_RUN_LOOP;
-        }
-        else if(M.x86.R_EIP + 2 + ofs32 == M.x86.saved_eip && M.x86.saved_eip >= 1) {
-          u_m1 = vm_read_byte_noerr(mem, M.x86.R_CS_BASE + M.x86.saved_eip - 1);
-          if(u_m1 >= 0xf8 && u_m1 <= 0xfd) rs |= X86EMU_RUN_LOOP;
-        }
+        ofs32 = (s32) (s8) vm_read_byte_noerr(mem, u) + 1;
       }
       else if(op1 == 0xe9) {
         if(MODE_DATA32) {
           ofs32 = (vm_read_byte_noerr(mem, u) +
             (vm_read_byte_noerr(mem, u + 1) << 8)) +
             (vm_read_byte_noerr(mem, u + 2) << 16) +
-            (vm_read_byte_noerr(mem, u + 3) << 24);
-          if(M.x86.R_EIP + 4 + ofs32 == M.x86.saved_eip) {
-            rs |= X86EMU_RUN_LOOP;
-          }
+            (vm_read_byte_noerr(mem, u + 3) << 24) + 4;
         }
         else {
-          ofs32 = (s16) (vm_read_byte_noerr(mem, u) + (vm_read_byte_noerr(mem, u + 1) << 8));
-          if(M.x86.R_EIP + 2 + ofs32 == M.x86.saved_eip) {
-            rs |= X86EMU_RUN_LOOP;
-          }
+          ofs32 = (s32) (s16) (
+            vm_read_byte_noerr(mem, u) +
+            (vm_read_byte_noerr(mem, u + 1) << 8)) + 2;
         }
       }
 
-      if(rs) x86emu_stop();
+      if(ofs32) {
+        if(M.x86.R_EIP + ofs32 == M.x86.saved_eip) {
+          rs |= X86EMU_RUN_LOOP;
+        }
+        else if(M.x86.R_EIP + 1 + ofs32 == M.x86.saved_eip && M.x86.saved_eip >= 1) {
+          u_m1 = vm_read_byte_noerr(mem, M.x86.R_CS_BASE + M.x86.saved_eip - 1);
+          if(u_m1 >= 0xf8 && u_m1 <= 0xfd) rs |= X86EMU_RUN_LOOP;
+        }
+
+        if(rs) x86emu_stop(&M);
+      }
     }
 
     if((flags & X86EMU_RUN_NO_CODE) && mem) {
@@ -228,7 +242,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
         }
       }
 
-      if(rs) x86emu_stop();
+      if(rs) x86emu_stop(&M);
     }
 
     (*x86emu_optab[op1])(op1);
@@ -272,9 +286,9 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 REMARKS:
 Halts the system by setting the halted system flag.
 ****************************************************************************/
-void x86emu_stop(void)
+void x86emu_stop(x86emu_t *emu)
 {
-  M.x86.mode |= _MODE_HALTED;
+  emu->x86.mode |= _MODE_HALTED;
 }
 
 /****************************************************************************
@@ -362,7 +376,7 @@ u8 fetch_byte(void)
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_X);
 
-  if(err) x86emu_stop();
+  if(err) x86emu_stop(&M);
 
   if(MODE_CODE32) {
     M.x86.R_EIP++;
@@ -393,7 +407,7 @@ u16 fetch_word(void)
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_X);
 
-  if(err) x86emu_stop();
+  if(err) x86emu_stop(&M);
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 2;
@@ -425,7 +439,7 @@ u32 fetch_long(void)
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_X);
 
-  if(err) x86emu_stop();
+  if(err) x86emu_stop(&M);
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 4;
@@ -1882,7 +1896,7 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
 
   M.x86.intr_stats[nr]++;
 
-  i = M.intr_table[nr] ? (*M.intr_table[nr])(nr, type) : 0;
+  i = M.intr_table[nr] ? (*M.intr_table[nr])(&M, nr, type) : 0;
 
   if(!i) {
     if(type & INTR_MODE_RESTART) {

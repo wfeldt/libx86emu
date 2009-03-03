@@ -4633,7 +4633,7 @@ Handles opcode 0xf4
 static void x86emuOp_hlt(u8 op1)
 {
   OP_DECODE("hlt");
-  x86emu_stop();
+  x86emu_stop(&M);
 }
 
 
