@@ -42,7 +42,7 @@ struct option options[] = {
   { "stderr",     0, NULL, 1004 },
   { "data",       0, NULL, 1005 },
   { "io",         0, NULL, 1006 },
-  { "intr",       0, NULL, 1007 },
+  { "ints",       0, NULL, 1007 },
   { "acc",        0, NULL, 1008 },
   { "attr",       0, NULL, 1009 },
   { }
@@ -56,7 +56,7 @@ struct {
     unsigned code:1;
     unsigned data:1;
     unsigned io:1;
-    unsigned intr:1;
+    unsigned ints:1;
     unsigned acc:1;
     unsigned stderr:1;
     unsigned attr:1;
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
         break;
 
       case 1007:
-        opt.show.intr = 1;
+        opt.show.ints = 1;
         break;
 
       case 1008:
@@ -354,11 +354,11 @@ void vm_run(vm_t *vm)
   if(opt.show.data) vm->emu->log.data = 1;
   if(opt.show.acc) vm->emu->log.acc = 1;
   if(opt.show.io) vm->emu->log.io = 1;
-  if(opt.show.intr) vm->emu->log.intr = 1;
+  if(opt.show.ints) vm->emu->log.ints = 1;
 
-  // x86emu_set_perm(vm->emu, 0x1004, 1, X86EMU_ACC_W | X86EMU_PERM_R);
+  // x86emu_set_perm(vm->emu, 0x1004, 0x1004, X86EMU_ACC_W | X86EMU_PERM_R);
 
-  // x86emu_set_io_perm(vm->emu, 0, 0x400, X86EMU_PERM_R | X86EMU_PERM_W);
+  // x86emu_set_io_perm(vm->emu, 0, 0x3ff, X86EMU_PERM_R | X86EMU_PERM_W);
   // iopl(3);
 
   flags = X86EMU_RUN_LOOP | X86EMU_RUN_NO_CODE;
