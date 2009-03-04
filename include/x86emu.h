@@ -328,11 +328,6 @@ typedef struct {
 #define INTR_MODE_RESTART	0x100
 #define INTR_MODE_ERRCODE	0x200
 
-#define INTR_RAISE_DIV0		x86emu_intr_raise(0, INTR_TYPE_SOFT | INTR_MODE_RESTART, 0)
-#define INTR_RAISE_SOFT(n)	x86emu_intr_raise(n, INTR_TYPE_SOFT, 0)
-#define INTR_RAISE_GP(err)	x86emu_intr_raise(0x0d, INTR_TYPE_FAULT | INTR_MODE_RESTART | INTR_MODE_ERRCODE, err)
-#define INTR_RAISE_UD		x86emu_intr_raise(0x06, INTR_TYPE_FAULT | INTR_MODE_RESTART, 0)
-
 #define X86EMU_RUN_TIMEOUT	(1 << 0)
 #define X86EMU_RUN_MAX_INSTR	(1 << 1)
 #define X86EMU_RUN_NO_EXEC	(1 << 2)
@@ -409,6 +404,8 @@ typedef struct {
 #define X86EMU_PDIR_BITS	(32 - X86EMU_PTABLE_BITS - X86EMU_PAGE_BITS)
 #define X86EMU_PAGE_SIZE	(1 << X86EMU_PAGE_BITS)
 
+#define X86EMU_IO_PORTS		(1 << 16)
+
 typedef struct {
   unsigned char *attr;	// malloc'ed
   unsigned char *data;	// NOT malloc'ed
@@ -440,9 +437,8 @@ typedef struct x86emu_s {
   x86emu_intr_func_t intr_table[256];
   x86emu_mem_t *mem;
   struct {
-    unsigned char map[1 << 16];
-    unsigned stats_i[1 << 16];
-    unsigned stats_o[1 << 16];
+    unsigned char *map;
+    unsigned *stats_i, *stats_o;
     unsigned iopl_needed:1;
     unsigned iopl_ok:1;
   } io;
@@ -457,7 +453,7 @@ typedef struct x86emu_s {
     unsigned data:1;
     unsigned acc:1;
     unsigned io:1;
-    unsigned intr:1;
+    unsigned ints:1;
   } log;
   unsigned timeout;
   u64 max_instr;
@@ -493,7 +489,7 @@ void x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func);
 void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handler);
 void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
 void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm);
-void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm);
+void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
 void x86emu_set_page_address(x86emu_t *emu, unsigned page, void *address);
 
 void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush);
@@ -506,7 +502,7 @@ x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm);
 void x86emu_done(x86emu_t *emu);
 void x86emu_dump(x86emu_t *emu, int flags);
 
-void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err);
+void x86emu_intr_raise(x86emu_t *emu, u8 intr_nr, unsigned type, unsigned err);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/

@@ -109,6 +109,7 @@ void decode_hex4s(char **p, s32 ofs);
 void decode_hex8s(char **p, s32 ofs);
 
 void decode_set_seg_register(sel_t *sel, u16 val);
+void emu_intr_raise(u8 intr_nr, unsigned type, unsigned err);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/

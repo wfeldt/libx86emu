@@ -55,6 +55,13 @@
 #include "prim_ops.h"
 #include "mem.h"
 
+
+#define INTR_RAISE_DIV0		emu_intr_raise(0, INTR_TYPE_SOFT | INTR_MODE_RESTART, 0)
+#define INTR_RAISE_SOFT(n)	emu_intr_raise(n, INTR_TYPE_SOFT, 0)
+#define INTR_RAISE_GP(err)	emu_intr_raise(0x0d, INTR_TYPE_FAULT | INTR_MODE_RESTART | INTR_MODE_ERRCODE, err)
+#define INTR_RAISE_UD		emu_intr_raise(0x06, INTR_TYPE_FAULT | INTR_MODE_RESTART, 0)
+
+
 #if defined(__i386__) || defined (__x86_64__)
 #define WITH_TSC	1
 #define WITH_IOPL	1

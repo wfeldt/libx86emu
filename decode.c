@@ -54,6 +54,7 @@ static void log_regs(void);
 static void log_code(void);
 void check_data_access(sel_t *seg, u32 ofs, u32 size);
 static unsigned decode_memio(u32 addr, u32 *val, unsigned type);
+static void emu_stop(void);
 
 
 /****************************************************************************
@@ -225,7 +226,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
           if(u_m1 >= 0xf8 && u_m1 <= 0xfd) rs |= X86EMU_RUN_LOOP;
         }
 
-        if(rs) x86emu_stop(&M);
+        if(rs) emu_stop();
       }
     }
 
@@ -239,7 +240,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
         rs |= X86EMU_RUN_NO_CODE;
       }
 
-      if(rs) x86emu_stop(&M);
+      if(rs) emu_stop();
     }
 
     (*x86emu_optab[op1])(op1);
@@ -283,6 +284,12 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 REMARKS:
 Halts the system by setting the halted system flag.
 ****************************************************************************/
+void emu_stop()
+{
+  M.x86.mode |= _MODE_HALTED;
+}
+
+
 void x86emu_stop(x86emu_t *emu)
 {
   emu->x86.mode |= _MODE_HALTED;
@@ -298,7 +305,7 @@ void handle_interrupt()
   unsigned lf;
 
   if(M.x86.intr_type) {
-    if(M.log.intr && *p) {
+    if(M.log.ints && *p) {
       lf = LOG_FREE;
       if(lf < 128) lf = x86emu_clear_log(&M, 1);
       if(lf < 128) {
@@ -328,7 +335,7 @@ REMARKS:
 Raise the specified interrupt to be handled before the execution of the
 next instruction.
 ****************************************************************************/
-void x86emu_intr_raise(u8 intr_nr, unsigned type, unsigned err)
+void emu_intr_raise(u8 intr_nr, unsigned type, unsigned err)
 {
   if(!M.x86.intr_type) {
     M.x86.intr_nr = intr_nr;
@@ -373,7 +380,7 @@ u8 fetch_byte(void)
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_X);
 
-  if(err) x86emu_stop(&M);
+  if(err) emu_stop();
 
   if(MODE_CODE32) {
     M.x86.R_EIP++;
@@ -404,7 +411,7 @@ u16 fetch_word(void)
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_X);
 
-  if(err) x86emu_stop(&M);
+  if(err) emu_stop();
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 2;
@@ -436,7 +443,7 @@ u32 fetch_long(void)
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_X);
 
-  if(err) x86emu_stop(&M);
+  if(err) emu_stop();
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 4;
@@ -1939,12 +1946,19 @@ unsigned decode_memio(u32 addr, u32 *val, unsigned type)
 
   err = M.memio(addr, val, type);
 
-  if(!M.log.data || !*p) return err;
+  type &= ~0xff;
+
+  if(!*p || !(M.log.data || M.log.io)) return err;
+  if(M.log.io) {
+    if(type != X86EMU_MEMIO_I && type != X86EMU_MEMIO_O) return err;
+  }
+  else {
+    if(type == X86EMU_MEMIO_I || type == X86EMU_MEMIO_O) return err;
+  }
+
   lf = LOG_FREE;
   if(lf < 1024) lf = x86emu_clear_log(&M, 1);
   if(lf < 1024) return err;
-
-  type &= ~0xff;
 
   switch(type) {
     case X86EMU_MEMIO_R:

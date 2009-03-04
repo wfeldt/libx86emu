@@ -80,7 +80,7 @@ logged. If the function returns a value != 0, the emulation is stopped.
 
 - io permissions
 
-  void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm);
+  void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
 
   - perm: see x86emu_set_perm()
 

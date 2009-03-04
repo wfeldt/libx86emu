@@ -29,15 +29,15 @@ void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func)
 }
 
 
-void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm)
+void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
 {
   if(!emu) return;
 
-  for(; len && start < sizeof emu->io.map / sizeof *emu->io.map; start++, len--) {
-    emu->io.map[start] = perm;
-  }
+  if(end > X86EMU_IO_PORTS - 1) end = X86EMU_IO_PORTS - 1;
 
-  for(start = perm = 0; start < sizeof emu->io.map / sizeof *emu->io.map; start++) {
+  while(start <= end) emu->io.map[start++] = perm;
+
+  for(start = perm = 0; start < X86EMU_IO_PORTS; start++) {
     perm |= emu->io.map[start];
   }
 
@@ -107,7 +107,11 @@ x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm)
 
   emu->mem = x86emu_mem_new(def_mem_perm);
 
-  if(def_io_perm) x86emu_set_io_perm(emu, 0, 1 << 16, def_io_perm);
+  emu->io.map =  calloc(X86EMU_IO_PORTS, sizeof *emu->io.map);
+  emu->io.stats_i =  calloc(X86EMU_IO_PORTS, sizeof *emu->io.stats_i);
+  emu->io.stats_o =  calloc(X86EMU_IO_PORTS, sizeof *emu->io.stats_o);
+
+  if(def_io_perm) x86emu_set_io_perm(emu, 0, X86EMU_IO_PORTS - 1, def_io_perm);
 
   x86emu_set_memio_func(emu, vm_memio);
 
@@ -120,7 +124,13 @@ x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm)
 void x86emu_done(x86emu_t *emu)
 {
   if(emu) {
+    x86emu_mem_free(emu->mem);
+
     if(emu->log.buf) free(emu->log.buf);
+
+    if(emu->io.map) free(emu->io.map);
+    if(emu->io.stats_i) free(emu->io.stats_i);
+    if(emu->io.stats_o) free(emu->io.stats_o);
 
     free(emu);
   }
@@ -218,7 +228,7 @@ void x86emu_dump(x86emu_t *emu, int flags)
   if((flags & X86EMU_DUMP_IO)) {
     x86emu_log(emu, "; - - io accesses\n");
 
-    for(u = 0; u < sizeof emu->io.map / sizeof *emu->io.map; u++) {
+    for(u = 0; u < X86EMU_IO_PORTS; u++) {
       if(emu->io.map[u] & (X86EMU_ACC_R | X86EMU_ACC_W | X86EMU_ACC_INVALID)) {
         x86emu_log(emu,
           "%04x: %c%c%c in=%08x out=%08x\n",
