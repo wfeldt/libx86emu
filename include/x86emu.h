@@ -283,20 +283,9 @@ typedef struct {
 #define F_DF 0x0400             /* DIR flag    */
 #define F_OF 0x0800             /* OVERFLOW flag */
 
-#define TOGGLE_FLAG(flag)     	(x86emu.x86.R_FLG ^= (flag))
-#define SET_FLAG(flag)        	(x86emu.x86.R_FLG |= (flag))
-#define CLEAR_FLAG(flag)      	(x86emu.x86.R_FLG &= ~(flag))
-#define ACCESS_FLAG(flag)     	(x86emu.x86.R_FLG & (flag))
-#define CLEARALL_FLAG(m)    	(x86emu.x86.R_FLG = 0)
-
-#define CONDITIONAL_SET_FLAG(COND,FLAG) \
-  if(COND) SET_FLAG(FLAG); else CLEAR_FLAG(FLAG)
-
-#define F_PF_CALC 0x010000      /* PARITY flag has been calced    */
-#define F_ZF_CALC 0x020000      /* ZERO flag has been calced      */
-#define F_SF_CALC 0x040000      /* SIGN flag has been calced      */
-
-#define F_ALL_CALC      0xff0000        /* All have been calced   */
+#define X86EMU_TOGGLE_FLAG(emu, flag)     (emu->x86.R_FLG ^= (flag))
+#define X86EMU_SET_FLAG(emu, flag)        (emu->x86.R_FLG |= (flag))
+#define X86EMU_CLEAR_FLAG(emu, flag)      (emu->x86.R_FLG &= ~(flag))
 
 /*
  * Emulator machine state.
@@ -310,18 +299,6 @@ typedef struct {
 #define _MODE_STACK32           0x00000020
 #define _MODE_CODE32            0x00000040
 #define _MODE_HALTED            0x00000080
-
-#define MODE_REPE		(x86emu.x86.mode & _MODE_REPE)
-#define MODE_REPNE		(x86emu.x86.mode & _MODE_REPNE)
-#define MODE_REP		(x86emu.x86.mode & (_MODE_REPE | _MODE_REPNE))
-#define MODE_DATA32		(x86emu.x86.mode & _MODE_DATA32)
-#define MODE_ADDR32		(x86emu.x86.mode & _MODE_ADDR32)
-#define MODE_STACK32		(x86emu.x86.mode & _MODE_STACK32)
-#define MODE_CODE32		(x86emu.x86.mode & _MODE_CODE32)
-#define MODE_HALTED		(x86emu.x86.mode & _MODE_HALTED)
-
-#define MODE_PROTECTED		(x86emu.x86.R_CR0 & 1)
-#define MODE_REAL		(!MODE_PROTECTED)
 
 #define INTR_TYPE_SOFT		1
 #define INTR_TYPE_FAULT		2
@@ -460,15 +437,6 @@ typedef struct x86emu_s {
   void *private;
 } x86emu_t;
 
-/*----------------------------- Global Variables --------------------------*/
-
-/* Global emulator machine state.
- *
- * We keep it global to avoid pointer dereferences in the code for speed.
- */
-
-extern x86emu_t x86emu;
-
 /*-------------------------- Function Prototypes --------------------------*/
 
 x86emu_mem_t *x86emu_mem_new(unsigned perm);
@@ -485,10 +453,10 @@ void vm_write_word(x86emu_mem_t *vm, unsigned addr, unsigned val);
 void vm_write_dword(x86emu_mem_t *vm, unsigned addr, unsigned val);
 void vm_write_qword(x86emu_mem_t *vm, unsigned addr, uint64_t val);
 
-void x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func);
+x86emu_memio_func_t x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func);
 void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handler);
 void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
-void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm);
+void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
 void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
 void x86emu_set_page_address(x86emu_t *emu, unsigned page, void *address);
 

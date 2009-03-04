@@ -46,7 +46,7 @@
 
 /*----------------------------- Implementation ----------------------------*/
 
-x86emu_t x86emu;
+x86emu_t M;
 
 static void handle_interrupt(void);
 static void generate_int(u8 nr, unsigned type, unsigned errcode);
@@ -77,7 +77,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
     [0xf0] = 1, [0xf2 ... 0xf3] = 1
   };
 
-  if(emu) x86emu = *emu;
+  if(emu) M = *emu;
 
   p = &M.log.ptr;
 
@@ -275,7 +275,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
     **p = 0;
   }
 
-  if(emu) *emu = x86emu;
+  if(emu) *emu = M;
 
   return rs;
 }
@@ -341,6 +341,15 @@ void emu_intr_raise(u8 intr_nr, unsigned type, unsigned err)
     M.x86.intr_nr = intr_nr;
     M.x86.intr_type = type;
     M.x86.intr_errcode = err;
+  }
+}
+
+void x86emu_intr_raise(x86emu_t *emu, u8 intr_nr, unsigned type, unsigned err)
+{
+  if(emu && !emu->x86.intr_type) {
+    emu->x86.intr_nr = intr_nr;
+    emu->x86.intr_type = type;
+    emu->x86.intr_errcode = err;
   }
 }
 

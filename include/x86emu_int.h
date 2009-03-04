@@ -42,12 +42,12 @@
 #ifndef __X86EMU_X86EMU_INT_H
 #define __X86EMU_X86EMU_INT_H
 
-#define M x86emu
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+
+#define M x86emu1
 
 #include "x86emu.h"
 #include "decode.h"
@@ -55,11 +55,33 @@
 #include "prim_ops.h"
 #include "mem.h"
 
+extern x86emu_t M;
 
 #define INTR_RAISE_DIV0		emu_intr_raise(0, INTR_TYPE_SOFT | INTR_MODE_RESTART, 0)
 #define INTR_RAISE_SOFT(n)	emu_intr_raise(n, INTR_TYPE_SOFT, 0)
 #define INTR_RAISE_GP(err)	emu_intr_raise(0x0d, INTR_TYPE_FAULT | INTR_MODE_RESTART | INTR_MODE_ERRCODE, err)
 #define INTR_RAISE_UD		emu_intr_raise(0x06, INTR_TYPE_FAULT | INTR_MODE_RESTART, 0)
+
+#define MODE_REPE		(M.x86.mode & _MODE_REPE)
+#define MODE_REPNE		(M.x86.mode & _MODE_REPNE)
+#define MODE_REP		(M.x86.mode & (_MODE_REPE | _MODE_REPNE))
+#define MODE_DATA32		(M.x86.mode & _MODE_DATA32)
+#define MODE_ADDR32		(M.x86.mode & _MODE_ADDR32)
+#define MODE_STACK32		(M.x86.mode & _MODE_STACK32)
+#define MODE_CODE32		(M.x86.mode & _MODE_CODE32)
+#define MODE_HALTED		(M.x86.mode & _MODE_HALTED)
+
+#define MODE_PROTECTED		(M.x86.R_CR0 & 1)
+#define MODE_REAL		(!MODE_PROTECTED)
+
+#define TOGGLE_FLAG(flag)     	(M.x86.R_FLG ^= (flag))
+#define SET_FLAG(flag)        	(M.x86.R_FLG |= (flag))
+#define CLEAR_FLAG(flag)      	(M.x86.R_FLG &= ~(flag))
+#define ACCESS_FLAG(flag)     	(M.x86.R_FLG & (flag))
+#define CLEARALL_FLAG(m)    	(M.x86.R_FLG = 0)
+
+#define CONDITIONAL_SET_FLAG(COND,FLAG) \
+  if(COND) SET_FLAG(FLAG); else CLEAR_FLAG(FLAG)
 
 
 #if defined(__i386__) || defined (__x86_64__)

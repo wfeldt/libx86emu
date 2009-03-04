@@ -7,11 +7,16 @@
 #define LINE_LEN 16
 
 
-void x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func)
+x86emu_memio_func_t x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func)
 {
+  x86emu_memio_func_t old = NULL;
+
   if(emu) {
+    old = emu->memio;
     emu->memio = func;
   }
+
+  return old;
 }
 
 
@@ -65,7 +70,7 @@ void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flu
 
 unsigned x86emu_clear_log(x86emu_t *emu, int flush)
 {
-  if(!emu) emu = &x86emu;
+  if(!emu) emu = &M;
 
   if(flush && emu->log.flush) {
     if(emu->log.ptr && emu->log.ptr != emu->log.buf) {

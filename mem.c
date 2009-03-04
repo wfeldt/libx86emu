@@ -66,7 +66,7 @@ mem2_page_t *vm_get_page(x86emu_mem_t *mem, unsigned addr, int create)
 }
 
 
-void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm)
+void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
 {
   x86emu_mem_t *mem;
   mem2_page_t *page;
@@ -74,28 +74,29 @@ void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned len, unsigned perm)
 
   if(!emu || !(mem = emu->mem)) return;
 
+  if(start > end) return;
+
   if((idx = start & (X86EMU_PAGE_SIZE - 1))) {
     page = vm_get_page(mem, start, 1);
-    for(; idx < X86EMU_PAGE_SIZE && len; len--) {
+    for(; idx < X86EMU_PAGE_SIZE && start <= end; start++) {
       page->attr[idx++] = perm;
     }
-    start |= X86EMU_PAGE_SIZE - 1;
-    start++;
+    if(!start || start > end) return;
   }
 
-  if(!len || !start) return;
-
-  for(; start && len >= X86EMU_PAGE_SIZE; start += X86EMU_PAGE_SIZE, len -= X86EMU_PAGE_SIZE) {
+  for(; end - start >= X86EMU_PAGE_SIZE - 1; start += X86EMU_PAGE_SIZE) {
     page = vm_get_page(mem, start, 0);
     page->def_attr = perm;
     if(page->attr) memset(page->attr, page->def_attr, X86EMU_PAGE_SIZE);
+    if(!start) return;
   }
 
-  if(!len || !start) return;
+  if(start > end) return;
 
   page = vm_get_page(mem, start, 1);
-  for(idx = 0; len; len--) {
-    page->attr[idx++] = perm;
+  end = end - start + 1;
+  for(idx = 0; idx < end; idx++) {
+    page->attr[idx] = perm;
   }
 }
 
@@ -211,15 +212,15 @@ unsigned vm_i_byte(unsigned addr)
   unsigned char *perm;
 
   addr &= 0xffff;
-  perm = x86emu.io.map + addr;
+  perm = M.io.map + addr;
 
   if(
-    x86emu.io.iopl_ok &&
+    M.io.iopl_ok &&
     (*perm & X86EMU_PERM_R)
   ) {
     *perm |= X86EMU_ACC_R;
 
-    x86emu.io.stats_i[addr]++;
+    M.io.stats_i[addr]++;
 
     return inb(addr);
   }
@@ -227,7 +228,7 @@ unsigned vm_i_byte(unsigned addr)
     *perm |= X86EMU_ACC_INVALID;
   }
 
-  x86emu.mem->invalid = 1;
+  M.mem->invalid = 1;
 
   return 0xff;
 }
@@ -239,10 +240,10 @@ unsigned vm_i_word(unsigned addr)
   unsigned val;
 
   addr &= 0xffff;
-  perm = x86emu.io.map + addr;
+  perm = M.io.map + addr;
 
   if(
-    !x86emu.io.iopl_ok ||
+    !M.io.iopl_ok ||
     addr == 0xffff ||
     !(perm[0] & X86EMU_PERM_R) ||
     !(perm[1] & X86EMU_PERM_R)
@@ -256,8 +257,8 @@ unsigned vm_i_word(unsigned addr)
   perm[0] |= X86EMU_ACC_R;
   perm[1] |= X86EMU_ACC_R;
 
-  x86emu.io.stats_i[addr]++;
-  x86emu.io.stats_i[addr + 1]++;
+  M.io.stats_i[addr]++;
+  M.io.stats_i[addr + 1]++;
 
   return inw(addr);
 }
@@ -269,10 +270,10 @@ unsigned vm_i_dword(unsigned addr)
   unsigned val;
 
   addr &= 0xffff;
-  perm = x86emu.io.map + addr;
+  perm = M.io.map + addr;
 
   if(
-    !x86emu.io.iopl_ok ||
+    !M.io.iopl_ok ||
     addr >= 0xfffd ||
     !(perm[0] & X86EMU_PERM_R) ||
     !(perm[1] & X86EMU_PERM_R) ||
@@ -292,10 +293,10 @@ unsigned vm_i_dword(unsigned addr)
   perm[2] |= X86EMU_ACC_R;
   perm[3] |= X86EMU_ACC_R;
 
-  x86emu.io.stats_i[addr]++;
-  x86emu.io.stats_i[addr + 1]++;
-  x86emu.io.stats_i[addr + 2]++;
-  x86emu.io.stats_i[addr + 3]++;
+  M.io.stats_i[addr]++;
+  M.io.stats_i[addr + 1]++;
+  M.io.stats_i[addr + 2]++;
+  M.io.stats_i[addr + 3]++;
 
   return inl(addr);
 }
@@ -306,22 +307,22 @@ void vm_o_byte(unsigned addr, unsigned val)
   unsigned char *perm;
 
   addr &= 0xffff;
-  perm = x86emu.io.map + addr;
+  perm = M.io.map + addr;
 
   if(
-    x86emu.io.iopl_ok &&
+    M.io.iopl_ok &&
     (*perm & X86EMU_PERM_W)
   ) {
     *perm |= X86EMU_ACC_W;
 
-    x86emu.io.stats_o[addr]++;
+    M.io.stats_o[addr]++;
 
     outb(val, addr);
   }
   else {
     *perm |= X86EMU_ACC_INVALID;
 
-    x86emu.mem->invalid = 1;
+    M.mem->invalid = 1;
   }
 }
 
@@ -331,10 +332,10 @@ void vm_o_word(unsigned addr, unsigned val)
   unsigned char *perm;
 
   addr &= 0xffff;
-  perm = x86emu.io.map + addr;
+  perm = M.io.map + addr;
 
   if(
-    !x86emu.io.iopl_ok ||
+    !M.io.iopl_ok ||
     addr == 0xffff ||
     !(perm[0] & X86EMU_PERM_W) ||
     !(perm[1] & X86EMU_PERM_W)
@@ -348,8 +349,8 @@ void vm_o_word(unsigned addr, unsigned val)
   perm[0] |= X86EMU_ACC_W;
   perm[1] |= X86EMU_ACC_W;
 
-  x86emu.io.stats_o[addr]++;
-  x86emu.io.stats_o[addr + 1]++;
+  M.io.stats_o[addr]++;
+  M.io.stats_o[addr + 1]++;
 
   outw(val, addr);
 }
@@ -360,10 +361,10 @@ void vm_o_dword(unsigned addr, unsigned val)
   unsigned char *perm;
 
   addr &= 0xffff;
-  perm = x86emu.io.map + addr;
+  perm = M.io.map + addr;
 
   if(
-    !x86emu.io.iopl_ok ||
+    !M.io.iopl_ok ||
     addr >= 0xfffd ||
     !(perm[0] & X86EMU_PERM_W) ||
     !(perm[1] & X86EMU_PERM_W) ||
@@ -383,10 +384,10 @@ void vm_o_dword(unsigned addr, unsigned val)
   perm[2] |= X86EMU_ACC_W;
   perm[3] |= X86EMU_ACC_W;
 
-  x86emu.io.stats_o[addr]++;
-  x86emu.io.stats_o[addr + 1]++;
-  x86emu.io.stats_o[addr + 2]++;
-  x86emu.io.stats_o[addr + 3]++;
+  M.io.stats_o[addr]++;
+  M.io.stats_o[addr + 1]++;
+  M.io.stats_o[addr + 2]++;
+  M.io.stats_o[addr + 3]++;
 
   outl(val, addr);
 }
@@ -452,7 +453,7 @@ void vm_write_qword(x86emu_mem_t *mem, unsigned addr, uint64_t val)
 
 unsigned vm_memio(u32 addr, u32 *val, unsigned type)
 {
-  x86emu_mem_t *mem = x86emu.mem;
+  x86emu_mem_t *mem = M.mem;
   unsigned bits = type & 0xff;
 
   type &= ~0xff;
