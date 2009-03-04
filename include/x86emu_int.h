@@ -47,7 +47,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define M x86emu1
+#define M x86emu
 
 #include "x86emu.h"
 #include "decode.h"
@@ -55,6 +55,7 @@
 #include "prim_ops.h"
 #include "mem.h"
 
+// global emulator state
 extern x86emu_t M;
 
 #define INTR_RAISE_DIV0		emu_intr_raise(0, INTR_TYPE_SOFT | INTR_MODE_RESTART, 0)
