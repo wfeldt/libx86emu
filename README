@@ -45,8 +45,8 @@ Note: copies emu to global variable x86emu while running!
   void x86emu_stop(x86emu_t *emu);
 
 Use this function in callbacks (e.g. interrupt handler) to tell the emulator
-to stop. The result is that the emulator returns from x86emu_run() when the
-current instruction is finished.
+to stop. The emulator returns from x86emu_run() when the current instruction
+has been finished.
 
 
 - set log buffer
