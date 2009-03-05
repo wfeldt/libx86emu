@@ -211,7 +211,6 @@ void vm_free(vm_t *vm)
 
 int vm_init(vm_t *vm, char *file)
 {
-  x86emu_mem_t *mem = vm->emu->mem;
   FILE *f;
   char buf[1024], *s, *s1, *s2;
   unsigned u, addr, line = 0;
@@ -236,7 +235,7 @@ int vm_init(vm_t *vm, char *file)
         ((isxdigit(s[2]) && isxdigit(s[3])) || (isspace(s[2]) && isspace(s[3]))) &&
         !isxdigit(s[4])
       ) {
-        if(isxdigit(s[2])) vm_write_byte(mem, addr, strtoul(s, NULL, 16));
+        if(isxdigit(s[2])) x86emu_write_byte(vm->emu, addr, strtoul(s, NULL, 16));
 
         addr++;
         s += 4;

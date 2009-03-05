@@ -311,18 +311,19 @@ typedef struct {
 #define X86EMU_RUN_NO_CODE	(1 << 3)
 #define X86EMU_RUN_LOOP		(1 << 4)
 
-#define X86EMU_MEMIO_8	0
-#define X86EMU_MEMIO_16	1
-#define X86EMU_MEMIO_32	2
-#define X86EMU_MEMIO_R	(0 << 8)
-#define X86EMU_MEMIO_W	(1 << 8)
-#define X86EMU_MEMIO_X	(2 << 8)
-#define X86EMU_MEMIO_I	(3 << 8)
-#define X86EMU_MEMIO_O	(4 << 8)
+#define X86EMU_MEMIO_8		0
+#define X86EMU_MEMIO_16		1
+#define X86EMU_MEMIO_32		2
+#define X86EMU_MEMIO_8_NOPERM	3
+#define X86EMU_MEMIO_R		(0 << 8)
+#define X86EMU_MEMIO_W		(1 << 8)
+#define X86EMU_MEMIO_X		(2 << 8)
+#define X86EMU_MEMIO_I		(3 << 8)
+#define X86EMU_MEMIO_O		(4 << 8)
 
 struct x86emu_s;
 
-typedef unsigned (* x86emu_memio_func_t)(u32 addr, u32 *val, unsigned type);
+typedef unsigned (* x86emu_memio_func_t)(struct x86emu_s *, u32 addr, u32 *val, unsigned type);
 typedef int (* x86emu_intr_func_t)(struct x86emu_s *, u8 num, unsigned type);
 typedef int (* x86emu_code_check_t)(struct x86emu_s *);
 typedef void (* x86emu_flush_func_t)(char *buf, unsigned size);
@@ -439,38 +440,35 @@ typedef struct x86emu_s {
 
 /*-------------------------- Function Prototypes --------------------------*/
 
-x86emu_mem_t *x86emu_mem_new(unsigned perm);
-x86emu_mem_t *x86emu_mem_free(x86emu_mem_t *mem);
+x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm);
+x86emu_t *x86emu_done(x86emu_t *emu);
 
-unsigned vm_read_byte(x86emu_mem_t *vm, unsigned addr);
-unsigned vm_read_byte_noerr(x86emu_mem_t *vm, unsigned addr);
-unsigned vm_read_word(x86emu_mem_t *vm, unsigned addr);
-unsigned vm_read_dword(x86emu_mem_t *vm, unsigned addr);
-uint64_t vm_read_qword(x86emu_mem_t *vm, unsigned addr);
-unsigned vm_read_segofs16(x86emu_mem_t *vm, unsigned addr);
-void vm_write_byte(x86emu_mem_t *vm, unsigned addr, unsigned val);
-void vm_write_word(x86emu_mem_t *vm, unsigned addr, unsigned val);
-void vm_write_dword(x86emu_mem_t *vm, unsigned addr, unsigned val);
-void vm_write_qword(x86emu_mem_t *vm, unsigned addr, uint64_t val);
-
-x86emu_memio_func_t x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func);
-void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handler);
-void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
-void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
-void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
-void x86emu_set_page_address(x86emu_t *emu, unsigned page, void *address);
+void x86emu_reset(x86emu_t *emu);
+unsigned x86emu_run(x86emu_t *emu, unsigned flags);
+void x86emu_stop(x86emu_t *emu);
 
 void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush);
 unsigned x86emu_clear_log(x86emu_t *emu, int flush);
 void x86emu_log(x86emu_t *emu, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-void x86emu_reset(x86emu_t *emu);
-unsigned x86emu_run(x86emu_t *emu, unsigned flags);
-void x86emu_stop(x86emu_t *emu);
-x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm);
-void x86emu_done(x86emu_t *emu);
 void x86emu_dump(x86emu_t *emu, int flags);
 
+void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
+void x86emu_set_page_address(x86emu_t *emu, unsigned page, void *address);
+void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
+
+void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
+void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handler);
+x86emu_memio_func_t x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func);
+
 void x86emu_intr_raise(x86emu_t *emu, u8 intr_nr, unsigned type, unsigned err);
+
+unsigned x86emu_read_byte(x86emu_t *emu, unsigned addr);
+unsigned x86emu_read_byte_noperm(x86emu_t *emu, unsigned addr);
+unsigned x86emu_read_word(x86emu_t *emu, unsigned addr);
+unsigned x86emu_read_dword(x86emu_t *emu, unsigned addr);
+void x86emu_write_byte(x86emu_t *emu, unsigned addr, unsigned val);
+void x86emu_write_word(x86emu_t *emu, unsigned addr, unsigned val);
+void x86emu_write_dword(x86emu_t *emu, unsigned addr, unsigned val);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/

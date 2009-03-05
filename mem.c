@@ -1,7 +1,22 @@
 #include "include/x86emu_int.h"
 #include <sys/io.h>
 
-x86emu_mem_t *x86emu_mem_new(unsigned perm)
+#define PERM16(a)	((a) + ((a) << 8))
+#define PERM32(a)	(PERM16(a) + (PERM16(a) << 16))
+
+// avoid unaliged memory accesses
+#define STRICT_ALIGN	0
+
+static unsigned vm_r_byte(x86emu_mem_t *vm, unsigned addr);
+static unsigned vm_r_byte_noperm(x86emu_mem_t *vm, unsigned addr);
+static unsigned vm_r_word(x86emu_mem_t *vm, unsigned addr);
+static unsigned vm_r_dword(x86emu_mem_t *vm, unsigned addr);
+static void vm_w_byte(x86emu_mem_t *vm, unsigned addr, unsigned val);
+static void vm_w_word(x86emu_mem_t *vm, unsigned addr, unsigned val);
+static void vm_w_dword(x86emu_mem_t *vm, unsigned addr, unsigned val);
+
+
+x86emu_mem_t *emu_mem_new(unsigned perm)
 {
   x86emu_mem_t *mem;
 
@@ -12,7 +27,7 @@ x86emu_mem_t *x86emu_mem_new(unsigned perm)
 }
 
 
-x86emu_mem_t *x86emu_mem_free(x86emu_mem_t *mem)
+x86emu_mem_t *emu_mem_free(x86emu_mem_t *mem)
 {
   if(mem) {
 
@@ -21,6 +36,28 @@ x86emu_mem_t *x86emu_mem_free(x86emu_mem_t *mem)
   }
 
   return NULL;
+}
+
+
+void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
+{
+  if(!emu) return;
+
+  if(end > X86EMU_IO_PORTS - 1) end = X86EMU_IO_PORTS - 1;
+
+  while(start <= end) emu->io.map[start++] = perm;
+
+  for(start = perm = 0; start < X86EMU_IO_PORTS; start++) {
+    perm |= emu->io.map[start];
+  }
+
+  emu->io.iopl_needed = (perm & (X86EMU_PERM_R | X86EMU_PERM_W)) ? 1 : 0;
+
+#if WITH_IOPL 
+  emu->io.iopl_ok = emu->io.iopl_needed && getiopl() != 3 ? 0 : 1;
+#else 
+  emu->io.iopl_ok = 1;
+#endif
 }
 
 
@@ -125,19 +162,19 @@ void x86emu_set_page_address(x86emu_t *emu, unsigned page, void *address)
 }
 
 
-unsigned vm_read_byte(x86emu_mem_t *mem, unsigned addr)
+unsigned vm_r_byte(x86emu_mem_t *mem, unsigned addr)
 {
   mem2_page_t *page;
   unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
-  unsigned char *attr;
+  unsigned char *perm;
 
   page = vm_get_page(mem, addr, 1);
-  attr = page->attr + page_idx;
+  perm = page->attr + page_idx;
 
-  if(*attr & X86EMU_PERM_R) {
-    *attr |= X86EMU_ACC_R;
-    if(!(*attr & X86EMU_ACC_W)) {
-      *attr |= X86EMU_ACC_INVALID;
+  if(*perm & X86EMU_PERM_R) {
+    *perm |= X86EMU_ACC_R;
+    if(!(*perm & X86EMU_ACC_W)) {
+      *perm |= X86EMU_ACC_INVALID;
       mem->invalid = 1;
     }
     return page->data[page_idx];
@@ -149,7 +186,7 @@ unsigned vm_read_byte(x86emu_mem_t *mem, unsigned addr)
 }
 
 
-unsigned vm_read_byte_noerr(x86emu_mem_t *mem, unsigned addr)
+unsigned vm_r_byte_noperm(x86emu_mem_t *mem, unsigned addr)
 {
   mem2_page_t *page;
   unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
@@ -158,11 +195,86 @@ unsigned vm_read_byte_noerr(x86emu_mem_t *mem, unsigned addr)
   page = vm_get_page(mem, addr, 1);
   attr = page->attr + page_idx;
 
-  return (*attr & X86EMU_PERM_R) ? page->data[page_idx] : 0xff;
+  return page->data[page_idx];
 }
 
 
-void vm_write_byte(x86emu_mem_t *mem, unsigned addr, unsigned val)
+unsigned vm_r_word(x86emu_mem_t *mem, unsigned addr)
+{
+  mem2_page_t *page;
+  unsigned val, page_idx = addr & (X86EMU_PAGE_SIZE - 1);
+  u16 *perm16;
+
+  page = vm_get_page(mem, addr, 1);
+  perm16 = (u16 *) (page->attr + page_idx);
+
+  if(
+#if STRICT_ALIGN
+    (page_idx & 1) ||
+#else
+    page_idx >= X86EMU_PAGE_SIZE - 1 ||
+#endif
+    (*perm16 & PERM16(X86EMU_PERM_R | X86EMU_ACC_W)) != PERM16(X86EMU_PERM_R | X86EMU_ACC_W)
+  ) {
+    val = vm_r_byte(mem, addr);
+    val += vm_r_byte(mem, addr + 1) << 8;
+
+    return val;
+  }
+
+  *perm16 |= PERM16(X86EMU_ACC_R);
+
+#ifdef __BIG_ENDIAN__
+  val = page->data[page_idx] + (page->data[page_idx + 1] << 8);
+#else
+  val = *(u16 *) (page->data + page_idx);
+#endif
+
+  return val;
+}
+
+
+unsigned vm_r_dword(x86emu_mem_t *mem, unsigned addr)
+{
+  mem2_page_t *page;
+  unsigned val, page_idx = addr & (X86EMU_PAGE_SIZE - 1);
+  u32 *perm32;
+
+  page = vm_get_page(mem, addr, 1);
+  perm32 = (u32 *) (page->attr + page_idx);
+
+  if(
+#if STRICT_ALIGN
+    (page_idx & 3) ||
+#else
+    page_idx >= X86EMU_PAGE_SIZE - 3 ||
+#endif
+    (*perm32 & PERM32(X86EMU_PERM_R | X86EMU_ACC_W)) != PERM32(X86EMU_PERM_R | X86EMU_ACC_W)
+  ) {
+    val = vm_r_byte(mem, addr);
+    val += vm_r_byte(mem, addr + 1) << 8;
+    val += vm_r_byte(mem, addr + 2) << 16;
+    val += vm_r_byte(mem, addr + 3) << 24;
+
+    return val;
+  }
+
+  *perm32 |= PERM32(X86EMU_ACC_R);
+
+#ifdef __BIG_ENDIAN__
+  val = page->data[page_idx] +
+    (page->data[page_idx + 1] << 8) +
+    (page->data[page_idx + 2] << 16) +
+    (page->data[page_idx + 3] << 24);
+#else
+  val = *(u32 *) (page->data + page_idx);
+#endif
+
+  return val;
+}
+
+
+void vm_w_byte(x86emu_mem_t *mem, unsigned addr, unsigned val)
 {
   mem2_page_t *page;
   unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
@@ -204,6 +316,32 @@ unsigned vm_x_byte(x86emu_mem_t *mem, unsigned addr)
   mem->invalid = 1;
 
   return 0xff;
+}
+
+
+unsigned vm_x_word(x86emu_mem_t *mem, unsigned addr)
+{
+  return vm_x_byte(mem, addr) + (vm_x_byte(mem, addr + 1) << 8);
+}
+
+
+unsigned vm_x_dword(x86emu_mem_t *mem, unsigned addr)
+{
+  return vm_x_word(mem, addr) + (vm_x_word(mem, addr + 2) << 16);
+}
+
+
+void vm_w_word(x86emu_mem_t *mem, unsigned addr, unsigned val)
+{
+  vm_w_byte(mem, addr, val);
+  vm_w_byte(mem, addr + 1, val >> 8);
+}
+
+
+void vm_w_dword(x86emu_mem_t *mem, unsigned addr, unsigned val)
+{
+  vm_w_word(mem, addr, val);
+  vm_w_word(mem, addr + 2, val >> 16);
 }
 
 
@@ -393,67 +531,9 @@ void vm_o_dword(unsigned addr, unsigned val)
 }
 
 
-unsigned vm_read_word(x86emu_mem_t *mem, unsigned addr)
+unsigned vm_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type)
 {
-  return vm_read_byte(mem, addr) + (vm_read_byte(mem, addr + 1) << 8);
-}
-
-
-unsigned vm_read_dword(x86emu_mem_t *mem, unsigned addr)
-{
-  return vm_read_word(mem, addr) + (vm_read_word(mem, addr + 2) << 16);
-}
-
-
-uint64_t vm_read_qword(x86emu_mem_t *mem, unsigned addr)
-{
-  return vm_read_dword(mem, addr) + ((uint64_t) vm_read_dword(mem, addr + 4) << 32);
-
-}
-
-
-unsigned vm_read_segofs16(x86emu_mem_t *mem, unsigned addr)
-{
-  return vm_read_word(mem, addr) + (vm_read_word(mem, addr + 2) << 4);
-}
-
-
-unsigned vm_x_word(x86emu_mem_t *mem, unsigned addr)
-{
-  return vm_x_byte(mem, addr) + (vm_x_byte(mem, addr + 1) << 8);
-}
-
-
-unsigned vm_x_dword(x86emu_mem_t *mem, unsigned addr)
-{
-  return vm_x_word(mem, addr) + (vm_x_word(mem, addr + 2) << 16);
-}
-
-
-void vm_write_word(x86emu_mem_t *mem, unsigned addr, unsigned val)
-{
-  vm_write_byte(mem, addr, val);
-  vm_write_byte(mem, addr + 1, val >> 8);
-}
-
-
-void vm_write_dword(x86emu_mem_t *mem, unsigned addr, unsigned val)
-{
-  vm_write_word(mem, addr, val);
-  vm_write_word(mem, addr + 2, val >> 16);
-}
-
-
-void vm_write_qword(x86emu_mem_t *mem, unsigned addr, uint64_t val)
-{
-  vm_write_dword(mem, addr, val);
-  vm_write_dword(mem, addr + 4, val >> 32);
-}
-
-
-unsigned vm_memio(u32 addr, u32 *val, unsigned type)
-{
-  x86emu_mem_t *mem = M.mem;
+  x86emu_mem_t *mem = emu->mem;
   unsigned bits = type & 0xff;
 
   type &= ~0xff;
@@ -464,13 +544,16 @@ unsigned vm_memio(u32 addr, u32 *val, unsigned type)
     case X86EMU_MEMIO_R:
       switch(bits) {
         case X86EMU_MEMIO_8:
-          *val = vm_read_byte(mem, addr);
+          *val = vm_r_byte(mem, addr);
           break;
         case X86EMU_MEMIO_16:
-          *val = vm_read_word(mem, addr);
+          *val = vm_r_word(mem, addr);
           break;
         case X86EMU_MEMIO_32:
-          *val = vm_read_dword(mem, addr);
+          *val = vm_r_dword(mem, addr);
+          break;
+        case X86EMU_MEMIO_8_NOPERM:
+          *val = vm_r_byte_noperm(mem, addr);
           break;
       }
       break;
@@ -478,13 +561,13 @@ unsigned vm_memio(u32 addr, u32 *val, unsigned type)
     case X86EMU_MEMIO_W:
       switch(bits) {
         case X86EMU_MEMIO_8:
-          vm_write_byte(mem, addr, *val);
+          vm_w_byte(mem, addr, *val);
           break;
         case X86EMU_MEMIO_16:
-          vm_write_word(mem, addr, *val);
+          vm_w_word(mem, addr, *val);
           break;
         case X86EMU_MEMIO_32:
-          vm_write_dword(mem, addr, *val);
+          vm_w_dword(mem, addr, *val);
           break;
       }
       break;

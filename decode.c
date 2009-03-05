@@ -68,7 +68,6 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
   s32 ofs32;
   char **p;
   unsigned u, rs = 0;
-  x86emu_mem_t *mem;
   time_t t0;
 
   static unsigned char is_prefix[0x100] = {
@@ -193,27 +192,25 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
       break;
     }
 
-    mem = M.mem;
-
-    if((flags & X86EMU_RUN_LOOP) && mem) {
+    if(flags & X86EMU_RUN_LOOP) {
       u = M.x86.R_CS_BASE + M.x86.R_EIP;
 
       ofs32  = 0;
 
       if(op1 == 0xeb) {
-        ofs32 = (s32) (s8) vm_read_byte_noerr(mem, u) + 1;
+        ofs32 = (s32) (s8) x86emu_read_byte_noperm(&M, u) + 1;
       }
       else if(op1 == 0xe9) {
         if(MODE_DATA32) {
-          ofs32 = (vm_read_byte_noerr(mem, u) +
-            (vm_read_byte_noerr(mem, u + 1) << 8)) +
-            (vm_read_byte_noerr(mem, u + 2) << 16) +
-            (vm_read_byte_noerr(mem, u + 3) << 24) + 4;
+          ofs32 = (x86emu_read_byte_noperm(&M, u) +
+            (x86emu_read_byte_noperm(&M, u + 1) << 8)) +
+            (x86emu_read_byte_noperm(&M, u + 2) << 16) +
+            (x86emu_read_byte_noperm(&M, u + 3) << 24) + 4;
         }
         else {
           ofs32 = (s32) (s16) (
-            vm_read_byte_noerr(mem, u) +
-            (vm_read_byte_noerr(mem, u + 1) << 8)) + 2;
+            x86emu_read_byte_noperm(&M, u) +
+            (x86emu_read_byte_noperm(&M, u + 1) << 8)) + 2;
         }
       }
 
@@ -222,7 +219,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
           rs |= X86EMU_RUN_LOOP;
         }
         else if(M.x86.R_EIP + 1 + ofs32 == M.x86.saved_eip && M.x86.saved_eip >= 1) {
-          u_m1 = vm_read_byte_noerr(mem, M.x86.R_CS_BASE + M.x86.saved_eip - 1);
+          u_m1 = x86emu_read_byte_noperm(&M, M.x86.R_CS_BASE + M.x86.saved_eip - 1);
           if(u_m1 >= 0xf8 && u_m1 <= 0xfd) rs |= X86EMU_RUN_LOOP;
         }
 
@@ -230,13 +227,10 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
       }
     }
 
-    if((flags & X86EMU_RUN_NO_CODE) && mem) {
+    if(flags & X86EMU_RUN_NO_CODE) {
       u = M.x86.R_CS_BASE + M.x86.R_EIP;
 
-      if(op1 == 0xff && vm_read_byte_noerr(mem, u) == 0xff) {
-        rs |= X86EMU_RUN_NO_CODE;
-      }
-      else if(op1 == 0x00 && vm_read_byte_noerr(mem, u) == 0x00) {
+      if(op1 == 0x00 && x86emu_read_byte_noperm(&M, u) == 0x00) {
         rs |= X86EMU_RUN_NO_CODE;
       }
 
@@ -1953,7 +1947,7 @@ unsigned decode_memio(u32 addr, u32 *val, unsigned type)
   unsigned err, bits = type & 0xff, lf;
   char **p = &M.log.ptr;
 
-  err = M.memio(addr, val, type);
+  err = M.memio(&M, addr, val, type);
 
   type &= ~0xff;
 
@@ -2023,7 +2017,4 @@ unsigned decode_memio(u32 addr, u32 *val, unsigned type)
 
   return err;
 }
-
-#undef LOG_STR
-#undef LOG_FREE
 

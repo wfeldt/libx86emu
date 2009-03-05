@@ -7,6 +7,44 @@
 #define LINE_LEN 16
 
 
+x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm)
+{
+  x86emu_t *emu = calloc(1, sizeof *emu);
+
+  emu->mem = emu_mem_new(def_mem_perm);
+
+  emu->io.map =  calloc(X86EMU_IO_PORTS, sizeof *emu->io.map);
+  emu->io.stats_i =  calloc(X86EMU_IO_PORTS, sizeof *emu->io.stats_i);
+  emu->io.stats_o =  calloc(X86EMU_IO_PORTS, sizeof *emu->io.stats_o);
+
+  if(def_io_perm) x86emu_set_io_perm(emu, 0, X86EMU_IO_PORTS - 1, def_io_perm);
+
+  x86emu_set_memio_func(emu, vm_memio);
+
+  x86emu_reset(emu);
+
+  return emu;
+}
+
+
+x86emu_t *x86emu_done(x86emu_t *emu)
+{
+  if(emu) {
+    emu_mem_free(emu->mem);
+
+    if(emu->log.buf) free(emu->log.buf);
+
+    if(emu->io.map) free(emu->io.map);
+    if(emu->io.stats_i) free(emu->io.stats_i);
+    if(emu->io.stats_o) free(emu->io.stats_o);
+
+    free(emu);
+  }
+
+  return NULL;
+}
+
+
 x86emu_memio_func_t x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func)
 {
   x86emu_memio_func_t old = NULL;
@@ -34,25 +72,67 @@ void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func)
 }
 
 
-void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
+unsigned x86emu_read_byte(x86emu_t *emu, unsigned addr)
 {
-  if(!emu) return;
+  u32 val = 0xff;
 
-  if(end > X86EMU_IO_PORTS - 1) end = X86EMU_IO_PORTS - 1;
+  if(emu) emu->memio(emu, addr, &val, X86EMU_MEMIO_R | X86EMU_MEMIO_8);
+ 
+  return val;
+}
 
-  while(start <= end) emu->io.map[start++] = perm;
 
-  for(start = perm = 0; start < X86EMU_IO_PORTS; start++) {
-    perm |= emu->io.map[start];
-  }
+unsigned x86emu_read_byte_noperm(x86emu_t *emu, unsigned addr)
+{
+  u32 val = 0xff;
 
-  emu->io.iopl_needed = (perm & (X86EMU_PERM_R | X86EMU_PERM_W)) ? 1 : 0;
+  if(emu) emu->memio(emu, addr, &val, X86EMU_MEMIO_R | X86EMU_MEMIO_8_NOPERM);
+ 
+  return val;
+}
 
-#if WITH_IOPL 
-  emu->io.iopl_ok = emu->io.iopl_needed && getiopl() != 3 ? 0 : 1;
-#else 
-  emu->io.iopl_ok = 1;
-#endif
+
+unsigned x86emu_read_word(x86emu_t *emu, unsigned addr)
+{
+  u32 val = 0xffff;
+
+  if(emu) emu->memio(emu, addr, &val, X86EMU_MEMIO_R | X86EMU_MEMIO_16);
+ 
+  return val;
+}
+
+
+unsigned x86emu_read_dword(x86emu_t *emu, unsigned addr)
+{
+  u32 val = 0xffffffff;
+
+  if(emu) emu->memio(emu, addr, &val, X86EMU_MEMIO_R | X86EMU_MEMIO_32);
+ 
+  return val;
+}
+
+
+void x86emu_write_byte(x86emu_t *emu, unsigned addr, unsigned val)
+{
+  u32 val32 = val;
+
+  if(emu) emu->memio(emu, addr, &val32, X86EMU_MEMIO_W | X86EMU_MEMIO_8);
+}
+
+
+void x86emu_write_word(x86emu_t *emu, unsigned addr, unsigned val)
+{
+  u32 val32 = val;
+
+  if(emu) emu->memio(emu, addr, &val32, X86EMU_MEMIO_W | X86EMU_MEMIO_16);
+}
+
+
+void x86emu_write_dword(x86emu_t *emu, unsigned addr, unsigned val)
+{
+  u32 val32 = val;
+
+  if(emu) emu->memio(emu, addr, &val32, X86EMU_MEMIO_W | X86EMU_MEMIO_32);
 }
 
 
@@ -103,42 +183,6 @@ void x86emu_log(x86emu_t *emu, const char *format, ...)
     }
   }
   va_end(args);  
-}
-
-
-x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm)
-{
-  x86emu_t *emu = calloc(1, sizeof *emu);
-
-  emu->mem = x86emu_mem_new(def_mem_perm);
-
-  emu->io.map =  calloc(X86EMU_IO_PORTS, sizeof *emu->io.map);
-  emu->io.stats_i =  calloc(X86EMU_IO_PORTS, sizeof *emu->io.stats_i);
-  emu->io.stats_o =  calloc(X86EMU_IO_PORTS, sizeof *emu->io.stats_o);
-
-  if(def_io_perm) x86emu_set_io_perm(emu, 0, X86EMU_IO_PORTS - 1, def_io_perm);
-
-  x86emu_set_memio_func(emu, vm_memio);
-
-  x86emu_reset(emu);
-
-  return emu;
-}
-
-
-void x86emu_done(x86emu_t *emu)
-{
-  if(emu) {
-    x86emu_mem_free(emu->mem);
-
-    if(emu->log.buf) free(emu->log.buf);
-
-    if(emu->io.map) free(emu->io.map);
-    if(emu->io.stats_i) free(emu->io.stats_i);
-    if(emu->io.stats_o) free(emu->io.stats_o);
-
-    free(emu);
-  }
 }
 
 
@@ -334,7 +378,4 @@ void x86emu_dump(x86emu_t *emu, int flags)
     x86emu_log(emu, "\n");
   }
 }
-
-
-#undef LINE_LEN
 
