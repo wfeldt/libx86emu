@@ -45,6 +45,7 @@ struct option options[] = {
   { "ints",       0, NULL, 1007 },
   { "acc",        0, NULL, 1008 },
   { "attr",       0, NULL, 1009 },
+  { "tsc",        0, NULL, 1010 },
   { }
 };
 
@@ -60,6 +61,7 @@ struct {
     unsigned acc:1;
     unsigned stderr:1;
     unsigned attr:1;
+    unsigned tsc:1;
   } show;
 } opt;
 
@@ -114,6 +116,10 @@ int main(int argc, char **argv)
 
       case 1009:
         opt.show.attr = 1;
+        break;
+
+      case 1010:
+        opt.show.tsc = 1;
         break;
 
       default:
@@ -354,6 +360,7 @@ void vm_run(vm_t *vm)
   if(opt.show.acc) vm->emu->log.acc = 1;
   if(opt.show.io) vm->emu->log.io = 1;
   if(opt.show.ints) vm->emu->log.ints = 1;
+  if(opt.show.tsc) vm->emu->log.tsc = 1;
 
   // x86emu_set_perm(vm->emu, 0x1004, 0x1004, X86EMU_ACC_W | X86EMU_PERM_R);
 

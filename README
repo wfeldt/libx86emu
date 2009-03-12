@@ -76,6 +76,7 @@ Clear log buffer. If flush != 0, write current log via flush() function (see x86
   X86EMU_DUMP_IO
   X86EMU_DUMP_REGS
   X86EMU_DUMP_INTS
+  X86EMU_DUMP_TIME
 
 Writes emulator state to log.
 

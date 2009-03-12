@@ -4,13 +4,16 @@
 #define PERM16(a)	((a) + ((a) << 8))
 #define PERM32(a)	(PERM16(a) + (PERM16(a) << 16))
 
-// avoid unaliged memory accesses
+// avoid unaligned memory accesses
 #define STRICT_ALIGN	0
 
 static unsigned vm_r_byte(x86emu_mem_t *vm, unsigned addr);
 static unsigned vm_r_byte_noperm(x86emu_mem_t *vm, unsigned addr);
 static unsigned vm_r_word(x86emu_mem_t *vm, unsigned addr);
 static unsigned vm_r_dword(x86emu_mem_t *vm, unsigned addr);
+static unsigned vm_x_byte(x86emu_mem_t *vm, unsigned addr);
+static unsigned vm_x_word(x86emu_mem_t *vm, unsigned addr);
+static unsigned vm_x_dword(x86emu_mem_t *vm, unsigned addr);
 static void vm_w_byte(x86emu_mem_t *vm, unsigned addr, unsigned val);
 static void vm_w_word(x86emu_mem_t *vm, unsigned addr, unsigned val);
 static void vm_w_dword(x86emu_mem_t *vm, unsigned addr, unsigned val);
@@ -224,7 +227,7 @@ unsigned vm_r_word(x86emu_mem_t *mem, unsigned addr)
 
   *perm16 |= PERM16(X86EMU_ACC_R);
 
-#ifdef __BIG_ENDIAN__
+#if defined(__BIG_ENDIAN__) || STRICT_ALIGN
   val = page->data[page_idx] + (page->data[page_idx + 1] << 8);
 #else
   val = *(u16 *) (page->data + page_idx);
@@ -261,7 +264,7 @@ unsigned vm_r_dword(x86emu_mem_t *mem, unsigned addr)
 
   *perm32 |= PERM32(X86EMU_ACC_R);
 
-#ifdef __BIG_ENDIAN__
+#if defined(__BIG_ENDIAN__) || STRICT_ALIGN
   val = page->data[page_idx] +
     (page->data[page_idx + 1] << 8) +
     (page->data[page_idx + 2] << 16) +
@@ -271,27 +274,6 @@ unsigned vm_r_dword(x86emu_mem_t *mem, unsigned addr)
 #endif
 
   return val;
-}
-
-
-void vm_w_byte(x86emu_mem_t *mem, unsigned addr, unsigned val)
-{
-  mem2_page_t *page;
-  unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
-  unsigned char *attr;
-
-  page = vm_get_page(mem, addr, 1);
-  attr = page->attr + page_idx;
-
-  if(*attr & X86EMU_PERM_W) {
-    *attr |= X86EMU_ACC_W;
-    page->data[page_idx] = val;
-  }
-  else {
-    *attr |= X86EMU_ACC_INVALID;
-
-    mem->invalid = 1;
-  }
 }
 
 
@@ -331,17 +313,96 @@ unsigned vm_x_dword(x86emu_mem_t *mem, unsigned addr)
 }
 
 
+void vm_w_byte(x86emu_mem_t *mem, unsigned addr, unsigned val)
+{
+  mem2_page_t *page;
+  unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
+  unsigned char *attr;
+
+  page = vm_get_page(mem, addr, 1);
+  attr = page->attr + page_idx;
+
+  if(*attr & X86EMU_PERM_W) {
+    *attr |= X86EMU_ACC_W;
+    page->data[page_idx] = val;
+  }
+  else {
+    *attr |= X86EMU_ACC_INVALID;
+
+    mem->invalid = 1;
+  }
+}
+
+
 void vm_w_word(x86emu_mem_t *mem, unsigned addr, unsigned val)
 {
-  vm_w_byte(mem, addr, val);
-  vm_w_byte(mem, addr + 1, val >> 8);
+  mem2_page_t *page;
+  unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
+  u16 *perm16;
+
+  page = vm_get_page(mem, addr, 1);
+  perm16 = (u16 *) (page->attr + page_idx);
+
+  if(
+#if STRICT_ALIGN
+    (page_idx & 1) ||
+#else
+    page_idx >= X86EMU_PAGE_SIZE - 1 ||
+#endif
+    (*perm16 & PERM16(X86EMU_PERM_W)) != PERM16(X86EMU_PERM_W)
+  ) {
+    vm_w_byte(mem, addr, val);
+    vm_w_byte(mem, addr + 1, val >> 8);
+
+    return;
+  }
+
+  *perm16 |= PERM16(X86EMU_ACC_W);
+
+#if defined(__BIG_ENDIAN__) || STRICT_ALIGN
+  page->data[page_idx] = val;
+  page->data[page_idx + 1] = val >> 8;
+#else
+  *(u16 *) (page->data + page_idx) = val;
+#endif
 }
 
 
 void vm_w_dword(x86emu_mem_t *mem, unsigned addr, unsigned val)
 {
-  vm_w_word(mem, addr, val);
-  vm_w_word(mem, addr + 2, val >> 16);
+  mem2_page_t *page;
+  unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
+  u32 *perm32;
+
+  page = vm_get_page(mem, addr, 1);
+  perm32 = (u32 *) (page->attr + page_idx);
+
+  if(
+#if STRICT_ALIGN
+    (page_idx & 3) ||
+#else
+    page_idx >= X86EMU_PAGE_SIZE - 3 ||
+#endif
+    (*perm32 & PERM32(X86EMU_PERM_W)) != PERM32(X86EMU_PERM_W)
+  ) {
+    vm_w_byte(mem, addr, val);
+    vm_w_byte(mem, addr + 1, val >> 8);
+    vm_w_byte(mem, addr + 2, val >> 16);
+    vm_w_byte(mem, addr + 3, val >> 24);
+
+    return;
+  }
+
+  *perm32 |= PERM32(X86EMU_ACC_W);
+
+#if defined(__BIG_ENDIAN__) || STRICT_ALIGN
+  page->data[page_idx] = val;
+  page->data[page_idx + 1] = val >> 8;
+  page->data[page_idx + 2] = val >> 16;
+  page->data[page_idx + 3] = val >> 24;
+#else
+  *(u32 *) (page->data + page_idx) = val;
+#endif
 }
 
 

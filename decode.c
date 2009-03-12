@@ -269,6 +269,10 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
     **p = 0;
   }
 
+#if WITH_TSC
+  M.x86.real_tsc = tsc() - M.x86.real_tsc;
+#endif
+
   if(emu) *emu = M;
 
   return rs;
@@ -1680,14 +1684,15 @@ void log_code()
   if(lf < 512) lf = x86emu_clear_log(&M, 1);
   if(lf < 512) return;
 
-#if WITH_TSC
-  new_tsc = tsc();
-#endif
-
   decode_hex(p, M.x86.tsc);
+
 #if WITH_TSC
-  LOG_STR(" +");
-  decode_hex(p, new_tsc - M.x86.real_tsc);
+  if(M.log.tsc) {
+    new_tsc = tsc();
+    LOG_STR(" +");
+    decode_hex(p, new_tsc - M.x86.real_tsc);
+    M.x86.real_tsc = new_tsc;
+  }
 #endif
   LOG_STR(" ");
   decode_hex4(p, M.x86.saved_cs);
@@ -1712,10 +1717,6 @@ void log_code()
   LOG_STR("\n");
 
   **p = 0;
-
-#if WITH_TSC
-  M.x86.real_tsc = new_tsc;
-#endif
 }
 
 

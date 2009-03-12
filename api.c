@@ -239,8 +239,10 @@ void x86emu_dump(x86emu_t *emu, int flags)
   unsigned pdir_idx, u, u1, u2, addr;
   char str_data[LINE_LEN * 8], str_attr[LINE_LEN * 8], fbuf[64];
   unsigned char def_data[LINE_LEN], def_attr[LINE_LEN];
+  double d;
 
   if(mem && mem->pdir && (flags & (X86EMU_DUMP_MEM | X86EMU_DUMP_ATTR))) {
+    x86emu_log(emu, "; - - memory\n");
     x86emu_log(emu, ";        ");
     for(u1 = 0; u1 < 16; u1++) x86emu_log(emu, "%4x", u1);
     x86emu_log(emu, "\n");
@@ -293,7 +295,20 @@ void x86emu_dump(x86emu_t *emu, int flags)
     x86emu_log(emu, "\n");
   }
 
+  if((flags & X86EMU_DUMP_INTS)) {
+    x86emu_log(emu, "; - - interrupt statistics\n");
+    for(u1 = 0; u1 < 0x100; u1++) {
+      if(emu->x86.intr_stats[u1]) x86emu_log(emu, "int %02x: %08x\n", u1, emu->x86.intr_stats[u1]);
+    }
+
+    x86emu_log(emu, "\n");
+  }
+
   if((flags & X86EMU_DUMP_REGS)) {
+    x86emu_log(emu, "; - - registers\n");
+
+    x86emu_log(emu, "tsc=%016llx\n\n", (unsigned long long) emu->x86.tsc);
+
     x86emu_log(emu, "cr0=%08x cr1=%08x cr2=%08x cr3=%08x cr4=%08x\n",
       emu->x86.R_CR0, emu->x86.R_CR1, emu->x86.R_CR2, emu->x86.R_CR3, emu->x86.R_CR4
     );
@@ -369,13 +384,16 @@ void x86emu_dump(x86emu_t *emu, int flags)
     x86emu_log(emu, "\n\n");
   }
 
-  if((flags & X86EMU_DUMP_INTS)) {
-    x86emu_log(emu, "; - - interrupt statistics\n");
-    for(u1 = 0; u1 < 0x100; u1++) {
-      if(emu->x86.intr_stats[u1]) x86emu_log(emu, "int %02x: %08x\n", u1, emu->x86.intr_stats[u1]);
-    }
+  if((flags & X86EMU_DUMP_TIME)) {
+    x86emu_log(emu, "; - - timing\n");
 
-    x86emu_log(emu, "\n");
+    d = 0.0;
+    if(emu->x86.tsc) d = (double) emu->x86.real_tsc/emu->x86.tsc;
+    x86emu_log(emu, "cycles: real=%016llx, emulated=%016llx, ratio=%.2f\n\n",
+      (unsigned long long) emu->x86.real_tsc,
+      (unsigned long long) emu->x86.tsc,
+      d
+    );
   }
 }
 

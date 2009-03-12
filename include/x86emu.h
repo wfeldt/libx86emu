@@ -366,6 +366,7 @@ typedef struct {
 #define X86EMU_DUMP_IO		(1 << 2)
 #define X86EMU_DUMP_REGS	(1 << 3)
 #define X86EMU_DUMP_INTS	(1 << 4)
+#define X86EMU_DUMP_TIME	(1 << 5)
 
 #define X86EMU_PERM_R		(1 << 0)
 #define X86EMU_PERM_W		(1 << 1)
@@ -432,6 +433,7 @@ typedef struct x86emu_s {
     unsigned acc:1;
     unsigned io:1;
     unsigned ints:1;
+    unsigned tsc:1;
   } log;
   unsigned timeout;
   u64 max_instr;
