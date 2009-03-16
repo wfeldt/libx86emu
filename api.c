@@ -32,11 +32,14 @@ x86emu_t *x86emu_done(x86emu_t *emu)
   if(emu) {
     emu_mem_free(emu->mem);
 
-    if(emu->log.buf) free(emu->log.buf);
+    free(emu->log.buf);
 
-    if(emu->io.map) free(emu->io.map);
-    if(emu->io.stats_i) free(emu->io.stats_i);
-    if(emu->io.stats_o) free(emu->io.stats_o);
+    free(emu->io.map);
+    free(emu->io.stats_i);
+    free(emu->io.stats_o);
+
+    free(emu->x86.msr);
+    free(emu->x86.msr_perm);
 
     free(emu);
   }
@@ -239,7 +242,6 @@ void x86emu_dump(x86emu_t *emu, int flags)
   unsigned pdir_idx, u, u1, u2, addr;
   char str_data[LINE_LEN * 8], str_attr[LINE_LEN * 8], fbuf[64];
   unsigned char def_data[LINE_LEN], def_attr[LINE_LEN];
-  double d;
 
   if(mem && mem->pdir && (flags & (X86EMU_DUMP_MEM | X86EMU_DUMP_ATTR))) {
     x86emu_log(emu, "; - - memory\n");
@@ -307,7 +309,35 @@ void x86emu_dump(x86emu_t *emu, int flags)
   if((flags & X86EMU_DUMP_REGS)) {
     x86emu_log(emu, "; - - registers\n");
 
-    x86emu_log(emu, "tsc=%016llx\n\n", (unsigned long long) emu->x86.tsc);
+    for(u = u1 = 0; u < X86EMU_MSRS; u++) {
+      if(u >= 0x11 && u <= 0x12 && !(flags & X86EMU_DUMP_TIME)) continue;
+      if(emu->x86.msr_perm[u]) {
+        u1 = 1;
+        x86emu_log(emu, "msr[%04x] %c%c %016llx",
+          u,
+          (emu->x86.msr_perm[u] & X86EMU_ACC_R) ? 'r' : ' ',
+          (emu->x86.msr_perm[u] & X86EMU_ACC_W) ? 'w' : ' ',
+          (unsigned long long) emu->x86.msr[u]
+        );
+        switch(u) {
+          case 0x10:
+            x86emu_log(emu, " ; tsc");
+            break;
+          case 0x11:
+            x86emu_log(emu, " ; last real tsc");
+            break;
+          case 0x12:
+            x86emu_log(emu, " ; real tsc");
+            if(emu->x86.R_TSC) {
+              x86emu_log(emu, ", ratio=%.2f", (double) emu->x86.R_REAL_TSC / emu->x86.R_TSC);
+            }
+            break;
+        }
+        x86emu_log(emu, "\n");
+      }
+    }
+
+    if(u1) x86emu_log(emu, "\n");
 
     x86emu_log(emu, "cr0=%08x cr1=%08x cr2=%08x cr3=%08x cr4=%08x\n",
       emu->x86.R_CR0, emu->x86.R_CR1, emu->x86.R_CR2, emu->x86.R_CR3, emu->x86.R_CR4
@@ -382,18 +412,6 @@ void x86emu_dump(x86emu_t *emu, int flags)
     if(*fbuf) x86emu_log(emu, " ;%s", fbuf);
 
     x86emu_log(emu, "\n\n");
-  }
-
-  if((flags & X86EMU_DUMP_TIME)) {
-    x86emu_log(emu, "; - - timing\n");
-
-    d = 0.0;
-    if(emu->x86.tsc) d = (double) emu->x86.real_tsc/emu->x86.tsc;
-    x86emu_log(emu, "cycles: real=%016llx, emulated=%016llx, ratio=%.2f\n\n",
-      (unsigned long long) emu->x86.real_tsc,
-      (unsigned long long) emu->x86.tsc,
-      d
-    );
   }
 }
 

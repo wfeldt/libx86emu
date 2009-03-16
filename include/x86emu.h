@@ -251,6 +251,10 @@ typedef struct {
 #define R_DR6		drx[6]
 #define R_DR7		drx[7]
 
+#define R_TSC		msr[0x10]
+#define R_LAST_REAL_TSC	msr[0x11]
+#define R_REAL_TSC	msr[0x12]
+
 /* flag conditions   */
 #define FB_CF 0x0001            /* CARRY flag  */
 #define FB_PF 0x0004            /* PARITY flag */
@@ -321,6 +325,8 @@ typedef struct {
 #define X86EMU_MEMIO_I		(3 << 8)
 #define X86EMU_MEMIO_O		(4 << 8)
 
+#define X86EMU_MSRS		0x800
+
 struct x86emu_s;
 
 typedef unsigned (* x86emu_memio_func_t)(struct x86emu_s *, u32 addr, u32 *val, unsigned type);
@@ -342,9 +348,8 @@ typedef struct {
   struct {
     u32 base, limit;
   } idt;
-  u64 msr[0x800];		/* MSRs */
-  u64 tsc;			/* TSC */
-  u64 real_tsc;
+  u64 *msr;			/* X86EMU_MSRS */
+  unsigned char *msr_perm;	/* X86EMU_MSRS */
   u32 mode;
   sel_t *default_seg;
   u32 saved_eip;

@@ -387,11 +387,12 @@ static void x86emuOp2_wrmsr(u8 op2)
 
   u = M.x86.R_ECX;
 
-  if(u >= sizeof M.x86.msr / sizeof *M.x86.msr) {
+  if(u >= X86EMU_MSRS) {
     INTR_RAISE_UD;
   }
   else {
     M.x86.msr[u] = ((u64) M.x86.R_EDX << 32) + M.x86.R_EAX;
+    M.x86.msr_perm[u] |= X86EMU_ACC_W;
   }
 }
 
@@ -404,8 +405,10 @@ static void x86emuOp2_rdtsc(u8 op2)
 {
   OP_DECODE("rdtsc");
 
-  M.x86.R_EAX = M.x86.tsc;
-  M.x86.R_EDX = M.x86.tsc >> 32;
+  M.x86.R_EAX = M.x86.R_TSC;
+  M.x86.R_EDX = M.x86.R_TSC >> 32;
+
+  M.x86.msr_perm[0x10] |= X86EMU_ACC_R;
 }
 
 
@@ -421,12 +424,13 @@ static void x86emuOp2_rdmsr(u8 op2)
 
   u = M.x86.R_ECX;
 
-  if(u >= sizeof M.x86.msr / sizeof *M.x86.msr) {
+  if(u >= X86EMU_MSRS) {
     INTR_RAISE_UD;
   }
   else {
     M.x86.R_EDX = M.x86.msr[u] >> 32;
     M.x86.R_EAX = M.x86.msr[u];
+    M.x86.msr_perm[u] |= X86EMU_ACC_R;
   }
 }
 

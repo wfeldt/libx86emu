@@ -69,6 +69,9 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
   char **p;
   unsigned u, rs = 0;
   time_t t0;
+#if WITH_TSC
+  u64 tsc_ofs;
+#endif
 
   static unsigned char is_prefix[0x100] = {
     [0x26] = 1, [0x2e] = 1, [0x36] = 1, [0x3e] = 1,
@@ -80,12 +83,10 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 
   p = &M.log.ptr;
 
-  M.x86.tsc = 0;
-
   t0 = time(NULL);
 
 #if WITH_TSC
-  M.x86.real_tsc = tsc();
+  tsc_ofs = tsc() - M.x86.R_REAL_TSC;
 #endif
 
 #if WITH_IOPL
@@ -119,7 +120,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
     if(
       (flags & X86EMU_RUN_MAX_INSTR) &&
       M.max_instr &&
-      M.x86.tsc >= M.max_instr
+      M.x86.R_TSC >= M.max_instr
     ) {
       rs |= X86EMU_RUN_MAX_INSTR;
       break;
@@ -128,7 +129,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
     if(
       (flags & X86EMU_RUN_TIMEOUT) &&
       M.timeout &&
-      !(M.x86.tsc & 0xffff) &&
+      !(M.x86.R_TSC & 0xffff) &&
       time(NULL) - t0 > M.timeout
     ) {
       rs |= X86EMU_RUN_TIMEOUT;
@@ -243,9 +244,14 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 
     handle_interrupt();
 
+#if WITH_TSC
+    M.x86.R_LAST_REAL_TSC = M.x86.R_REAL_TSC;
+    M.x86.R_REAL_TSC = tsc() - tsc_ofs;
+#endif
+
     log_code();
 
-    M.x86.tsc++;	// time stamp counter
+    M.x86.R_TSC++;	// time stamp counter
 
     if(MODE_HALTED) break;
   }
@@ -270,7 +276,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
   }
 
 #if WITH_TSC
-  M.x86.real_tsc = tsc() - M.x86.real_tsc;
+  M.x86.R_REAL_TSC = tsc() - tsc_ofs;
 #endif
 
   if(emu) *emu = M;
@@ -1651,6 +1657,9 @@ void x86emu_reset(x86emu_t *emu)
 {
   x86emu_regs_t *x86 = &emu->x86;
 
+  free(x86->msr);
+  free(x86->msr_perm);
+
   memset(x86, 0, sizeof *x86);
 
   x86->R_EFLG = 2;
@@ -1668,6 +1677,13 @@ void x86emu_reset(x86emu_t *emu)
 
   x86->R_GDT_LIMIT = 0xffff;
   x86->R_IDT_LIMIT = 0xffff;
+
+  x86->msr = calloc(X86EMU_MSRS, sizeof *x86->msr);
+  x86->msr_perm = calloc(X86EMU_MSRS, sizeof *x86->msr_perm);
+
+  x86->msr_perm[0x10] = X86EMU_ACC_X;	// tsc
+  x86->msr_perm[0x11] = X86EMU_ACC_X;	// last real tsc
+  x86->msr_perm[0x12] = X86EMU_ACC_X;	// real tsc
 }
 
 
@@ -1675,23 +1691,18 @@ void log_code()
 {
   unsigned u, lf;
   char **p = &M.log.ptr;
-#if WITH_TSC
-  u64 new_tsc;
-#endif
 
   if(!M.log.code || !*p) return;
   lf = LOG_FREE;
   if(lf < 512) lf = x86emu_clear_log(&M, 1);
   if(lf < 512) return;
 
-  decode_hex(p, M.x86.tsc);
+  decode_hex(p, M.x86.R_TSC);
 
 #if WITH_TSC
   if(M.log.tsc) {
-    new_tsc = tsc();
     LOG_STR(" +");
-    decode_hex(p, new_tsc - M.x86.real_tsc);
-    M.x86.real_tsc = new_tsc;
+    decode_hex(p, M.x86.R_REAL_TSC - M.x86.R_LAST_REAL_TSC);
   }
 #endif
   LOG_STR(" ");
