@@ -1802,7 +1802,7 @@ void check_data_access(sel_t *seg, u32 ofs, u32 size)
     lf = LOG_FREE;
     if(lf < 512) lf = x86emu_clear_log(&M, 1);
     if(lf >= 512) {
-      LOG_STR("acc ");
+      LOG_STR("a [");
       switch(size) {
         case 1:
           LOG_STR("byte ");
@@ -1818,7 +1818,7 @@ void check_data_access(sel_t *seg, u32 ofs, u32 size)
       *(*p)++ = seg_name[idx];
       LOG_STR("s:");
       decode_hex8(p, ofs);
-      LOG_STR("\n");
+      LOG_STR("]\n");
 
       **p = 0;
     }
@@ -1964,12 +1964,11 @@ unsigned decode_memio(u32 addr, u32 *val, unsigned type)
   type &= ~0xff;
 
   if(!*p || !(M.log.data || M.log.io)) return err;
-  if(M.log.io) {
-    if(type != X86EMU_MEMIO_I && type != X86EMU_MEMIO_O) return err;
-  }
-  else {
-    if(type == X86EMU_MEMIO_I || type == X86EMU_MEMIO_O) return err;
-  }
+
+  if(
+    !(M.log.io && (type == X86EMU_MEMIO_I || type == X86EMU_MEMIO_O)) &&
+    !(M.log.data && (type == X86EMU_MEMIO_R || type == X86EMU_MEMIO_W || X86EMU_MEMIO_X))
+  ) return err;
 
   lf = LOG_FREE;
   if(lf < 1024) lf = x86emu_clear_log(&M, 1);
