@@ -123,6 +123,14 @@ void x86emu_write_byte(x86emu_t *emu, unsigned addr, unsigned val)
 }
 
 
+void x86emu_write_byte_noperm(x86emu_t *emu, unsigned addr, unsigned val)
+{
+  u32 val32 = val;
+
+  if(emu) emu->memio(emu, addr, &val32, X86EMU_MEMIO_W | X86EMU_MEMIO_8_NOPERM);
+}
+
+
 void x86emu_write_word(x86emu_t *emu, unsigned addr, unsigned val)
 {
   u32 val32 = val;

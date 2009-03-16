@@ -15,6 +15,7 @@ static unsigned vm_x_byte(x86emu_mem_t *vm, unsigned addr);
 static unsigned vm_x_word(x86emu_mem_t *vm, unsigned addr);
 static unsigned vm_x_dword(x86emu_mem_t *vm, unsigned addr);
 static void vm_w_byte(x86emu_mem_t *vm, unsigned addr, unsigned val);
+static void vm_w_byte_noperm(x86emu_mem_t *vm, unsigned addr, unsigned val);
 static void vm_w_word(x86emu_mem_t *vm, unsigned addr, unsigned val);
 static void vm_w_dword(x86emu_mem_t *vm, unsigned addr, unsigned val);
 
@@ -116,26 +117,39 @@ void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
 
   if(start > end) return;
 
+  // x86emu_log(emu, "set perm: start 0x%x, end 0x%x, perm 0x%x\n", start, end, perm);
+
   if((idx = start & (X86EMU_PAGE_SIZE - 1))) {
     page = vm_get_page(mem, start, 1);
     for(; idx < X86EMU_PAGE_SIZE && start <= end; start++) {
+      // x86emu_log(emu, "  page %p, idx = 0x%x\n", page, idx);
       page->attr[idx++] = perm;
     }
     if(!start || start > end) return;
   }
 
+  // x86emu_log(emu, "  2: start 0x%x, end 0x%x\n", start, end);
+
   for(; end - start >= X86EMU_PAGE_SIZE - 1; start += X86EMU_PAGE_SIZE) {
     page = vm_get_page(mem, start, 0);
     page->def_attr = perm;
+    // x86emu_log(emu, "  page %p (start 0x%x, end - start 0x%x)\n", page, start, end - start);
     if(page->attr) memset(page->attr, page->def_attr, X86EMU_PAGE_SIZE);
     if(!start) return;
+    if(end - start == X86EMU_PAGE_SIZE - 1) {
+      start += X86EMU_PAGE_SIZE;
+      break;
+    }
   }
 
   if(start > end) return;
 
+  // x86emu_log(emu, "  3: start 0x%x, end 0x%x\n", start, end);
+
   page = vm_get_page(mem, start, 1);
   end = end - start + 1;
   for(idx = 0; idx < end; idx++) {
+    // x86emu_log(emu, "  page %p, idx = 0x%x\n", page, idx);
     page->attr[idx] = perm;
   }
 }
@@ -331,6 +345,20 @@ void vm_w_byte(x86emu_mem_t *mem, unsigned addr, unsigned val)
 
     mem->invalid = 1;
   }
+}
+
+
+void vm_w_byte_noperm(x86emu_mem_t *mem, unsigned addr, unsigned val)
+{
+  mem2_page_t *page;
+  unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
+  unsigned char *attr;
+
+  page = vm_get_page(mem, addr, 1);
+  attr = page->attr + page_idx;
+
+  *attr |= X86EMU_ACC_W;
+  page->data[page_idx] = val;
 }
 
 
@@ -629,6 +657,9 @@ unsigned vm_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type)
           break;
         case X86EMU_MEMIO_32:
           vm_w_dword(mem, addr, *val);
+          break;
+        case X86EMU_MEMIO_8_NOPERM:
+          vm_w_byte_noperm(mem, addr, *val);
           break;
       }
       break;

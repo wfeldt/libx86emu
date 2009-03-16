@@ -383,6 +383,12 @@ typedef struct {
 #define X86EMU_ACC_INVALID	(1 << 6)
 #define X86EMU_ACC_UNUSED	(1 << 7)
 
+/* for convenience */
+#define X86EMU_PERM_RW		(X86EMU_PERM_R | X86EMU_PERM_W)
+#define X86EMU_PERM_RX		(X86EMU_PERM_R | X86EMU_PERM_X)
+#define X86EMU_PERM_RWX		(X86EMU_PERM_R | X86EMU_PERM_W | X86EMU_PERM_X)
+
+
 /* 4k pages */
 #define X86EMU_PAGE_BITS	12
 #define X86EMU_PTABLE_BITS	10
@@ -475,6 +481,7 @@ unsigned x86emu_read_byte_noperm(x86emu_t *emu, unsigned addr);
 unsigned x86emu_read_word(x86emu_t *emu, unsigned addr);
 unsigned x86emu_read_dword(x86emu_t *emu, unsigned addr);
 void x86emu_write_byte(x86emu_t *emu, unsigned addr, unsigned val);
+void x86emu_write_byte_noperm(x86emu_t *emu, unsigned addr, unsigned val);
 void x86emu_write_word(x86emu_t *emu, unsigned addr, unsigned val);
 void x86emu_write_dword(x86emu_t *emu, unsigned addr, unsigned val);
 
