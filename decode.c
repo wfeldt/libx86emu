@@ -1915,7 +1915,7 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
 
   M.x86.intr_stats[nr]++;
 
-  i = M.intr_table[nr] ? (*M.intr_table[nr])(&M, nr, type) : 0;
+  i = M.intr ? (*M.intr)(&M, nr, type) : 0;
 
   if(!i) {
     if(type & INTR_MODE_RESTART) {

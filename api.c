@@ -61,9 +61,9 @@ x86emu_memio_func_t x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t fun
 }
 
 
-void x86emu_set_intr_func(x86emu_t *emu, unsigned num, x86emu_intr_func_t handler)
+void x86emu_set_intr_func(x86emu_t *emu, x86emu_intr_func_t handler)
 {
-  if(emu && num < sizeof emu->intr_table / sizeof *emu->intr_table) emu->intr_table[num] = handler;
+  if(emu) emu->intr = handler;
 }
 
 
@@ -157,7 +157,7 @@ unsigned x86emu_clear_log(x86emu_t *emu, int flush)
 
   if(flush && emu->log.flush) {
     if(emu->log.ptr && emu->log.ptr != emu->log.buf) {
-      emu->log.flush(emu->log.buf, emu->log.ptr - emu->log.buf);
+      emu->log.flush(emu, emu->log.buf, emu->log.ptr - emu->log.buf);
     }
   }
   if((emu->log.ptr = emu->log.buf)) *emu->log.ptr = 0;

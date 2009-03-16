@@ -17,7 +17,7 @@ typedef struct {
 
 
 void lprintf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
-void flush_log(char *buf, unsigned size);
+void flush_log(x86emu_t *emu, char *buf, unsigned size);
 
 void help(void);
 int do_int(x86emu_t *emu, u8 num, unsigned type);
@@ -63,10 +63,10 @@ struct {
     unsigned attr:1;
     unsigned tsc:1;
   } show;
+
+  FILE *log_file;
 } opt;
 
-
-FILE *log_file = NULL;
 
 int main(int argc, char **argv)
 {
@@ -152,16 +152,16 @@ void lprintf(const char *format, ...)
   va_list args;
 
   va_start(args, format);
-  if(log_file) vfprintf(log_file, format, args);
+  if(opt.log_file) vfprintf(opt.log_file, format, args);
   va_end(args);
 }
 
 
-void flush_log(char *buf, unsigned size)
+void flush_log(x86emu_t *emu, char *buf, unsigned size)
 {
-  if(!buf || !size || !log_file) return;
+  if(!buf || !size || !opt.log_file) return;
 
-  fwrite(buf, size, 1, log_file);
+  fwrite(buf, size, 1, opt.log_file);
 }
 
 
@@ -194,7 +194,6 @@ char *skip_spaces(char *s)
 vm_t *vm_new()
 {
   vm_t *vm;
-  unsigned u;
 
   vm = calloc(1, sizeof *vm);
 
@@ -202,8 +201,7 @@ vm_t *vm_new()
   vm->emu->private = vm;
 
   x86emu_set_log(vm->emu, 1000000, flush_log);
-
-  for(u = 0; u < 0x100; u++) x86emu_set_intr_func(vm->emu, u, do_int);
+  x86emu_set_intr_func(vm->emu, do_int);
 
   return vm;
 }
@@ -383,18 +381,18 @@ void vm_dump(vm_t *vm, char *file)
 {
   FILE *old_log;
 
-  old_log = log_file;
+  old_log = opt.log_file;
 
-  if(file) log_file = fopen(file, "w");
+  if(file) opt.log_file = fopen(file, "w");
 
-  if(log_file) {
+  if(opt.log_file) {
     x86emu_dump(vm->emu, X86EMU_DUMP_MEM | X86EMU_DUMP_REGS | (!file && opt.show.attr ? X86EMU_DUMP_ATTR : 0));
     x86emu_clear_log(vm->emu, 1);
   }
 
-  if(file) fclose(log_file);
+  if(file) fclose(opt.log_file);
 
-  log_file = old_log;
+  opt.log_file = old_log;
 }
 
 
@@ -467,7 +465,7 @@ int run_test(char *file)
 
   if(!file) return 1;
 
-  log_file = opt.show.stderr ? stderr : fopen(build_file_name(file, ".log"), "w");
+  opt.log_file = opt.show.stderr ? stderr : fopen(build_file_name(file, ".log"), "w");
 
   ok = vm_init(vm, file);
 
@@ -495,8 +493,8 @@ int run_test(char *file)
   lprintf("%s: %s\n", file, result == 0 ? "ok" : result == 1 ? "failed" : "unchecked");
   fprintf(stderr, "%s  %s\n", result == 0 ? "ok" : result == 1 ? "F " : "- ", file);
 
-  fclose(log_file);
-  log_file = NULL;
+  fclose(opt.log_file);
+  opt.log_file = NULL;
 
   return result == 1 ? 1 : 0;
 }
