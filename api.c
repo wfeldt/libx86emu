@@ -189,7 +189,7 @@ void x86emu_log(x86emu_t *emu, const char *format, ...)
 }
 
 
-static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, char *str_attr)
+static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, char *str_attr, int flags)
 {
   unsigned u;
   char c;
@@ -198,7 +198,10 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
 
   for(u = 0; u < LINE_LEN; u++) {
     *str_data++ = (attr[u] & X86EMU_ACC_INVALID) ? '*' : ' ';
-    if((attr[u] & X86EMU_ACC_W)) {
+    if(
+      (!flags && (attr[u] & X86EMU_ACC_W)) ||
+      (flags && (attr[u] & X86EMU_ACC_INVALID))
+    ) {
       ok = 1;
       decode_hex2(&str_data, data[u]);
 
@@ -243,7 +246,7 @@ void x86emu_dump(x86emu_t *emu, int flags)
   char str_data[LINE_LEN * 8], str_attr[LINE_LEN * 8], fbuf[64];
   unsigned char def_data[LINE_LEN], def_attr[LINE_LEN];
 
-  if(mem && mem->pdir && (flags & (X86EMU_DUMP_MEM | X86EMU_DUMP_ATTR))) {
+  if(mem && mem->pdir && (flags & (X86EMU_DUMP_MEM | X86EMU_DUMP_ATTR | X86EMU_DUMP_INV_MEM))) {
     x86emu_log(emu, "; - - memory\n");
     x86emu_log(emu, ";        ");
     for(u1 = 0; u1 < 16; u1++) x86emu_log(emu, "%4x", u1);
@@ -264,7 +267,7 @@ void x86emu_dump(x86emu_t *emu, int flags)
             else {
               memset(def_attr, page.def_attr, LINE_LEN);
             }
-            dump_data(def_data, def_attr, str_data, str_attr);
+            dump_data(def_data, def_attr, str_data, str_attr, (flags & X86EMU_DUMP_INV_MEM) ? 1 : 0);
             if(*str_data) {
               addr = (((pdir_idx << X86EMU_PTABLE_BITS) + u1) << X86EMU_PAGE_BITS) + u2;
               x86emu_log(emu, "%08x: %s\n", addr, str_data);
