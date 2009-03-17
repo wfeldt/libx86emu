@@ -396,7 +396,7 @@ void x86emu_dump(x86emu_t *emu, int flags)
             x86emu_log(emu, " ; tsc");
             break;
           case 0x11:
-            x86emu_log(emu, " ; last real tsc");
+            x86emu_log(emu, " ; real tsc (previous)");
             break;
           case 0x12:
             x86emu_log(emu, " ; real tsc");
