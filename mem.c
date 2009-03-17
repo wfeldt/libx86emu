@@ -20,6 +20,18 @@ static void vm_w_word(x86emu_mem_t *vm, unsigned addr, unsigned val);
 static void vm_w_dword(x86emu_mem_t *vm, unsigned addr, unsigned val);
 
 
+void *mem_dup(const void *src, size_t n)
+{
+  void *dst;
+
+  if(!src || !n || !(dst = malloc(n))) return NULL;
+
+  memcpy(dst, src, n);
+
+  return dst;
+}
+
+
 x86emu_mem_t *emu_mem_new(unsigned perm)
 {
   x86emu_mem_t *mem;
@@ -33,13 +45,63 @@ x86emu_mem_t *emu_mem_new(unsigned perm)
 
 x86emu_mem_t *emu_mem_free(x86emu_mem_t *mem)
 {
-  if(mem) {
+  mem2_pdir_t *pdir;
+  mem2_ptable_t *ptable;
+  mem2_page_t page;
+  unsigned pdir_idx, u1;
 
+  if(mem) {
+    if((pdir = mem->pdir)) {
+      for(pdir_idx = 0; pdir_idx < (1 << X86EMU_PDIR_BITS); pdir_idx++) {
+        ptable = (*pdir)[pdir_idx];
+        if(!ptable) continue;
+        for(u1 = 0; u1 < (1 << X86EMU_PTABLE_BITS); u1++) {
+          page = (*ptable)[u1];
+          free(page.attr);
+        }
+        free(ptable);
+      }
+      free(pdir);
+    }
 
     free(mem);
   }
 
   return NULL;
+}
+
+
+x86emu_mem_t *emu_mem_clone(x86emu_mem_t *mem)
+{
+  mem2_pdir_t *pdir, *new_pdir;
+  mem2_ptable_t *ptable, *new_ptable;
+  mem2_page_t page;
+  unsigned pdir_idx, u1;
+  x86emu_mem_t *new_mem = NULL;
+
+  if(!mem) return new_mem;
+
+  new_mem = mem_dup(mem, sizeof *new_mem);
+
+  if((pdir = mem->pdir)) {
+    new_pdir = new_mem->pdir = mem_dup(mem->pdir, sizeof *mem->pdir);
+    for(pdir_idx = 0; pdir_idx < (1 << X86EMU_PDIR_BITS); pdir_idx++) {
+      ptable = (*pdir)[pdir_idx];
+      if(!ptable) continue;
+      new_ptable = (*new_pdir)[pdir_idx] = mem_dup(ptable, sizeof *ptable);
+      for(u1 = 0; u1 < (1 << X86EMU_PTABLE_BITS); u1++) {
+        page = (*ptable)[u1];
+        if(page.attr) {
+          (*new_ptable)[u1].attr = mem_dup(page.attr, 2 * X86EMU_PAGE_SIZE);
+          if(page.data == page.attr + X86EMU_PAGE_SIZE) {
+            (*new_ptable)[u1].data = (*new_ptable)[u1].attr + X86EMU_PAGE_SIZE;
+          }
+        }
+      }
+    }
+  }
+
+  return new_mem;
 }
 
 

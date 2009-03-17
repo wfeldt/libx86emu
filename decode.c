@@ -1653,40 +1653,6 @@ u32 decode_sib_address(int sib, int mod)
 }
 
 
-void x86emu_reset(x86emu_t *emu)
-{
-  x86emu_regs_t *x86 = &emu->x86;
-
-  free(x86->msr);
-  free(x86->msr_perm);
-
-  memset(x86, 0, sizeof *x86);
-
-  x86->R_EFLG = 2;
-
-  x86->R_CS_LIMIT = x86->R_DS_LIMIT = x86->R_SS_LIMIT = x86->R_ES_LIMIT =
-  x86->R_FS_LIMIT = x86->R_GS_LIMIT = 0xffff;
-
-  // resp. 0x4093/9b for 4GB
-  x86->R_CS_ACC = 0x9b;
-  x86->R_SS_ACC = x86->R_DS_ACC = x86->R_ES_ACC = x86->R_FS_ACC = x86->R_GS_ACC = 0x93;
-
-  x86->R_CS = 0xf000;
-  x86->R_CS_BASE = 0xf0000;
-  x86->R_EIP = 0xfff0;
-
-  x86->R_GDT_LIMIT = 0xffff;
-  x86->R_IDT_LIMIT = 0xffff;
-
-  x86->msr = calloc(X86EMU_MSRS, sizeof *x86->msr);
-  x86->msr_perm = calloc(X86EMU_MSRS, sizeof *x86->msr_perm);
-
-  x86->msr_perm[0x10] = X86EMU_ACC_X;	// tsc
-  x86->msr_perm[0x11] = X86EMU_ACC_X;	// last real tsc
-  x86->msr_perm[0x12] = X86EMU_ACC_X;	// real tsc
-}
-
-
 void log_code()
 {
   unsigned u, lf;

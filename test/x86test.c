@@ -209,6 +209,7 @@ vm_t *vm_new()
 
 void vm_free(vm_t *vm)
 {
+  x86emu_done(vm->emu);
   free(vm);
 }
 
@@ -402,6 +403,9 @@ char *build_file_name(char *file, char *suffix)
   static char *s = NULL;
 
   free(s);
+  s = NULL;
+
+  if(!file || !suffix) return s;
 
   i = strlen(file);
   // 5 = strlen(".init")
@@ -454,6 +458,8 @@ int result_cmp(char *file)
   if(f1) fclose(f1);
   if(f0) fclose(f0);
 
+  build_file_name(NULL, NULL);
+
   return err;
 }
 
@@ -495,6 +501,8 @@ int run_test(char *file)
 
   fclose(opt.log_file);
   opt.log_file = NULL;
+
+  build_file_name(NULL, NULL);
 
   return result == 1 ? 1 : 0;
 }

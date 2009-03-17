@@ -456,6 +456,7 @@ typedef struct x86emu_s {
 
 x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm);
 x86emu_t *x86emu_done(x86emu_t *emu);
+x86emu_t *x86emu_clone(x86emu_t *emu);
 
 void x86emu_reset(x86emu_t *emu);
 unsigned x86emu_run(x86emu_t *emu, unsigned flags);
