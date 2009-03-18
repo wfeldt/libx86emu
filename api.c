@@ -58,10 +58,12 @@ x86emu_t *x86emu_clone(x86emu_t *emu)
 
   new_emu->mem = emu_mem_clone(emu->mem);
 
-  if(emu->log.buf) {
-    new_emu->log.buf = mem_dup(emu->log.buf, emu->log.size);
-    if(emu->log.ptr) {
+  if(emu->log.buf && emu->log.ptr) {
+    new_emu->log.buf = malloc(emu->log.size);
+    // copy only used log space
+    if(emu->log.ptr <= emu->log.buf + emu->log.size) {
       new_emu->log.ptr = new_emu->log.buf + (emu->log.ptr - emu->log.buf);
+      memcpy(new_emu->log.buf, emu->log.buf, emu->log.ptr - emu->log.buf);
     }
   }
 
