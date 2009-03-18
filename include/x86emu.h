@@ -377,11 +377,11 @@ typedef struct {
 #define X86EMU_PERM_R		(1 << 0)
 #define X86EMU_PERM_W		(1 << 1)
 #define X86EMU_PERM_X		(1 << 2)
-#define X86EMU_ACC_R		(1 << 3)
-#define X86EMU_ACC_W		(1 << 4)
-#define X86EMU_ACC_X		(1 << 5)
-#define X86EMU_ACC_INVALID	(1 << 6)
-#define X86EMU_ACC_UNUSED	(1 << 7)
+#define X86EMU_PERM_VALID	(1 << 3)
+#define X86EMU_ACC_R		(1 << 4)
+#define X86EMU_ACC_W		(1 << 5)
+#define X86EMU_ACC_X		(1 << 6)
+#define X86EMU_ACC_INVALID	(1 << 7)
 
 /* for convenience */
 #define X86EMU_PERM_RW		(X86EMU_PERM_R | X86EMU_PERM_W)

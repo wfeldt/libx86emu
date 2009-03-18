@@ -232,7 +232,7 @@ void x86emu_set_page(x86emu_t *emu, unsigned page, void *address)
 
     // tag memory as initialized
     for(u = 0; u < X86EMU_PAGE_SIZE; u++) {
-      p->attr[u] |= X86EMU_ACC_W;
+      p->attr[u] |= X86EMU_PERM_VALID;
     }
   }
   else {
@@ -252,7 +252,7 @@ unsigned vm_r_byte(x86emu_mem_t *mem, unsigned addr)
 
   if(*perm & X86EMU_PERM_R) {
     *perm |= X86EMU_ACC_R;
-    if(!(*perm & X86EMU_ACC_W)) {
+    if(!(*perm & X86EMU_PERM_VALID)) {
       *perm |= X86EMU_ACC_INVALID;
       mem->invalid = 1;
     }
@@ -293,7 +293,7 @@ unsigned vm_r_word(x86emu_mem_t *mem, unsigned addr)
 #else
     page_idx >= X86EMU_PAGE_SIZE - 1 ||
 #endif
-    (*perm16 & PERM16(X86EMU_PERM_R | X86EMU_ACC_W)) != PERM16(X86EMU_PERM_R | X86EMU_ACC_W)
+    (*perm16 & PERM16(X86EMU_PERM_R | X86EMU_PERM_VALID)) != PERM16(X86EMU_PERM_R | X86EMU_PERM_VALID)
   ) {
     val = vm_r_byte(mem, addr);
     val += vm_r_byte(mem, addr + 1) << 8;
@@ -328,7 +328,7 @@ unsigned vm_r_dword(x86emu_mem_t *mem, unsigned addr)
 #else
     page_idx >= X86EMU_PAGE_SIZE - 3 ||
 #endif
-    (*perm32 & PERM32(X86EMU_PERM_R | X86EMU_ACC_W)) != PERM32(X86EMU_PERM_R | X86EMU_ACC_W)
+    (*perm32 & PERM32(X86EMU_PERM_R | X86EMU_PERM_VALID)) != PERM32(X86EMU_PERM_R | X86EMU_PERM_VALID)
   ) {
     val = vm_r_byte(mem, addr);
     val += vm_r_byte(mem, addr + 1) << 8;
@@ -364,7 +364,7 @@ unsigned vm_x_byte(x86emu_mem_t *mem, unsigned addr)
 
   if(*attr & X86EMU_PERM_X) {
     *attr |= X86EMU_ACC_X;
-    if(!(*attr & X86EMU_ACC_W)) {
+    if(!(*attr & X86EMU_PERM_VALID)) {
       *attr |= X86EMU_ACC_INVALID;
       mem->invalid = 1;
     }
@@ -399,7 +399,7 @@ void vm_w_byte(x86emu_mem_t *mem, unsigned addr, unsigned val)
   attr = page->attr + page_idx;
 
   if(*attr & X86EMU_PERM_W) {
-    *attr |= X86EMU_ACC_W;
+    *attr |= X86EMU_PERM_VALID | X86EMU_ACC_W;
     page->data[page_idx] = val;
   }
   else {
@@ -419,7 +419,7 @@ void vm_w_byte_noperm(x86emu_mem_t *mem, unsigned addr, unsigned val)
   page = vm_get_page(mem, addr, 1);
   attr = page->attr + page_idx;
 
-  *attr |= X86EMU_ACC_W;
+  *attr |= X86EMU_PERM_VALID | X86EMU_ACC_W;
   page->data[page_idx] = val;
 }
 
@@ -447,7 +447,7 @@ void vm_w_word(x86emu_mem_t *mem, unsigned addr, unsigned val)
     return;
   }
 
-  *perm16 |= PERM16(X86EMU_ACC_W);
+  *perm16 |= PERM16(X86EMU_PERM_VALID | X86EMU_ACC_W);
 
 #if defined(__BIG_ENDIAN__) || STRICT_ALIGN
   page->data[page_idx] = val;
@@ -483,7 +483,7 @@ void vm_w_dword(x86emu_mem_t *mem, unsigned addr, unsigned val)
     return;
   }
 
-  *perm32 |= PERM32(X86EMU_ACC_W);
+  *perm32 |= PERM32(X86EMU_PERM_VALID | X86EMU_ACC_W);
 
 #if defined(__BIG_ENDIAN__) || STRICT_ALIGN
   page->data[page_idx] = val;

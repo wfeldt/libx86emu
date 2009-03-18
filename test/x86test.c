@@ -361,7 +361,7 @@ void vm_run(vm_t *vm)
   if(opt.show.ints) vm->emu->log.ints = 1;
   if(opt.show.tsc) vm->emu->log.tsc = 1;
 
-  // x86emu_set_perm(vm->emu, 0x1004, 0x1004, X86EMU_ACC_W | X86EMU_PERM_R);
+  // x86emu_set_perm(vm->emu, 0x1004, 0x1004, X86EMU_PERM_VALID | X86EMU_PERM_R);
 
   // x86emu_set_io_perm(vm->emu, 0, 0x3ff, X86EMU_PERM_R | X86EMU_PERM_W);
   // iopl(3);

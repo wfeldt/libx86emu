@@ -95,12 +95,14 @@ Writes emulator state to log.
     X86EMU_PERM_R
     X86EMU_PERM_W
     X86EMU_PERM_X
+    X86EMU_PERM_VALID
     X86EMU_ACC_R
     X86EMU_ACC_W
     X86EMU_ACC_X
     X86EMU_ACC_INVALID
 
   X86EMU_PERM_{R,W,X}: memory is readable, writable, executable
+  X86EMU_PERM_VALID: memory has been initialized (that is, been written to)
   X86EMU_ACC_{R,W,X}: memory has been read, written, executed
   X86EMU_ACC_INVALID: there was an invalid access (e.g. tried to read but not readable)
 

@@ -272,6 +272,11 @@ void x86emu_log(x86emu_t *emu, const char *format, ...)
 }
 
 
+/*
+ * flags:
+ *   0: show all
+ *   1: show only memory with invalid accesses
+ */
 static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, char *str_attr, int flags)
 {
   unsigned u;
@@ -282,7 +287,7 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
   for(u = 0; u < LINE_LEN; u++) {
     *str_data++ = (attr[u] & X86EMU_ACC_INVALID) ? '*' : ' ';
     if(
-      (!flags && (attr[u] & X86EMU_ACC_W)) ||
+      (!flags && (attr[u] & X86EMU_PERM_VALID)) ||
       (flags && (attr[u] & X86EMU_ACC_INVALID))
     ) {
       ok = 1;
