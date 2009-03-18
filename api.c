@@ -19,7 +19,7 @@ x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm)
 
   if(def_io_perm) x86emu_set_io_perm(emu, 0, X86EMU_IO_PORTS - 1, def_io_perm);
 
-  x86emu_set_memio_func(emu, vm_memio);
+  x86emu_set_memio_handler(emu, vm_memio);
 
   x86emu_reset(emu);
 
@@ -109,30 +109,42 @@ void x86emu_reset(x86emu_t *emu)
 }
 
 
-x86emu_memio_func_t x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func)
+x86emu_memio_handler_t x86emu_set_memio_handler(x86emu_t *emu, x86emu_memio_handler_t handler)
 {
-  x86emu_memio_func_t old = NULL;
+  x86emu_memio_handler_t old = NULL;
 
   if(emu) {
     old = emu->memio;
-    emu->memio = func;
+    emu->memio = handler;
   }
 
   return old;
 }
 
 
-void x86emu_set_intr_func(x86emu_t *emu, x86emu_intr_func_t handler)
+x86emu_intr_handler_t x86emu_set_intr_handler(x86emu_t *emu, x86emu_intr_handler_t handler)
 {
-  if(emu) emu->intr = handler;
+  x86emu_intr_handler_t old = NULL;
+
+  if(emu) {
+    old = emu->intr;
+    emu->intr = handler;
+  }
+
+  return old;
 }
 
 
-void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func)
+x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code_handler_t handler)
 {
+  x86emu_code_handler_t old = NULL;
+
   if(emu) {
-    emu->code_check = func;
+    old = emu->code_check;
+    emu->code_check = handler;
   }
+
+  return old;
 }
 
 

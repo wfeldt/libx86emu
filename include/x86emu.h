@@ -329,9 +329,9 @@ typedef struct {
 
 struct x86emu_s;
 
-typedef unsigned (* x86emu_memio_func_t)(struct x86emu_s *, u32 addr, u32 *val, unsigned type);
-typedef int (* x86emu_intr_func_t)(struct x86emu_s *, u8 num, unsigned type);
-typedef int (* x86emu_code_check_t)(struct x86emu_s *);
+typedef unsigned (* x86emu_memio_handler_t)(struct x86emu_s *, u32 addr, u32 *val, unsigned type);
+typedef int (* x86emu_intr_handler_t)(struct x86emu_s *, u8 num, unsigned type);
+typedef int (* x86emu_code_handler_t)(struct x86emu_s *);
 typedef void (* x86emu_flush_func_t)(struct x86emu_s *, char *buf, unsigned size);
 
 typedef struct {
@@ -423,9 +423,9 @@ x86			- X86 registers
 ****************************************************************************/
 typedef struct x86emu_s {
   x86emu_regs_t x86;
-  x86emu_code_check_t code_check;
-  x86emu_memio_func_t memio;
-  x86emu_intr_func_t intr;
+  x86emu_code_handler_t code_check;
+  x86emu_memio_handler_t memio;
+  x86emu_intr_handler_t intr;
   x86emu_mem_t *mem;
   struct {
     unsigned char *map;
@@ -471,9 +471,9 @@ void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
 void x86emu_set_page_address(x86emu_t *emu, unsigned page, void *address);
 void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
 
-void x86emu_set_code_check(x86emu_t *emu, x86emu_code_check_t func);
-void x86emu_set_intr_func(x86emu_t *emu, x86emu_intr_func_t handler);
-x86emu_memio_func_t x86emu_set_memio_func(x86emu_t *emu, x86emu_memio_func_t func);
+x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code_handler_t handler);
+x86emu_intr_handler_t x86emu_set_intr_handler(x86emu_t *emu, x86emu_intr_handler_t handler);
+x86emu_memio_handler_t x86emu_set_memio_handler(x86emu_t *emu, x86emu_memio_handler_t handler);
 
 void x86emu_intr_raise(x86emu_t *emu, u8 intr_nr, unsigned type, unsigned err);
 
