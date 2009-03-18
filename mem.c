@@ -217,7 +217,7 @@ void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
 }
 
 
-void x86emu_set_page_address(x86emu_t *emu, unsigned page, void *address)
+void x86emu_set_page(x86emu_t *emu, unsigned page, void *address)
 {
   x86emu_mem_t *mem;
   mem2_page_t *p;

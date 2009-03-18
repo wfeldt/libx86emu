@@ -107,14 +107,15 @@ Writes emulator state to log.
 
 - direct memory access
 
-  void x86emu_set_page_address(x86emu_t *emu, unsigned page, void *address);
+  void x86emu_set_page(x86emu_t *emu, unsigned offset, void *address);
 
-  - page: start address of memory page (page size: X86EMU_PAGE_SIZE)
 
-Give x86emu access to memory mapped regions. Works only for hole pages. Note
-that memory permissions still apply (x86emu_set_perm()).
+Map memory area of X86EMU_PAGE_SIZE size at address into emulator at offset. offset
+must be X86EMU_PAGE_SIZE aligned, address needs not.
 
-If address = NULL, switch back to emulated memory.
+Memory permissions still apply (via x86emu_set_perm()).
+
+If address is NULL, switch back to emulated memory.
 
 
 - io permissions

@@ -468,8 +468,8 @@ void x86emu_log(x86emu_t *emu, const char *format, ...) __attribute__ ((format (
 void x86emu_dump(x86emu_t *emu, int flags);
 
 void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
-void x86emu_set_page_address(x86emu_t *emu, unsigned page, void *address);
 void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
+void x86emu_set_page(x86emu_t *emu, unsigned page, void *address);
 
 x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code_handler_t handler);
 x86emu_intr_handler_t x86emu_set_intr_handler(x86emu_t *emu, x86emu_intr_handler_t handler);
