@@ -36,32 +36,21 @@ int run_test(char *file);
 struct option options[] = {
   { "help",       0, NULL, 'h'  },
   { "verbose",    0, NULL, 'v'  },
-  { "code",       0, NULL, 1001 },
-  { "regs",       0, NULL, 1002 },
+  { "show",       1, NULL, 1001 },
   { "max",        1, NULL, 1003 },
   { "stderr",     0, NULL, 1004 },
-  { "data",       0, NULL, 1005 },
-  { "io",         0, NULL, 1006 },
-  { "ints",       0, NULL, 1007 },
-  { "acc",        0, NULL, 1008 },
-  { "attr",       0, NULL, 1009 },
-  { "tsc",        0, NULL, 1010 },
   { }
 };
 
 struct {
   unsigned verbose;
   unsigned inst_max;
+
+  unsigned trace_flags;
+  unsigned dump_flags;
+
   struct {
-    unsigned regs:1;
-    unsigned code:1;
-    unsigned data:1;
-    unsigned io:1;
-    unsigned ints:1;
-    unsigned acc:1;
     unsigned stderr:1;
-    unsigned attr:1;
-    unsigned tsc:1;
   } show;
 
   FILE *log_file;
@@ -71,8 +60,8 @@ struct {
 int main(int argc, char **argv)
 {
   int i, err = 0;
-
-  opt.inst_max = 100000;
+  char *s, *t;
+  unsigned u, tbits, dbits;
 
   opterr = 0;
 
@@ -83,11 +72,43 @@ int main(int argc, char **argv)
         break;
 
       case 1001:
-        opt.show.code = 1;
-        break;
-
-      case 1002:
-        opt.show.regs = 1;
+        for(s = optarg; (t = strsep(&s, ",")); ) {
+          u = 1;
+          tbits = 0;
+          while(*t == '+' || *t == '-') u = *t++ == '+' ? 1 : 0;
+               if(!strcmp(t, "trace")) tbits = X86EMU_TRACE_DEFAULT;
+          else if(!strcmp(t, "code"))  tbits = X86EMU_TRACE_CODE;
+          else if(!strcmp(t, "regs"))  tbits = X86EMU_TRACE_REGS;
+          else if(!strcmp(t, "data"))  tbits = X86EMU_TRACE_DATA;
+          else if(!strcmp(t, "acc"))   tbits = X86EMU_TRACE_ACC;
+          else if(!strcmp(t, "io"))    tbits = X86EMU_TRACE_IO;
+          else if(!strcmp(t, "ints"))  tbits = X86EMU_TRACE_INTS;
+          else if(!strcmp(t, "time"))  tbits = X86EMU_TRACE_TIME;
+          else if(!strcmp(t, "attr"))  dbits = X86EMU_DUMP_ATTR;
+          else err = 5;
+          if(err) {
+            fprintf(stderr, "error: invalid flag '%s'\n", t);
+            return 1;
+          }
+          else {
+            if(tbits) {
+              if(u) {
+                opt.trace_flags |= tbits;
+              }
+              else {
+                opt.trace_flags &= ~tbits;
+              }
+            }
+            if(dbits) {
+              if(u) {
+                opt.dump_flags |= dbits;
+              }
+              else {
+                opt.dump_flags &= ~dbits;
+              }
+            }
+          }
+        }
         break;
 
       case 1003:
@@ -96,30 +117,6 @@ int main(int argc, char **argv)
 
       case 1004:
         opt.show.stderr = 1;
-        break;
-
-      case 1005:
-        opt.show.data = 1;
-        break;
-
-      case 1006:
-        opt.show.io = 1;
-        break;
-
-      case 1007:
-        opt.show.ints = 1;
-        break;
-
-      case 1008:
-        opt.show.acc = 1;
-        break;
-
-      case 1009:
-        opt.show.attr = 1;
-        break;
-
-      case 1010:
-        opt.show.tsc = 1;
         break;
 
       default:
@@ -202,6 +199,8 @@ vm_t *vm_new()
 
   x86emu_set_log(vm->emu, 1000000, flush_log);
   x86emu_set_intr_handler(vm->emu, do_int);
+
+  vm->emu->log.trace = opt.trace_flags;
 
   return vm;
 }
@@ -353,14 +352,6 @@ void vm_run(vm_t *vm)
 {
   unsigned flags;
 
-  if(opt.show.regs) vm->emu->log.regs = 1;
-  if(opt.show.code) vm->emu->log.code = 1;
-  if(opt.show.data) vm->emu->log.data = 1;
-  if(opt.show.acc) vm->emu->log.acc = 1;
-  if(opt.show.io) vm->emu->log.io = 1;
-  if(opt.show.ints) vm->emu->log.ints = 1;
-  if(opt.show.tsc) vm->emu->log.tsc = 1;
-
   // x86emu_set_perm(vm->emu, 0x1004, 0x1004, X86EMU_PERM_VALID | X86EMU_PERM_R);
 
   // x86emu_set_io_perm(vm->emu, 0, 0x3ff, X86EMU_PERM_R | X86EMU_PERM_W);
@@ -387,7 +378,9 @@ void vm_dump(vm_t *vm, char *file)
   if(file) opt.log_file = fopen(file, "w");
 
   if(opt.log_file) {
-    x86emu_dump(vm->emu, X86EMU_DUMP_MEM | X86EMU_DUMP_REGS | (!file && opt.show.attr ? X86EMU_DUMP_ATTR : 0));
+    x86emu_dump(vm->emu,
+      X86EMU_DUMP_MEM | X86EMU_DUMP_REGS | (!file && opt.dump_flags ? opt.dump_flags : 0)
+    );
     x86emu_clear_log(vm->emu, 1);
   }
 

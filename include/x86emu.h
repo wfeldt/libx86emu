@@ -366,13 +366,24 @@ typedef struct {
 } x86emu_regs_t;
 
 
-#define X86EMU_DUMP_MEM		(1 << 0)
-#define X86EMU_DUMP_ATTR	(1 << 1)
-#define X86EMU_DUMP_IO		(1 << 2)
-#define X86EMU_DUMP_REGS	(1 << 3)
-#define X86EMU_DUMP_INTS	(1 << 4)
-#define X86EMU_DUMP_TIME	(1 << 5)
-#define X86EMU_DUMP_INV_MEM	(1 << 6)
+#define X86EMU_TRACE_REGS	(1 << 0)
+#define X86EMU_TRACE_CODE	(1 << 1)
+#define X86EMU_TRACE_DATA	(1 << 2)
+#define X86EMU_TRACE_ACC	(1 << 3)
+#define X86EMU_TRACE_IO		(1 << 4)
+#define X86EMU_TRACE_INTS	(1 << 5)
+#define X86EMU_TRACE_TIME	(1 << 6)
+#define X86EMU_TRACE_DEFAULT	(X86EMU_TRACE_REGS | X86EMU_TRACE_CODE | X86EMU_TRACE_DATA | X86EMU_TRACE_IO | X86EMU_TRACE_INTS)
+
+#define X86EMU_DUMP_REGS	(1 << 0)
+#define X86EMU_DUMP_MEM		(1 << 1)
+#define X86EMU_DUMP_ACC_MEM	(1 << 2)
+#define X86EMU_DUMP_INV_MEM	(1 << 3)
+#define X86EMU_DUMP_ATTR	(1 << 4)
+#define X86EMU_DUMP_IO		(1 << 5)
+#define X86EMU_DUMP_INTS	(1 << 6)
+#define X86EMU_DUMP_TIME	(1 << 7)
+#define X86EMU_DUMP_DEFAULT	(X86EMU_DUMP_REGS | X86EMU_DUMP_INV_MEM | X86EMU_DUMP_ATTR | X86EMU_DUMP_IO | X86EMU_DUMP_INTS | X86EMU_DUMP_TIME)
 
 #define X86EMU_PERM_R		(1 << 0)
 #define X86EMU_PERM_W		(1 << 1)
@@ -438,14 +449,7 @@ typedef struct x86emu_s {
     unsigned size;
     char *buf;
     char *ptr;
-
-    unsigned regs:1;
-    unsigned code:1;
-    unsigned data:1;
-    unsigned acc:1;
-    unsigned io:1;
-    unsigned ints:1;
-    unsigned tsc:1;
+    unsigned trace;		/* trace flags: X86EMU_TRACE_* */
   } log;
   unsigned timeout;
   u64 max_instr;
@@ -470,6 +474,7 @@ void x86emu_dump(x86emu_t *emu, int flags);
 void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
 void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
 void x86emu_set_page(x86emu_t *emu, unsigned page, void *address);
+void x86emu_reset_access_stats(x86emu_t *emu);
 
 x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code_handler_t handler);
 x86emu_intr_handler_t x86emu_set_intr_handler(x86emu_t *emu, x86emu_intr_handler_t handler);

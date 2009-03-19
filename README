@@ -77,10 +77,12 @@ Clear log buffer. If flush != 0, write current log via flush() function (see x86
   void x86emu_dump(x86emu_t *emu, int flags);
 
   - flags:
+  X86EMU_DUMP_REGS
   X86EMU_DUMP_MEM
+  X86EMU_DUMP_ACC_MEM
+  X86EMU_DUMP_INV_MEM
   X86EMU_DUMP_ATTR
   X86EMU_DUMP_IO
-  X86EMU_DUMP_REGS
   X86EMU_DUMP_INTS
   X86EMU_DUMP_TIME
 
@@ -102,7 +104,7 @@ Writes emulator state to log.
     X86EMU_ACC_INVALID
 
   X86EMU_PERM_{R,W,X}: memory is readable, writable, executable
-  X86EMU_PERM_VALID: memory has been initialized (that is, been written to)
+  X86EMU_PERM_VALID: memory has been initialized (say, been written to)
   X86EMU_ACC_{R,W,X}: memory has been read, written, executed
   X86EMU_ACC_INVALID: there was an invalid access (e.g. tried to read but not readable)
 
@@ -125,6 +127,13 @@ If address is NULL, switch back to emulated memory.
   void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
 
   - perm: see x86emu_set_perm()
+
+
+- reset memory access statistics
+
+  void x86emu_reset_access_stats(x86emu_t *emu);
+
+Resets the X86EMU_ACC_* bits for the whole memory (see x86emu_set_perm()).
 
 
 - execution hook

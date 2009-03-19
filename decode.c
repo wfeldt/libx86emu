@@ -309,7 +309,7 @@ void handle_interrupt()
   unsigned lf;
 
   if(M.x86.intr_type) {
-    if(M.log.ints && *p) {
+    if((M.log.trace & X86EMU_TRACE_INTS) && *p) {
       lf = LOG_FREE;
       if(lf < 128) lf = x86emu_clear_log(&M, 1);
       if(lf < 128) {
@@ -1658,7 +1658,7 @@ void log_code()
   unsigned u, lf;
   char **p = &M.log.ptr;
 
-  if(!M.log.code || !*p) return;
+  if(!(M.log.trace & X86EMU_TRACE_CODE) || !*p) return;
   lf = LOG_FREE;
   if(lf < 512) lf = x86emu_clear_log(&M, 1);
   if(lf < 512) return;
@@ -1666,7 +1666,7 @@ void log_code()
   decode_hex(p, M.x86.R_TSC);
 
 #if WITH_TSC
-  if(M.log.tsc) {
+  if(M.log.trace & X86EMU_TRACE_TIME) {
     LOG_STR(" +");
     decode_hex(p, M.x86.R_REAL_TSC - M.x86.R_LAST_REAL_TSC);
   }
@@ -1702,7 +1702,7 @@ void log_regs()
   char **p = &M.log.ptr;
   unsigned lf;
 
-  if(!M.log.regs || !*p) return;
+  if(!(M.log.trace & X86EMU_TRACE_REGS) || !*p) return;
   lf = LOG_FREE;
   if(lf < 512) lf = x86emu_clear_log(&M, 1);
   if(lf < 512) return;
@@ -1764,7 +1764,7 @@ void check_data_access(sel_t *seg, u32 ofs, u32 size)
   static char seg_name[7] = "ecsdfg?";
   unsigned idx = seg - M.x86.seg, lf;
 
-  if(M.log.acc && *p) {
+  if((M.log.trace & X86EMU_TRACE_ACC) && *p) {
     lf = LOG_FREE;
     if(lf < 512) lf = x86emu_clear_log(&M, 1);
     if(lf >= 512) {
@@ -1929,11 +1929,11 @@ unsigned decode_memio(u32 addr, u32 *val, unsigned type)
 
   type &= ~0xff;
 
-  if(!*p || !(M.log.data || M.log.io)) return err;
+  if(!*p || !((M.log.trace & X86EMU_TRACE_DATA) || (M.log.trace & X86EMU_TRACE_IO))) return err;
 
   if(
-    !(M.log.io && (type == X86EMU_MEMIO_I || type == X86EMU_MEMIO_O)) &&
-    !(M.log.data && (type == X86EMU_MEMIO_R || type == X86EMU_MEMIO_W || X86EMU_MEMIO_X))
+    !((M.log.trace & X86EMU_TRACE_IO) && (type == X86EMU_MEMIO_I || type == X86EMU_MEMIO_O)) &&
+    !((M.log.trace & X86EMU_TRACE_DATA) && (type == X86EMU_MEMIO_R || type == X86EMU_MEMIO_W || X86EMU_MEMIO_X))
   ) return err;
 
   lf = LOG_FREE;

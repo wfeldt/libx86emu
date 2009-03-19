@@ -3,7 +3,7 @@ CFLAGS     = -g -Wall -fomit-frame-pointer -O2
 TST_FILES  = $(wildcard *.tst)
 INIT_FILES = $(addsuffix .init,$(basename $(wildcard *.tst)))
 RES_FILES  = $(addsuffix .result,$(basename $(wildcard *.tst)))
-TEST_OPTS  = --verbose --code --regs --data --acc --io --ints --attr --tsc
+TEST_OPTS  = --verbose --show code,regs,data,acc,io,ints,attr,time
 
 .PHONY: all test clean
 .SECONDARY: $(INIT_FILES)

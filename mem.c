@@ -105,6 +105,30 @@ x86emu_mem_t *emu_mem_clone(x86emu_mem_t *mem)
 }
 
 
+void x86emu_reset_access_stats(x86emu_t *emu)
+{
+  mem2_pdir_t *pdir;
+  mem2_ptable_t *ptable;
+  mem2_page_t page;
+  unsigned pdir_idx, u, u1;
+
+  if(!emu || !emu->mem || !(pdir = emu->mem->pdir)) return;
+
+  for(pdir_idx = 0; pdir_idx < (1 << X86EMU_PDIR_BITS); pdir_idx++) {
+    ptable = (*pdir)[pdir_idx];
+    if(!ptable) continue;
+    for(u = 0; u < (1 << X86EMU_PTABLE_BITS); u++) {
+      page = (*ptable)[u];
+      if(page.attr) {
+        for(u1 = 0; u1 < X86EMU_PAGE_SIZE; u1++) {
+          page.attr[u1] &= X86EMU_PERM_RWX | X86EMU_PERM_VALID;
+        }
+      }
+    }
+  }
+}
+
+
 void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
 {
   if(!emu) return;

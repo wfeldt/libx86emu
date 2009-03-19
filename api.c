@@ -274,8 +274,9 @@ void x86emu_log(x86emu_t *emu, const char *format, ...)
 
 /*
  * flags:
- *   0: show all
- *   1: show only memory with invalid accesses
+ *   0: show all initialized memory
+ *   1: show only accessed memory
+ *   2: show only invalidly accessed memory
  */
 static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, char *str_attr, int flags)
 {
@@ -287,8 +288,9 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
   for(u = 0; u < LINE_LEN; u++) {
     *str_data++ = (attr[u] & X86EMU_ACC_INVALID) ? '*' : ' ';
     if(
-      (!flags && (attr[u] & X86EMU_PERM_VALID)) ||
-      (flags && (attr[u] & X86EMU_ACC_INVALID))
+      (flags == 0 && (attr[u] & X86EMU_PERM_VALID)) ||
+      (flags == 1 && (attr[u] & (X86EMU_ACC_R | X86EMU_ACC_W | X86EMU_ACC_X | X86EMU_ACC_INVALID))) ||
+      (flags == 2 && (attr[u] & X86EMU_ACC_INVALID))
     ) {
       ok = 1;
       decode_hex2(&str_data, data[u]);
@@ -333,12 +335,22 @@ void x86emu_dump(x86emu_t *emu, int flags)
   unsigned pdir_idx, u, u1, u2, addr;
   char str_data[LINE_LEN * 8], str_attr[LINE_LEN * 8], fbuf[64];
   unsigned char def_data[LINE_LEN], def_attr[LINE_LEN];
+  int dump_flags;
 
-  if(mem && mem->pdir && (flags & (X86EMU_DUMP_MEM | X86EMU_DUMP_ATTR | X86EMU_DUMP_INV_MEM))) {
+  if(
+    mem &&
+    mem->pdir &&
+    (flags & (X86EMU_DUMP_MEM | X86EMU_DUMP_ACC_MEM | X86EMU_DUMP_INV_MEM | X86EMU_DUMP_ATTR))
+  ) {
     x86emu_log(emu, "; - - memory\n");
     x86emu_log(emu, ";        ");
     for(u1 = 0; u1 < 16; u1++) x86emu_log(emu, "%4x", u1);
     x86emu_log(emu, "\n");
+
+    dump_flags = 0;
+    if(flags & X86EMU_DUMP_INV_MEM) dump_flags = 2;
+    if(flags & X86EMU_DUMP_ACC_MEM) dump_flags = 1;
+    if(flags & X86EMU_DUMP_MEM) dump_flags = 0;
 
     pdir = mem->pdir;
     for(pdir_idx = 0; pdir_idx < (1 << X86EMU_PDIR_BITS); pdir_idx++) {
@@ -347,7 +359,7 @@ void x86emu_dump(x86emu_t *emu, int flags)
       for(u1 = 0; u1 < (1 << X86EMU_PTABLE_BITS); u1++) {
         page = (*ptable)[u1];
         if(page.data) {
-          for(u2 = 0; u2 < (1 << X86EMU_PAGE_BITS); u2 += LINE_LEN) {
+          for(u2 = 0; u2 < X86EMU_PAGE_SIZE; u2 += LINE_LEN) {
             memcpy(def_data, page.data + u2, LINE_LEN);
             if(page.attr) {
               memcpy(def_attr, page.attr + u2, LINE_LEN);
@@ -355,7 +367,7 @@ void x86emu_dump(x86emu_t *emu, int flags)
             else {
               memset(def_attr, page.def_attr, LINE_LEN);
             }
-            dump_data(def_data, def_attr, str_data, str_attr, (flags & X86EMU_DUMP_INV_MEM) ? 1 : 0);
+            dump_data(def_data, def_attr, str_data, str_attr, dump_flags);
             if(*str_data) {
               addr = (((pdir_idx << X86EMU_PTABLE_BITS) + u1) << X86EMU_PAGE_BITS) + u2;
               x86emu_log(emu, "%08x: %s\n", addr, str_data);
