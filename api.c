@@ -1,9 +1,5 @@
 #include "include/x86emu_int.h"
 
-
-#define LOG_STR(a) memcpy(*p, a, sizeof a - 1), *p += sizeof a - 1
-#define LOG_FREE(emu) (emu->log.size + emu->log.buf - emu->log.ptr)
-
 #define LINE_LEN 16
 
 

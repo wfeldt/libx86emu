@@ -225,7 +225,7 @@ Handles illegal opcodes.
 static void x86emuOp_illegal_op(u8 op1)
 {
   OP_DECODE("illegal opcode");
-  INTR_RAISE_UD;
+  INTR_RAISE_UD(&M);
 }
 
 
@@ -454,7 +454,7 @@ Handles opcode 0x07
 static void x86emuOp_pop_ES(u8 op1)
 {
   OP_DECODE("pop es");
-  decode_set_seg_register(M.x86.seg + R_ES_INDEX, MODE_DATA32 ? pop_long() : pop_word());
+  x86emu_set_seg_register(&M, M.x86.R_ES_SEL, MODE_DATA32 ? pop_long() : pop_word());
 }
 
 
@@ -510,7 +510,7 @@ Handles opcode 0x17
 static void x86emuOp_pop_SS(u8 op1)
 {
   OP_DECODE("pop ss");
-  decode_set_seg_register(M.x86.seg + R_SS_INDEX, MODE_DATA32 ? pop_long() : pop_word());
+  x86emu_set_seg_register(&M, M.x86.R_SS_SEL, MODE_DATA32 ? pop_long() : pop_word());
 }
 
 
@@ -538,7 +538,7 @@ Handles opcode 0x1f
 static void x86emuOp_pop_DS(u8 op1)
 {
   OP_DECODE("pop ds");
-  decode_set_seg_register(M.x86.seg + R_DS_INDEX, MODE_DATA32 ? pop_long() : pop_word());
+  x86emu_set_seg_register(&M, M.x86.R_DS_SEL, MODE_DATA32 ? pop_long() : pop_word());
 }
 
 
@@ -2027,7 +2027,7 @@ static void x86emuOp_lea_word_R_M(u8 op1)
   fetch_decode_modrm(&mod, &rh, &rl);
 
   if(mod == 3) {
-    INTR_RAISE_UD;
+    INTR_RAISE_UD(&M);
   }
   else {
     if(MODE_DATA32) {
@@ -2068,7 +2068,7 @@ static void x86emuOp_mov_word_SR_RM(u8 op1)
     val = fetch_data_word(decode_rm_address(mod, rl));
   }
 
-  decode_set_seg_register(seg, val);
+  x86emu_set_seg_register(&M, seg, val);
 }
 
 
@@ -2086,7 +2086,7 @@ static void x86emuOp_pop_RM(u8 op1)
   fetch_decode_modrm(&mod, &rh, &rl);
 
   if(rh != 0) {
-    INTR_RAISE_UD;
+    INTR_RAISE_UD(&M);
     return;
   }
 
@@ -2366,7 +2366,7 @@ static void x86emuOp_call_far_IMM(u8 op1)
     push_word(M.x86.R_IP);
   }
 
-  decode_set_seg_register(M.x86.seg + R_CS_INDEX, cs);
+  x86emu_set_seg_register(&M, M.x86.R_CS_SEL, cs);
   M.x86.R_EIP = eip;
 }
 
@@ -3680,7 +3680,7 @@ static void x86emuOp_les_R_IMM(u8 op1)
   OP_DECODE("les ");
   fetch_decode_modrm(&mod, &rh, &rl);
   if(mod == 3) {
-    INTR_RAISE_UD;
+    INTR_RAISE_UD(&M);
   }
   else {
     if(MODE_DATA32){
@@ -3697,7 +3697,7 @@ static void x86emuOp_les_R_IMM(u8 op1)
       *reg16 = fetch_data_word(addr);
       addr += 2;
     }
-    decode_set_seg_register(M.x86.seg + R_ES_INDEX, fetch_data_word(addr));
+    x86emu_set_seg_register(&M, M.x86.R_ES_SEL, fetch_data_word(addr));
   }
 }
 
@@ -3715,7 +3715,7 @@ static void x86emuOp_lds_R_IMM(u8 op1)
   OP_DECODE("lds ");
   fetch_decode_modrm(&mod, &rh, &rl);
   if(mod == 3) {
-    INTR_RAISE_UD;
+    INTR_RAISE_UD(&M);
   }
   else {
     if(MODE_DATA32){
@@ -3732,7 +3732,7 @@ static void x86emuOp_lds_R_IMM(u8 op1)
       *reg16 = fetch_data_word(addr);
       addr += 2;
     }
-    decode_set_seg_register(M.x86.seg + R_DS_INDEX, fetch_data_word(addr));
+    x86emu_set_seg_register(&M, M.x86.R_DS_SEL, fetch_data_word(addr));
   }
 }
 
@@ -3751,7 +3751,7 @@ static void x86emuOp_mov_byte_RM_IMM(u8 op1)
   fetch_decode_modrm(&mod, &rh, &rl);
 
   if(rh != 0) {
-    INTR_RAISE_UD;
+    INTR_RAISE_UD(&M);
     return;
   }
 
@@ -3785,7 +3785,7 @@ static void x86emuOp_mov_word_RM_IMM(u8 op1)
   fetch_decode_modrm(&mod, &rh, &rl);
 
   if(rh != 0) {
-    INTR_RAISE_UD;
+    INTR_RAISE_UD(&M);
   }
 
   if(mod == 3) {
@@ -3946,7 +3946,7 @@ static void x86emuOp_ret_far_IMM(u8 op1)
     M.x86.R_SP += imm;
   }
 
-  decode_set_seg_register(M.x86.seg + R_CS_INDEX, cs);
+  x86emu_set_seg_register(&M, M.x86.R_CS_SEL, cs);
   M.x86.R_EIP = eip;
 }
 
@@ -3971,7 +3971,7 @@ static void x86emuOp_ret_far(u8 op1)
     cs = pop_word();
   }
 
-  decode_set_seg_register(M.x86.seg + R_CS_INDEX, cs);
+  x86emu_set_seg_register(&M, M.x86.R_CS_SEL, cs);
   M.x86.R_EIP = eip;
 }
 
@@ -3984,7 +3984,7 @@ static void x86emuOp_int3(u8 op1)
 {
   OP_DECODE("int 3");
 
-  INTR_RAISE_SOFT(3);
+  INTR_RAISE_SOFT(&M, 3);
 }
 
 
@@ -4000,7 +4000,7 @@ static void x86emuOp_int_IMM(u8 op1)
   nr = fetch_byte();
   DECODE_HEX2(nr);
 
-  INTR_RAISE_SOFT(nr);
+  INTR_RAISE_SOFT(&M, nr);
 }
 
 
@@ -4012,7 +4012,7 @@ static void x86emuOp_into(u8 op1)
 {
   OP_DECODE("into");
 
-  if(ACCESS_FLAG(F_OF)) INTR_RAISE_SOFT(4);
+  if(ACCESS_FLAG(F_OF)) INTR_RAISE_SOFT(&M, 4);
 }
 
 
@@ -4038,7 +4038,7 @@ static void x86emuOp_iret(u8 op1)
     M.x86.R_FLG = pop_word() | F_ALWAYS_ON;
   }
  
-  decode_set_seg_register(M.x86.seg + R_CS_INDEX, cs);
+  x86emu_set_seg_register(&M, M.x86.R_CS_SEL, cs);
   M.x86.R_EIP = eip;
 }
 
@@ -4219,7 +4219,7 @@ static void x86emuOp_aam(u8 op1)
   OP_DECODE("aam");
 
   base = fetch_byte();
-  if(base == 0) INTR_RAISE_DIV0;
+  if(base == 0) INTR_RAISE_DIV0(&M);
 
   M.x86.R_AX = aam_word(M.x86.R_AL, base);
 }
@@ -4530,7 +4530,7 @@ static void x86emuOp_jump_far_IMM(u8 op1)
   eip = MODE_DATA32 ? fetch_long() : fetch_word();
   cs = fetch_word();
 
-  decode_set_seg_register(M.x86.seg + R_CS_INDEX, cs);
+  x86emu_set_seg_register(&M, M.x86.R_CS_SEL, cs);
   M.x86.R_EIP = eip;
 
   DECODE_HEX4(cs);
@@ -5099,7 +5099,7 @@ static void x86emuOp_opcFE_byte_RM(u8 op1)
       break;
 
     default:
-      INTR_RAISE_UD;
+      INTR_RAISE_UD(&M);
       return;
   }
 
@@ -5199,7 +5199,7 @@ static void x86emuOp_opcFF_word_RM(u8 op1)
         break;
 
       default:
-        INTR_RAISE_UD;
+        INTR_RAISE_UD(&M);
         break;
     }
   }
@@ -5285,7 +5285,7 @@ static void x86emuOp_opcFF_word_RM(u8 op1)
           push_word(M.x86.R_IP);
         }
 
-        decode_set_seg_register(M.x86.seg + R_CS_INDEX, cs);
+        x86emu_set_seg_register(&M, M.x86.R_CS_SEL, cs);
         M.x86.R_EIP = val;
         break;
 
@@ -5320,7 +5320,7 @@ static void x86emuOp_opcFF_word_RM(u8 op1)
           val = fetch_data_word(addr);
           cs = fetch_data_word(addr + 2);
         }
-        decode_set_seg_register(M.x86.seg + R_CS_INDEX, cs);
+        x86emu_set_seg_register(&M, M.x86.R_CS_SEL, cs);
         M.x86.R_EIP = val;
         break;
 
@@ -5342,7 +5342,7 @@ static void x86emuOp_opcFF_word_RM(u8 op1)
         break;
 
       case 7:
-        INTR_RAISE_UD;
+        INTR_RAISE_UD(&M);
         break;
     }
   }

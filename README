@@ -214,3 +214,14 @@ Convenience functions to access emulator memory. Memory access restrictions
 (see x86emu_set_perm()) apply except for x86emu_*_noperm() which do not
 check permissions.
 
+
+- set segment register
+
+  void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val);
+
+  R_CS_SEL, R_DS_SEL, R_ES_SEL, R_FS_SEL, R_GS_SEL, R_SS_SEL
+
+Example:
+  x86emu_set_seg_register(emu, emu->x86.R_CS_SEL, 0x7c0);
+
+

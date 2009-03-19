@@ -2211,13 +2211,13 @@ void idiv_byte(u8 s)
 
 	dvd = (s16)M.x86.R_AX;
 	if (s == 0) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
         return;
 	}
 	div = dvd / (s8)s;
 	mod = dvd % (s8)s;
 	if (abs(div) > 0x7f) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 	M.x86.R_AL = (s8) div;
@@ -2234,13 +2234,13 @@ void idiv_word(u16 s)
 
 	dvd = (((s32)M.x86.R_DX) << 16) | M.x86.R_AX;
 	if (s == 0) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 	div = dvd / (s16)s;
 	mod = dvd % (s16)s;
 	if (abs(div) > 0x7fff) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 	CLEAR_FLAG(F_CF);
@@ -2263,13 +2263,13 @@ void idiv_long(u32 s)
 
 	dvd = (((s64)M.x86.R_EDX) << 32) | M.x86.R_EAX;
 	if (s == 0) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 	div = dvd / (s32)s;
 	mod = dvd % (s32)s;
 	if (abs(div) > 0x7fffffff) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 #else
@@ -2284,7 +2284,7 @@ void idiv_long(u32 s)
 	int carry;
 
 	if (s == 0) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 	do {
@@ -2308,7 +2308,7 @@ void idiv_long(u32 s)
 	} while (counter > -1);
 	/* overflow */
 	if (abs_h_dvd || (l_dvd > abs_s)) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 	/* sign */
@@ -2336,13 +2336,13 @@ void div_byte(u8 s)
 
 	dvd = M.x86.R_AX;
     if (s == 0) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
         return;
     }
 	div = dvd / (u8)s;
 	mod = dvd % (u8)s;
 	if (abs(div) > 0xff) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
         return;
 	}
 	M.x86.R_AL = (u8)div;
@@ -2359,13 +2359,13 @@ void div_word(u16 s)
 
 	dvd = (((u32)M.x86.R_DX) << 16) | M.x86.R_AX;
 	if (s == 0) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
         return;
     }
 	div = dvd / (u16)s;
 	mod = dvd % (u16)s;
 	if (abs(div) > 0xffff) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 	CLEAR_FLAG(F_CF);
@@ -2388,13 +2388,13 @@ void div_long(u32 s)
 
 	dvd = (((u64)M.x86.R_EDX) << 32) | M.x86.R_EAX;
 	if (s == 0) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 	div = dvd / (u32)s;
 	mod = dvd % (u32)s;
 	if (abs(div) > 0xffffffff) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 #else
@@ -2408,7 +2408,7 @@ void div_long(u32 s)
 	int carry;
 		
 	if (s == 0) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 	do {
@@ -2432,7 +2432,7 @@ void div_long(u32 s)
 	} while (counter > -1);
 	/* overflow */
 	if (h_dvd || (l_dvd > s)) {
-		INTR_RAISE_DIV0;
+		INTR_RAISE_DIV0(&M);
 		return;
 	}
 	mod = l_dvd;

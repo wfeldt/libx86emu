@@ -41,8 +41,6 @@
 #include "include/x86emu_int.h"
 #include <time.h>
 
-#define LOG_STR(a) memcpy(*p, a, sizeof a - 1), *p += sizeof a - 1
-#define LOG_FREE (M.log.size + M.log.buf - M.log.ptr)
 
 /*----------------------------- Implementation ----------------------------*/
 
@@ -54,7 +52,7 @@ static void log_regs(void);
 static void log_code(void);
 void check_data_access(sel_t *seg, u32 ofs, u32 size);
 static unsigned decode_memio(u32 addr, u32 *val, unsigned type);
-static void emu_stop(void);
+unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type);
 
 
 /****************************************************************************
@@ -224,7 +222,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
           if(u_m1 >= 0xf8 && u_m1 <= 0xfd) rs |= X86EMU_RUN_LOOP;
         }
 
-        if(rs) emu_stop();
+        if(rs) x86emu_stop(&M);
       }
     }
 
@@ -235,7 +233,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
         rs |= X86EMU_RUN_NO_CODE;
       }
 
-      if(rs) emu_stop();
+      if(rs) x86emu_stop(&M);
     }
 
     (*x86emu_optab[op1])(op1);
@@ -288,12 +286,6 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 REMARKS:
 Halts the system by setting the halted system flag.
 ****************************************************************************/
-void emu_stop()
-{
-  M.x86.mode |= _MODE_HALTED;
-}
-
-
 void x86emu_stop(x86emu_t *emu)
 {
   emu->x86.mode |= _MODE_HALTED;
@@ -310,7 +302,7 @@ void handle_interrupt()
 
   if(M.x86.intr_type) {
     if((M.log.trace & X86EMU_TRACE_INTS) && *p) {
-      lf = LOG_FREE;
+      lf = LOG_FREE(&M);
       if(lf < 128) lf = x86emu_clear_log(&M, 1);
       if(lf < 128) {
         if((M.x86.intr_type & 0xff) == INTR_TYPE_FAULT) {
@@ -331,22 +323,6 @@ void handle_interrupt()
   M.x86.intr_type = 0;
 }
 
-/****************************************************************************
-PARAMETERS:
-intrnum - Interrupt number to raise
-
-REMARKS:
-Raise the specified interrupt to be handled before the execution of the
-next instruction.
-****************************************************************************/
-void emu_intr_raise(u8 intr_nr, unsigned type, unsigned err)
-{
-  if(!M.x86.intr_type) {
-    M.x86.intr_nr = intr_nr;
-    M.x86.intr_type = type;
-    M.x86.intr_errcode = err;
-  }
-}
 
 void x86emu_intr_raise(x86emu_t *emu, u8 intr_nr, unsigned type, unsigned err)
 {
@@ -393,7 +369,7 @@ u8 fetch_byte(void)
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_X);
 
-  if(err) emu_stop();
+  if(err) x86emu_stop(&M);
 
   if(MODE_CODE32) {
     M.x86.R_EIP++;
@@ -424,7 +400,7 @@ u16 fetch_word(void)
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_X);
 
-  if(err) emu_stop();
+  if(err) x86emu_stop(&M);
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 2;
@@ -456,7 +432,7 @@ u32 fetch_long(void)
 
   err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_X);
 
-  if(err) emu_stop();
+  if(err) x86emu_stop(&M);
 
   if(MODE_CODE32) {
     M.x86.R_EIP += 4;
@@ -949,7 +925,7 @@ sel_t *decode_rm_seg_register(int reg)
       break;
 
     default:
-      INTR_RAISE_UD;
+      INTR_RAISE_UD(&M);
       reg = 6;
       break;
   }
@@ -1132,7 +1108,7 @@ u32 decode_rm_address(int mod, int rl)
       break;
 
     default:
-      INTR_RAISE_UD;
+      INTR_RAISE_UD(&M);
       break;
   }
 
@@ -1659,7 +1635,7 @@ void log_code()
   char **p = &M.log.ptr;
 
   if(!(M.log.trace & X86EMU_TRACE_CODE) || !*p) return;
-  lf = LOG_FREE;
+  lf = LOG_FREE(&M);
   if(lf < 512) lf = x86emu_clear_log(&M, 1);
   if(lf < 512) return;
 
@@ -1703,7 +1679,7 @@ void log_regs()
   unsigned lf;
 
   if(!(M.log.trace & X86EMU_TRACE_REGS) || !*p) return;
-  lf = LOG_FREE;
+  lf = LOG_FREE(&M);
   if(lf < 512) lf = x86emu_clear_log(&M, 1);
   if(lf < 512) return;
 
@@ -1765,7 +1741,7 @@ void check_data_access(sel_t *seg, u32 ofs, u32 size)
   unsigned idx = seg - M.x86.seg, lf;
 
   if((M.log.trace & X86EMU_TRACE_ACC) && *p) {
-    lf = LOG_FREE;
+    lf = LOG_FREE(&M);
     if(lf < 512) lf = x86emu_clear_log(&M, 1);
     if(lf >= 512) {
       LOG_STR("a [");
@@ -1791,21 +1767,21 @@ void check_data_access(sel_t *seg, u32 ofs, u32 size)
   }
 
   if(ofs + size - 1 > seg->limit) {
-    INTR_RAISE_GP(seg->sel);
+    INTR_RAISE_GP(&M, seg->sel);
   }
 
   return;
 }
 
 
-void decode_set_seg_register(sel_t *seg, u16 val)
+void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val)
 {
   int err = 1;
   unsigned ofs, acc;
   u32 dl, dh, base, limit;
   u32 dt_base, dt_limit;
 
-  if(MODE_REAL) {
+  if(MODE_REAL(emu)) {
     seg->sel = val;
     seg->base = val << 4;
 
@@ -1815,12 +1791,12 @@ void decode_set_seg_register(sel_t *seg, u16 val)
     ofs = val & ~7;
 
     if(val & 4) {
-      dt_base = M.x86.R_LDT_BASE;
-      dt_limit = M.x86.R_LDT_BASE;
+      dt_base = emu->x86.R_LDT_BASE;
+      dt_limit = emu->x86.R_LDT_BASE;
     }
     else {
-      dt_base = M.x86.R_GDT_BASE;
-      dt_limit = M.x86.R_GDT_BASE;
+      dt_base = emu->x86.R_GDT_BASE;
+      dt_limit = emu->x86.R_GDT_BASE;
     }
 
     if(ofs == 0) {
@@ -1833,8 +1809,8 @@ void decode_set_seg_register(sel_t *seg, u16 val)
     }
     else if(ofs + 7 <= dt_limit) {
       err =
-        decode_memio(dt_base + ofs, &dl, X86EMU_MEMIO_32 + X86EMU_MEMIO_R) |
-        decode_memio(dt_base + ofs + 4, &dh, X86EMU_MEMIO_32 + X86EMU_MEMIO_R);
+        emu_memio(emu, dt_base + ofs, &dl, X86EMU_MEMIO_32 + X86EMU_MEMIO_R) |
+        emu_memio(emu, dt_base + ofs + 4, &dh, X86EMU_MEMIO_32 + X86EMU_MEMIO_R);
 
       if(!err) {
         err = 1;
@@ -1856,7 +1832,7 @@ void decode_set_seg_register(sel_t *seg, u16 val)
     }
   }
 
-  if(err) INTR_RAISE_GP(val);
+  if(err) INTR_RAISE_GP(emu, val);
 }
 
 
@@ -1864,7 +1840,7 @@ void idt_lookup(u8 nr, u32 *new_cs, u32 *new_eip)
 {
   unsigned err;
 
-  if(MODE_REAL) {
+  if(MODE_REAL(&M)) {
     err =
       decode_memio(M.x86.R_IDT_BASE + nr * 4, new_eip, X86EMU_MEMIO_16 + X86EMU_MEMIO_R) |
       decode_memio(M.x86.R_IDT_BASE + nr * 4 + 2, new_cs, X86EMU_MEMIO_16 + X86EMU_MEMIO_R);
@@ -1898,7 +1874,7 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
 
     idt_lookup(nr, &new_cs, &new_eip);
 
-    if(MODE_PROTECTED && MODE_CODE32) {
+    if(MODE_PROTECTED(&M) && MODE_CODE32) {
       push_long(M.x86.R_EFLG);
       push_long(cs);
       push_long(eip);
@@ -1914,7 +1890,7 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
     CLEAR_FLAG(F_IF);
     CLEAR_FLAG(F_TF);
 
-    decode_set_seg_register(M.x86.seg + R_CS_INDEX, new_cs);
+    x86emu_set_seg_register(&M, M.x86.R_CS_SEL, new_cs);
     M.x86.R_EIP = new_eip;
   }
 }
@@ -1936,7 +1912,7 @@ unsigned decode_memio(u32 addr, u32 *val, unsigned type)
     !((M.log.trace & X86EMU_TRACE_DATA) && (type == X86EMU_MEMIO_R || type == X86EMU_MEMIO_W || X86EMU_MEMIO_X))
   ) return err;
 
-  lf = LOG_FREE;
+  lf = LOG_FREE(&M);
   if(lf < 1024) lf = x86emu_clear_log(&M, 1);
   if(lf < 1024) return err;
 
@@ -1994,4 +1970,81 @@ unsigned decode_memio(u32 addr, u32 *val, unsigned type)
 
   return err;
 }
+
+
+unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type)
+{
+  unsigned err, bits = type & 0xff, lf;
+  char **p = &emu->log.ptr;
+
+  err = emu->memio(emu, addr, val, type);
+
+  type &= ~0xff;
+
+  if(!*p || !((emu->log.trace & X86EMU_TRACE_DATA) || (emu->log.trace & X86EMU_TRACE_IO))) return err;
+
+  if(
+    !((emu->log.trace & X86EMU_TRACE_IO) && (type == X86EMU_MEMIO_I || type == X86EMU_MEMIO_O)) &&
+    !((emu->log.trace & X86EMU_TRACE_DATA) && (type == X86EMU_MEMIO_R || type == X86EMU_MEMIO_W || X86EMU_MEMIO_X))
+  ) return err;
+
+  lf = LOG_FREE(emu);
+  if(lf < 1024) lf = x86emu_clear_log(emu, 1);
+  if(lf < 1024) return err;
+
+  switch(type) {
+    case X86EMU_MEMIO_R:
+      LOG_STR("r [");
+      break;
+    case X86EMU_MEMIO_W:
+      LOG_STR("w [");
+      break;
+    case X86EMU_MEMIO_X:
+      LOG_STR("x [");
+      break;
+    case X86EMU_MEMIO_I:
+      LOG_STR("i [");
+      break;
+    case X86EMU_MEMIO_O:
+      LOG_STR("o [");
+      break;
+  }
+
+  decode_hex8(p, addr);
+
+  LOG_STR("] = ");
+
+  switch(bits) {
+    case X86EMU_MEMIO_8:
+      if(err) {
+        LOG_STR("??");
+      }
+      else {
+        decode_hex2(p, *val);
+      }
+      break;
+    case X86EMU_MEMIO_16:
+      if(err) {
+        LOG_STR("????");
+      }
+      else {
+        decode_hex4(p, *val);
+      }
+      break;
+    case X86EMU_MEMIO_32:
+      if(err) {
+        LOG_STR("????????");
+      }
+      else {
+        decode_hex8(p, *val);
+      }
+      break;
+  }
+
+  LOG_STR("\n");
+  **p = 0;
+
+  return err;
+}
+
 

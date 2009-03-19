@@ -189,35 +189,49 @@ typedef struct {
 #define R_DS_INDEX	3
 #define R_FS_INDEX	4
 #define R_GS_INDEX	5
+#define R_NOSEG_INDEX	6
 
-#define R_ES		seg[0].sel
-#define R_ES_BASE	seg[0].base
-#define R_ES_LIMIT	seg[0].limit
-#define R_ES_ACC	seg[0].acc
-#define R_CS		seg[1].sel
-#define R_CS_BASE	seg[1].base
-#define R_CS_LIMIT	seg[1].limit
-#define R_CS_ACC	seg[1].acc
-#define R_SS		seg[2].sel
-#define R_SS_BASE	seg[2].base
-#define R_SS_LIMIT	seg[2].limit
-#define R_SS_ACC	seg[2].acc
-#define R_DS		seg[3].sel
-#define R_DS_BASE	seg[3].base
-#define R_DS_LIMIT	seg[3].limit
-#define R_DS_ACC	seg[3].acc
-#define R_FS		seg[4].sel
-#define R_FS_BASE	seg[4].base
-#define R_FS_LIMIT	seg[4].limit
-#define R_FS_ACC	seg[4].acc
-#define R_GS		seg[5].sel
-#define R_GS_BASE	seg[5].base
-#define R_GS_LIMIT	seg[5].limit
-#define R_GS_ACC	seg[5].acc
-#define R_NOSEG		seg[6].sel
-#define R_NOSEG_BASE	seg[6].base
-#define R_NOSEG_LIMIT	seg[6].limit
-#define R_NOSEG_ACC	seg[6].acc
+#define R_ES_SEL	seg + R_ES_INDEX
+#define R_ES		seg[R_ES_INDEX].sel
+#define R_ES_BASE	seg[R_ES_INDEX].base
+#define R_ES_LIMIT	seg[R_ES_INDEX].limit
+#define R_ES_ACC	seg[R_ES_INDEX].acc
+
+#define R_CS_SEL	seg + R_CS_INDEX
+#define R_CS		seg[R_CS_INDEX].sel
+#define R_CS_BASE	seg[R_CS_INDEX].base
+#define R_CS_LIMIT	seg[R_CS_INDEX].limit
+#define R_CS_ACC	seg[R_CS_INDEX].acc
+
+#define R_SS_SEL	seg + R_SS_INDEX
+#define R_SS		seg[R_SS_INDEX].sel
+#define R_SS_BASE	seg[R_SS_INDEX].base
+#define R_SS_LIMIT	seg[R_SS_INDEX].limit
+#define R_SS_ACC	seg[R_SS_INDEX].acc
+
+#define R_DS_SEL	seg + R_DS_INDEX
+#define R_DS		seg[R_DS_INDEX].sel
+#define R_DS_BASE	seg[R_DS_INDEX].base
+#define R_DS_LIMIT	seg[R_DS_INDEX].limit
+#define R_DS_ACC	seg[R_DS_INDEX].acc
+
+#define R_FS_SEL	seg + R_FS_INDEX
+#define R_FS		seg[R_FS_INDEX].sel
+#define R_FS_BASE	seg[R_FS_INDEX].base
+#define R_FS_LIMIT	seg[R_FS_INDEX].limit
+#define R_FS_ACC	seg[R_FS_INDEX].acc
+
+#define R_GS_SEL	seg + R_GS_INDEX
+#define R_GS		seg[R_GS_INDEX].sel
+#define R_GS_BASE	seg[R_GS_INDEX].base
+#define R_GS_LIMIT	seg[R_GS_INDEX].limit
+#define R_GS_ACC	seg[R_GS_INDEX].acc
+
+#define R_NOSEG_SEL	seg + R_NOSEG_INDEX
+#define R_NOSEG		seg[R_NOSEG_INDEX].sel
+#define R_NOSEG_BASE	seg[R_NOSEG_INDEX].base
+#define R_NOSEG_LIMIT	seg[R_NOSEG_INDEX].limit
+#define R_NOSEG_ACC	seg[R_NOSEG_INDEX].acc
 
 /* other registers: tr, ldt, gdt, idt */
 #define R_TR		tr.sel
@@ -490,6 +504,8 @@ void x86emu_write_byte(x86emu_t *emu, unsigned addr, unsigned val);
 void x86emu_write_byte_noperm(x86emu_t *emu, unsigned addr, unsigned val);
 void x86emu_write_word(x86emu_t *emu, unsigned addr, unsigned val);
 void x86emu_write_dword(x86emu_t *emu, unsigned addr, unsigned val);
+
+void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/
