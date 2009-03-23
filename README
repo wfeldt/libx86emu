@@ -2,6 +2,9 @@ x86 emulation library
 =====================
 
 
+API functions
+-------------
+
 - create new emulation object
   x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm);
 
@@ -82,6 +85,7 @@ Clear log buffer. If flush != 0, write current log via flush() function (see x86
   X86EMU_DUMP_ACC_MEM
   X86EMU_DUMP_INV_MEM
   X86EMU_DUMP_ATTR
+  X86EMU_DUMP_ASCII
   X86EMU_DUMP_IO
   X86EMU_DUMP_INTS
   X86EMU_DUMP_TIME
@@ -223,5 +227,43 @@ check permissions.
 
 Example:
   x86emu_set_seg_register(emu, emu->x86.R_CS_SEL, 0x7c0);
+
+
+
+debug instruction
+-----------------
+
+If the X86EMU_TRACE_DEBUG flags is set, the emulator interprets a special debug intruction:
+
+  db 0x67, 0xeb, LEN, DATA...
+
+which is basically a short jump with address size prefix (an instruction normally not
+used). LEN is the size of DATA.
+
+DATA can be:
+
+  - db 0x01
+    db STRING
+
+    Print STRING to log. STRING is not 0-zerminated.
+
+  - db 0x02
+    dd flags
+
+    Set trace flags.
+
+  - db 0x03
+    dd flags
+
+    Clear trace flags.
+
+  - db 0x04
+    dd flags
+
+    Dump emulator state. For flags, see x86emu_dump().
+
+  - db 0x05
+
+    Reset memory access stats. See x86emu_reset_access_stats().
 
 

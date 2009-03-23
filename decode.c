@@ -134,7 +134,12 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
       break;
     }
 
-    if(M.code_check && (*M.code_check)(&M)) break;
+    if(M.code_check) {
+      if((*M.code_check)(&M) || MODE_HALTED) {
+        rs |= X86EMU_RUN_NO_CODE;
+        break;
+      }
+    }
 
     memcpy(M.x86.decode_seg, "[", 1);
 
@@ -249,6 +254,11 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 
     log_code();
 
+    if(M.x86.debug_len) {
+      emu_process_debug(M.x86.debug_start, M.x86.debug_len);
+      M.x86.debug_len = M.x86.debug_start = 0;
+    }
+
     M.x86.R_TSC++;	// time stamp counter
 
     if(MODE_HALTED) break;
@@ -304,7 +314,7 @@ void handle_interrupt()
     if((M.log.trace & X86EMU_TRACE_INTS) && *p) {
       lf = LOG_FREE(&M);
       if(lf < 128) lf = x86emu_clear_log(&M, 1);
-      if(lf < 128) {
+      if(lf >= 128) {
         if((M.x86.intr_type & 0xff) == INTR_TYPE_FAULT) {
           LOG_STR("* fault ");
         }
@@ -2045,6 +2055,62 @@ unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type)
   **p = 0;
 
   return err;
+}
+
+
+void emu_process_debug(unsigned start, unsigned len)
+{
+  unsigned lf, type, u;
+  char **p = &M.log.ptr;
+
+  if(!*p) return;
+
+  lf = LOG_FREE(&M);
+  if(lf < 1024) lf = x86emu_clear_log(&M, 1);
+  if(lf < 1024) return;
+
+  type = x86emu_read_byte_noperm(&M, start++);
+  len--;
+
+  switch(type) {
+    case 1:
+      LOG_STR("\n");
+      while(len--) {
+        *(*p)++ = x86emu_read_byte_noperm(&M, start++);
+      }
+      LOG_STR("\n");
+      break;
+
+    case 2:
+      u = x86emu_read_byte_noperm(&M, start++);
+      u += x86emu_read_byte_noperm(&M, start++) << 8;
+      u += x86emu_read_byte_noperm(&M, start++) << 16;
+      u += x86emu_read_byte_noperm(&M, start++) << 24;
+      M.log.trace |= u;
+      break;
+
+    case 3:
+      u = x86emu_read_byte_noperm(&M, start++);
+      u += x86emu_read_byte_noperm(&M, start++) << 8;
+      u += x86emu_read_byte_noperm(&M, start++) << 16;
+      u += x86emu_read_byte_noperm(&M, start++) << 24;
+      M.log.trace &= ~u;
+      break;
+
+    case 4:
+      u = x86emu_read_byte_noperm(&M, start++);
+      u += x86emu_read_byte_noperm(&M, start++) << 8;
+      u += x86emu_read_byte_noperm(&M, start++) << 16;
+      u += x86emu_read_byte_noperm(&M, start++) << 24;
+      x86emu_dump(&M, u);
+      break;
+
+    case 5:
+      x86emu_reset_access_stats(&M);
+      break;
+  }
+
+  **p = 0;
 }
 
 

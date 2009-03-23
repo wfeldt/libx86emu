@@ -74,7 +74,7 @@ int main(int argc, char **argv)
       case 1001:
         for(s = optarg; (t = strsep(&s, ",")); ) {
           u = 1;
-          tbits = 0;
+          tbits = dbits = 0;
           while(*t == '+' || *t == '-') u = *t++ == '+' ? 1 : 0;
                if(!strcmp(t, "trace")) tbits = X86EMU_TRACE_DEFAULT;
           else if(!strcmp(t, "code"))  tbits = X86EMU_TRACE_CODE;
@@ -85,6 +85,7 @@ int main(int argc, char **argv)
           else if(!strcmp(t, "ints"))  tbits = X86EMU_TRACE_INTS;
           else if(!strcmp(t, "time"))  tbits = X86EMU_TRACE_TIME;
           else if(!strcmp(t, "attr"))  dbits = X86EMU_DUMP_ATTR;
+          else if(!strcmp(t, "ascii")) dbits = X86EMU_DUMP_ASCII;
           else err = 5;
           if(err) {
             fprintf(stderr, "error: invalid flag '%s'\n", t);

@@ -377,6 +377,7 @@ typedef struct {
   unsigned intr_type;
   unsigned intr_errcode;
   unsigned intr_stats[0x100];
+  unsigned debug_start, debug_len;
 } x86emu_regs_t;
 
 
@@ -387,6 +388,7 @@ typedef struct {
 #define X86EMU_TRACE_IO		(1 << 4)
 #define X86EMU_TRACE_INTS	(1 << 5)
 #define X86EMU_TRACE_TIME	(1 << 6)
+#define X86EMU_TRACE_DEBUG	(1 << 7)
 #define X86EMU_TRACE_DEFAULT	(X86EMU_TRACE_REGS | X86EMU_TRACE_CODE | X86EMU_TRACE_DATA | X86EMU_TRACE_IO | X86EMU_TRACE_INTS)
 
 #define X86EMU_DUMP_REGS	(1 << 0)
@@ -394,10 +396,11 @@ typedef struct {
 #define X86EMU_DUMP_ACC_MEM	(1 << 2)
 #define X86EMU_DUMP_INV_MEM	(1 << 3)
 #define X86EMU_DUMP_ATTR	(1 << 4)
-#define X86EMU_DUMP_IO		(1 << 5)
-#define X86EMU_DUMP_INTS	(1 << 6)
-#define X86EMU_DUMP_TIME	(1 << 7)
-#define X86EMU_DUMP_DEFAULT	(X86EMU_DUMP_REGS | X86EMU_DUMP_INV_MEM | X86EMU_DUMP_ATTR | X86EMU_DUMP_IO | X86EMU_DUMP_INTS | X86EMU_DUMP_TIME)
+#define X86EMU_DUMP_ASCII	(1 << 5)
+#define X86EMU_DUMP_IO		(1 << 6)
+#define X86EMU_DUMP_INTS	(1 << 7)
+#define X86EMU_DUMP_TIME	(1 << 8)
+#define X86EMU_DUMP_DEFAULT	(X86EMU_DUMP_REGS | X86EMU_DUMP_INV_MEM | X86EMU_DUMP_ATTR | X86EMU_DUMP_ASCII | X86EMU_DUMP_IO | X86EMU_DUMP_INTS | X86EMU_DUMP_TIME)
 
 #define X86EMU_PERM_R		(1 << 0)
 #define X86EMU_PERM_W		(1 << 1)

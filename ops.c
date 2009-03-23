@@ -4566,6 +4566,12 @@ static void x86emuOp_jump_byte_IMM(u8 op1)
     DECODE_HEX_ADDR(eip);
   }
 
+  // we had a prefix: special debug instruction
+  if((M.log.trace & X86EMU_TRACE_DEBUG) && M.x86.R_EIP - M.x86.saved_eip == 3 && ofs >= 1) {
+    M.x86.debug_start = M.x86.R_CS_BASE + M.x86.R_EIP;
+    M.x86.debug_len = ofs;
+  }
+
   M.x86.R_EIP = eip;
 }
 

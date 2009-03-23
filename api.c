@@ -270,16 +270,23 @@ void x86emu_log(x86emu_t *emu, const char *format, ...)
 
 /*
  * flags:
- *   0: show all initialized memory
- *   1: show only accessed memory
- *   2: show only invalidly accessed memory
+ *   bits 0-7:
+ *     0: show all initialized memory
+ *     1: show only accessed memory
+ *     2: show only invalidly accessed memory
+ *
+ *   bit 8: show ascii, too
  */
 static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, char *str_attr, int flags)
 {
-  unsigned u;
+  unsigned u, u1, flag_ascii;
   char c;
   int ok = 0;
   char *sd = str_data, *sa = str_attr;
+  char *ascii = str_data + 4 * LINE_LEN + 2;
+
+  flag_ascii = flags & 0x100;
+  flags &= 0xff;
 
   for(u = 0; u < LINE_LEN; u++) {
     *str_data++ = (attr[u] & X86EMU_ACC_INVALID) ? '*' : ' ';
@@ -289,7 +296,7 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
       (flags == 2 && (attr[u] & X86EMU_ACC_INVALID))
     ) {
       ok = 1;
-      decode_hex2(&str_data, data[u]);
+      decode_hex2(&str_data, u1 = data[u]);
 
       c = (attr[u] & X86EMU_PERM_R) ? (attr[u] & X86EMU_ACC_R) ? 'R' : 'r' : ' ';
       *str_attr++ = c;
@@ -297,6 +304,9 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
       *str_attr++ = c;
       c = (attr[u] & X86EMU_PERM_X) ? (attr[u] & X86EMU_ACC_X) ? 'X' : 'x' : ' ';
       *str_attr++ = c;
+
+      if(u1 < 0x20 || u1 >= 0x7f) u1 = '.';
+      ascii[u] = u1;
     }
     else {
       *str_data++ = ' ';
@@ -305,12 +315,21 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
       *str_attr++ = ' ';
       *str_attr++ = ' ';
       *str_attr++ = ' ';
+
+      ascii[u] = ' ';
     }
     *str_data++ = ' ';
     *str_attr++ = ' ';
   }
 
-  if(!ok) {
+  if(ok) {
+    if(flag_ascii) {
+      str_data[0] = ' ';
+      str_data[1] = ' ';
+      str_data += 2 + LINE_LEN;
+    }
+  }
+  else {
     str_data = sd;
     str_attr = sa;
   }
@@ -347,6 +366,7 @@ void x86emu_dump(x86emu_t *emu, int flags)
     if(flags & X86EMU_DUMP_INV_MEM) dump_flags = 2;
     if(flags & X86EMU_DUMP_ACC_MEM) dump_flags = 1;
     if(flags & X86EMU_DUMP_MEM) dump_flags = 0;
+    if(flags & X86EMU_DUMP_ASCII) dump_flags |= 0x100;
 
     pdir = mem->pdir;
     for(pdir_idx = 0; pdir_idx < (1 << X86EMU_PDIR_BITS); pdir_idx++) {

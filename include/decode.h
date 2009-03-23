@@ -108,6 +108,8 @@ void decode_hex2s(char **p, s32 ofs);
 void decode_hex4s(char **p, s32 ofs);
 void decode_hex8s(char **p, s32 ofs);
 
+void emu_process_debug(unsigned start, unsigned len);
+
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/
