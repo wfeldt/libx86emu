@@ -44,15 +44,16 @@
 
 /*----------------------------- Implementation ----------------------------*/
 
-x86emu_t M;
+x86emu_t M L_SYM;
 
 static void handle_interrupt(void);
 static void generate_int(u8 nr, unsigned type, unsigned errcode);
 static void log_regs(void);
 static void log_code(void);
-void check_data_access(sel_t *seg, u32 ofs, u32 size);
+static void check_data_access(sel_t *seg, u32 ofs, u32 size);
 static unsigned decode_memio(u32 addr, u32 *val, unsigned type);
-unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type);
+static unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type);
+static void idt_lookup(u8 nr, u32 *new_cs, u32 *new_eip);
 
 
 /****************************************************************************

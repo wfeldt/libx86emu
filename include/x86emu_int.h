@@ -47,6 +47,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#define L_SYM			__attribute__((visibility("internal")))
+
 #define M x86emu
 
 #include "x86emu.h"

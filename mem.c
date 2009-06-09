@@ -19,6 +19,13 @@ static void vm_w_byte_noperm(x86emu_mem_t *vm, unsigned addr, unsigned val);
 static void vm_w_word(x86emu_mem_t *vm, unsigned addr, unsigned val);
 static void vm_w_dword(x86emu_mem_t *vm, unsigned addr, unsigned val);
 
+static mem2_page_t *vm_get_page(x86emu_mem_t *mem, unsigned addr, int create);
+static unsigned vm_i_byte(unsigned addr);
+static unsigned vm_i_dword(unsigned addr);
+static unsigned vm_i_word(unsigned addr);
+static void vm_o_byte(unsigned addr, unsigned val);
+static void vm_o_dword(unsigned addr, unsigned val);
+static void vm_o_word(unsigned addr, unsigned val);
 
 void *mem_dup(const void *src, size_t n)
 {
