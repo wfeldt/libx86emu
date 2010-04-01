@@ -1785,12 +1785,135 @@ void check_data_access(sel_t *seg, u32 ofs, u32 size)
 }
 
 
+void decode_descriptor(descr_t *d, u32 dl, u32 dh)
+{
+  char **p = &M.log.ptr;
+  unsigned lf, acc;
+
+  memset(d, 0, sizeof *d);
+
+  d->acc = acc = ((dh >> 8) & 0xff) + ((dh >> 12) & 0xf00);
+  d->base = ((dl >> 16) & 0xffff) + ((dh & 0xff) << 16) + (dh & 0xff000000);
+  d->limit = (dl & 0xffff) + (dh & 0xf0000);
+  if(ACC_G(acc)) d->limit = (d->limit << 12) + 0xfff;
+  d->g = ACC_G(acc);
+  d->p = ACC_P(acc);
+  d->dpl = ACC_DPL(acc);
+
+  if(ACC_S(acc)) {
+    d->seg = 1;
+    d->i386 = ACC_D(acc);
+    d->a = ACC_A(acc);
+    if(ACC_E(acc)) {
+      // code
+      d->x = 1;
+      d->c = ACC_C(acc);
+      d->r = ACC_R(acc);
+    }
+    else {
+      // data
+      d->r = 1;
+      d->ed = ACC_ED(acc);
+      d->w = ACC_W(acc);
+    }
+  }
+  else {
+    if(acc & 8) d->i386 = 1;
+    switch(acc & 7) {
+      case 0:
+        d->invalid = 1;
+        break;
+
+      case 3:	// tss busy
+        d->busy = 1;
+
+      case 1:	// tss avail
+        d->tss = 1;
+        break;
+
+      case 2:
+        d->ldt = 1;
+        break;
+
+      case 4:
+        d->c_gate = 1;
+        break;
+
+      case 5:
+        d->t_gate = 1;
+        break;
+
+      case 7:
+        d->trap = 1;
+
+      case 6:
+        d->i_gate = 1;
+        break;
+    }
+
+    if(d->c_gate || d->i_gate || d->t_gate) {
+      d->offset = (dl & 0xffff) + (dh & 0xffff0000);
+      d->sel = dl >> 16;
+      d->w_count = dh & 0x1f;
+    }
+  }
+
+  if((M.log.trace & X86EMU_TRACE_ACC) && *p) {
+    lf = LOG_FREE(&M);
+    if(lf < 512) lf = x86emu_clear_log(&M, 1);
+    if(lf >= 512) {
+      LOG_STR("d [");
+      decode_hex8(p, dh);
+      LOG_STR(" ");
+      decode_hex8(p, dl);
+      LOG_STR("] =");
+      if(d->seg) {
+        LOG_STR(" base=");
+        decode_hex8(p, d->base);
+        LOG_STR(" limit=");
+        decode_hex8(p, d->limit);
+      }
+      else {
+        LOG_STR(" sel=");
+        decode_hex4(p, d->sel);
+        LOG_STR(" ofs=");
+        decode_hex8(p, d->offset);
+        LOG_STR(" wcnt=");
+        decode_hex2(p, d->w_count);
+      }
+      LOG_STR(" dpl=");
+      decode_hex1(p, d->dpl);
+      if(d->p) LOG_STR(" p");
+      if(d->a) LOG_STR(" a");
+      if(d->r) LOG_STR(" r");
+      if(d->w) LOG_STR(" w");
+      if(d->x) LOG_STR(" x");
+      if(d->c) LOG_STR(" c");
+      if(d->ed) LOG_STR(" ed");
+      if(d->g) LOG_STR(" g");
+      if(d->i386) LOG_STR(" 32");
+      if(d->ldt) LOG_STR(" ldt");
+      if(d->tss) LOG_STR(" tss");
+      if(d->busy) LOG_STR(" busy");
+      if(d->c_gate) LOG_STR(" callgate");
+      if(d->i_gate) LOG_STR(" intgate");
+      if(d->t_gate) LOG_STR(" taskgate");
+      if(d->trap) LOG_STR(" trap");
+      if(d->invalid) LOG_STR(" invalid");
+      LOG_STR("\n");
+
+      **p = 0;
+    }
+  }
+}
+
+
 void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val)
 {
   int err = 1;
-  unsigned ofs, acc;
-  u32 dl, dh, base, limit;
-  u32 dt_base, dt_limit;
+  unsigned ofs;
+  u32 dl, dh, dt_base, dt_limit;
+  descr_t d;
 
   if(MODE_REAL(emu)) {
     seg->sel = val;
@@ -1803,11 +1926,11 @@ void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val)
 
     if(val & 4) {
       dt_base = emu->x86.R_LDT_BASE;
-      dt_limit = emu->x86.R_LDT_BASE;
+      dt_limit = emu->x86.R_LDT_LIMIT;
     }
     else {
       dt_base = emu->x86.R_GDT_BASE;
-      dt_limit = emu->x86.R_GDT_BASE;
+      dt_limit = emu->x86.R_GDT_LIMIT;
     }
 
     if(ofs == 0) {
@@ -1824,20 +1947,15 @@ void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val)
         emu_memio(emu, dt_base + ofs + 4, &dh, X86EMU_MEMIO_32 + X86EMU_MEMIO_R);
 
       if(!err) {
-        err = 1;
-
-        acc = ((dh >> 8) & 0xff) + ((dh >> 12) & 0xf00);
-        base = ((dl >> 16) & 0xffff) + ((dh & 0xff) << 16) + (dh & 0xff000000);
-        limit = (dl & 0xffff) + (dh & 0xf0000);
-        if(ACC_G(acc)) limit = (limit << 12) + 0xfff;
-
-        if(ACC_P(acc) && ACC_S(acc)) {
+        decode_descriptor(&d, dl, dh);
+        if(!d.invalid && d.p && d.seg) {
           seg->sel = val;
-          seg->base = base;
-          seg->limit = limit;
-          seg->acc = acc;
-
-          err = 0;
+          seg->base = d.base;
+          seg->limit = d.limit;
+          seg->acc = d.acc;
+        }
+        else {
+          err = 1;
         }
       }
     }
@@ -1849,14 +1967,33 @@ void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val)
 
 void idt_lookup(u8 nr, u32 *new_cs, u32 *new_eip)
 {
-  unsigned err;
+  unsigned err, ofs;
+  u32 dl, dh;
+  descr_t d1;
 
   if(MODE_REAL(&M)) {
+    ofs = nr << 2;
     err =
-      decode_memio(M.x86.R_IDT_BASE + nr * 4, new_eip, X86EMU_MEMIO_16 + X86EMU_MEMIO_R) |
-      decode_memio(M.x86.R_IDT_BASE + nr * 4 + 2, new_cs, X86EMU_MEMIO_16 + X86EMU_MEMIO_R);
+      decode_memio(M.x86.R_IDT_BASE + ofs, new_eip, X86EMU_MEMIO_16 + X86EMU_MEMIO_R) |
+      decode_memio(M.x86.R_IDT_BASE + ofs + 2, new_cs, X86EMU_MEMIO_16 + X86EMU_MEMIO_R);
   }
   else {
+    ofs = nr << 3;
+    if(ofs + 7 <= M.x86.R_IDT_LIMIT) {
+      err =
+        decode_memio(M.x86.R_IDT_BASE + ofs, &dl, X86EMU_MEMIO_32 + X86EMU_MEMIO_R) |
+        decode_memio(M.x86.R_IDT_BASE + ofs + 4, &dh, X86EMU_MEMIO_32 + X86EMU_MEMIO_R);
+    }
+    else {
+      err = 1;
+    }
+    if(!err) {
+      decode_descriptor(&d1, dl, dh);
+      if(!d1.invalid && d1.p && d1.i_gate) {
+        *new_cs = d1.sel;
+        *new_eip = d1.offset;
+      }
+    }
   }
 }
 

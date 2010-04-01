@@ -108,6 +108,8 @@ void decode_hex2s(char **p, s32 ofs) L_SYM;
 void decode_hex4s(char **p, s32 ofs) L_SYM;
 void decode_hex8s(char **p, s32 ofs) L_SYM;
 
+void decode_descriptor(descr_t *d, u32 dl, u32 dh);
+
 void emu_process_debug(unsigned start, unsigned len) L_SYM;
 
 

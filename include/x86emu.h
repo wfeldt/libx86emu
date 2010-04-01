@@ -121,6 +121,41 @@ struct i386_special_regs {
 };
 
 
+typedef struct {
+  union {
+    u32 base;		// segment base
+    u32 offset;		// gate offset
+  };
+  union {
+    u32 limit;		// segment limit
+    struct {
+      u16 sel;		// gate selector
+      u16 w_count;	// gate (d)word count
+    };
+  };
+  u16 acc;		// access flags (12 bits)
+  unsigned invalid:1;	// invalid descriptor type
+  unsigned seg:1;	// is segment
+  unsigned dpl:2;
+  unsigned r:1;		// readable seg
+  unsigned w:1;		// writable seg
+  unsigned x:1;		// executable seg
+  unsigned c:1;		// conforming code seg
+  unsigned a:1;		// accessed seg
+  unsigned p:1;		// present
+  unsigned g:1;		// granularity
+  unsigned ed:1;	// expand down data seg
+  unsigned ldt:1;	// ldt
+  unsigned c_gate:1;	// call gate
+  unsigned i_gate:1;	// interrupt gate
+  unsigned t_gate:1;	// task gate
+  unsigned tss:1;	// tss
+  unsigned busy:1;	// tss is busy
+  unsigned trap:1;	// interrupt gate is trap gate
+  unsigned i386:1;	// i386 (32 bit) descriptor or 32 bit segment
+} descr_t;
+
+
 /*  
  * segment registers here represent 16 bit selectors & base/limit cache
  * ldt & tr are quite similar to segment selectors
