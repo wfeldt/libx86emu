@@ -1802,7 +1802,7 @@ void decode_descriptor(descr_t *d, u32 dl, u32 dh)
 
   if(ACC_S(acc)) {
     d->seg = 1;
-    d->i386 = ACC_D(acc);
+    d->is_i386 = ACC_D(acc);
     d->a = ACC_A(acc);
     if(ACC_E(acc)) {
       // code
@@ -1818,7 +1818,7 @@ void decode_descriptor(descr_t *d, u32 dl, u32 dh)
     }
   }
   else {
-    if(acc & 8) d->i386 = 1;
+    if(acc & 8) d->is_i386 = 1;
     switch(acc & 7) {
       case 0:
         d->invalid = 1;
@@ -1891,7 +1891,7 @@ void decode_descriptor(descr_t *d, u32 dl, u32 dh)
       if(d->c) LOG_STR(" c");
       if(d->ed) LOG_STR(" ed");
       if(d->g) LOG_STR(" g");
-      if(d->i386) LOG_STR(" 32");
+      if(d->is_i386) LOG_STR(" 32");
       if(d->ldt) LOG_STR(" ldt");
       if(d->tss) LOG_STR(" tss");
       if(d->busy) LOG_STR(" busy");

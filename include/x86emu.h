@@ -152,7 +152,7 @@ typedef struct {
   unsigned tss:1;	// tss
   unsigned busy:1;	// tss is busy
   unsigned trap:1;	// interrupt gate is trap gate
-  unsigned i386:1;	// i386 (32 bit) descriptor or 32 bit segment
+  unsigned is_i386:1;	// i386 (32 bit) descriptor or 32 bit segment
 } descr_t;
 
 
