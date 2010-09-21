@@ -1,3 +1,6 @@
+21/9/2010:	v1.2
+	- better descriptor decoding
+
 9/6/2009:	v1.1
 	- export only API functions in shared lib
 
