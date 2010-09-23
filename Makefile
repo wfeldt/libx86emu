@@ -3,7 +3,7 @@ ifneq ($(filter i386 i486 i586 i686, $(ARCH)),)
 ARCH	:= i386
 endif
 
-GIT2LOG = ./git2log --update
+GIT2LOG = $(shell if [ -x ./git2log ] ; then echo ./git2log --update ; else echo true ; fi)
 
 CC	= gcc
 CFLAGS	= -g -O2 -fPIC -fomit-frame-pointer -Wall
@@ -14,17 +14,8 @@ LIBDIR	= /usr/lib
 endif
 LIBX86	= libx86emu
 
-define VERSION
-$(shell $(GIT2LOG) --version VERSION ; cat VERSION)
-endef
-
-define MAJOR_VERSION
-$(shell $(GIT2LOG) --version VERSION ; cut -d . -f 1 VERSION)
-endef
-
-define MINOR_VERSION
-$(shell $(GIT2LOG) --version VERSION ; cut -d . -f 2 VERSION)
-endef
+VERSION := $(shell $(GIT2LOG) --version VERSION ; cat VERSION)
+MAJOR_VERSION := $(shell $(GIT2LOG) --version VERSION ; cut -d . -f 1 VERSION)
 
 CFILES	= $(wildcard *.c)
 OBJS	= $(CFILES:.c=.o)
