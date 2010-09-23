@@ -3,7 +3,8 @@ ifneq ($(filter i386 i486 i586 i686, $(ARCH)),)
 ARCH	:= i386
 endif
 
-GIT2LOG = $(shell if [ -x ./git2log ] ; then echo ./git2log --update ; else echo true ; fi)
+GIT2LOG := $(shell if [ -x ./git2log ] ; then echo ./git2log --update ; else echo true ; fi)
+GITDEPS := $(shell [ -d .git ] && echo .git/HEAD .git/refs/heads .git/refs/tags)
 
 CC	= gcc
 CFLAGS	= -g -O2 -fPIC -fomit-frame-pointer -Wall
@@ -30,7 +31,7 @@ LIB_SONAME	= $(LIBX86).so.$(MAJOR_VERSION)
 
 all: changelog shared
 
-changelog: .git/HEAD .git/refs/heads .git/refs/tags
+changelog: $(GITDEPS)
 	$(GIT2LOG) --changelog changelog
 
 shared: $(LIB_NAME)
