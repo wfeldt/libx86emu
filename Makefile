@@ -3,6 +3,8 @@ ifneq ($(filter i386 i486 i586 i686, $(ARCH)),)
 ARCH	:= i386
 endif
 
+GIT2LOG = ./git2log --update
+
 CC	= gcc
 CFLAGS	= -g -O2 -fPIC -fomit-frame-pointer -Wall
 ifneq ($(filter x86_64, $(ARCH)),)
@@ -12,9 +14,17 @@ LIBDIR	= /usr/lib
 endif
 LIBX86	= libx86emu
 
-VERSION		:= $(shell cat VERSION)
-MINOR_VERSION	:= $(shell cut -d . -f 2 VERSION)
-MAJOR_VERSION	:= $(shell cut -d . -f 1 VERSION)
+define VERSION
+$(shell $(GIT2LOG) --version VERSION ; cat VERSION)
+endef
+
+define MAJOR_VERSION
+$(shell $(GIT2LOG) --version VERSION ; cut -d . -f 1 VERSION)
+endef
+
+define MINOR_VERSION
+$(shell $(GIT2LOG) --version VERSION ; cut -d . -f 2 VERSION)
+endef
 
 CFILES	= $(wildcard *.c)
 OBJS	= $(CFILES:.c=.o)
@@ -27,7 +37,10 @@ LIB_SONAME	= $(LIBX86).so.$(MAJOR_VERSION)
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
 
-all: shared
+all: changelog shared
+
+changelog: .git/HEAD .git/refs/heads .git/refs/tags
+	$(GIT2LOG) --changelog changelog
 
 shared: $(LIB_NAME)
 
