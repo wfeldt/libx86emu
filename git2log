@@ -30,7 +30,6 @@ if($opt_update && $opt_file ne '-' && -f($opt_file)) {
   }
 
   exit 0 if $ok;
-  print "write\n";
 }
 
 for (`git branch`) {
