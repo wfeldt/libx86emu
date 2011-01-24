@@ -72,22 +72,22 @@ static void x86emuOp2_opc_00(u8 op2)
 
   switch(rh) {
     case 0:
-      OP_DECODE("SLDT");
+      OP_DECODE("sldt ");
       break;
     case 1:
-      OP_DECODE("STR");
+      OP_DECODE("str ");
       break;
     case 2:
-      OP_DECODE("LLDT");
+      OP_DECODE("lldt ");
       break;
     case 3:
-      OP_DECODE("LTR");
+      OP_DECODE("ltr ");
       break;
     case 4:
-      OP_DECODE("VERR");
+      OP_DECODE("verr ");
       break;
     case 5:
-      OP_DECODE("VERW");
+      OP_DECODE("verw ");
       break;
     default:
       INTR_RAISE_UD(&M);
@@ -97,27 +97,27 @@ static void x86emuOp2_opc_00(u8 op2)
   if(mod == 3) {
     reg16 = decode_rm_word_register(rl);
     switch(rh) {
-      case 0:	/* SLDT */
+      case 0:	/* sldt */
         *reg16 = M.x86.R_LDT;
         break;
 
-      case 1:	/* STR */
+      case 1:	/* str */
         *reg16 = M.x86.R_TR;
         break;
 
-      case 2:	/* LLDT */
+      case 2:	/* lldt */
         x86emu_set_seg_register(&M, &M.x86.ldt, *reg16);
         break;
 
-      case 3:	/* LTR */
+      case 3:	/* ltr */
         M.x86.R_TR = *reg16;
         break;
 
-      case 4:	/* VERR */
+      case 4:	/* verr */
         if(*reg16 != 0) SET_FLAG(F_ZF);
         break;
 
-      case 5:	/* VERW*/
+      case 5:	/* verw */
         if(*reg16 != 0) SET_FLAG(F_ZF);
         break;
     }
@@ -125,30 +125,30 @@ static void x86emuOp2_opc_00(u8 op2)
   else {
     addr = decode_rm_address(mod, rl);
     switch(rh) {
-      case 0:	/* SLDT */
+      case 0:	/* sldt */
         store_data_word(addr, M.x86.R_LDT);
         break;
 
-      case 1:	/* STR */
+      case 1:	/* str */
         store_data_word(addr, M.x86.R_TR);
         break;
 
-      case 2:	/* LLDT */
+      case 2:	/* lldt */
         val = fetch_data_word(addr);
         x86emu_set_seg_register(&M, &M.x86.ldt, val);
         break;
 
-      case 3:	/* LTR */
+      case 3:	/* ltr */
         val = fetch_data_word(addr);
         M.x86.R_TR = val;
         break;
 
-      case 4:	/* VERR */
+      case 4:	/* verr */
         val = fetch_data_word(addr);
         if(val != 0) SET_FLAG(F_ZF);
         break;
 
-      case 5:	/* VERW*/
+      case 5:	/* verw */
         val = fetch_data_word(addr);
         if(val != 0) SET_FLAG(F_ZF);
         break;
