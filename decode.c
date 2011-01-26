@@ -235,7 +235,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
     if(flags & X86EMU_RUN_NO_CODE) {
       u = M.x86.R_CS_BASE + M.x86.R_EIP;
 
-      if(op1 == 0x00 && x86emu_read_byte_noperm(&M, u) == 0x00) {
+      if(M.x86.mode == 0 && op1 == 0x00 && x86emu_read_byte_noperm(&M, u) == 0x00) {
         rs |= X86EMU_RUN_NO_CODE;
       }
 

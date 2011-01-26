@@ -2347,7 +2347,7 @@ static void x86emuOp_call_far_IMM(u8 op1)
   u16 cs;
   u32 eip;
 
-  OP_DECODE("call ");
+  OP_DECODE("call far ");
   eip = MODE_DATA32 ? fetch_long() : fetch_word();
   cs = fetch_word();
 
@@ -4526,7 +4526,7 @@ static void x86emuOp_jump_far_IMM(u8 op1)
   u16 cs;
   u32 eip;
 
-  OP_DECODE("jmp ");
+  OP_DECODE("jmp far ");
   eip = MODE_DATA32 ? fetch_long() : fetch_word();
   cs = fetch_word();
 
