@@ -505,7 +505,12 @@ typedef struct x86emu_s {
   } log;
   unsigned timeout;
   u64 max_instr;
-  void *private;
+  union {
+    void *_private;
+#ifndef	__cplusplus
+    void *private;		/* deprecated: use _private */
+#endif
+  };
 } x86emu_t;
 
 /*-------------------------- Function Prototypes --------------------------*/
