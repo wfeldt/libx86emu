@@ -3,7 +3,7 @@ ifneq ($(filter i386 i486 i586 i686, $(ARCH)),)
 ARCH	:= i386
 endif
 
-GIT2LOG := $(shell if [ -x ./git2log ] ; then echo ./git2log --update ; else echo true ; fi)
+GIT2LOG := $(shell if [ -x ./git2log -a -d .git ] ; then echo ./git2log --update ; else echo true ; fi)
 GITDEPS := $(shell [ -d .git ] && echo .git/HEAD .git/refs/heads .git/refs/tags)
 
 CC	= gcc
