@@ -7,7 +7,7 @@ GIT2LOG := $(shell if [ -x ./git2log ] ; then echo ./git2log --update ; else ech
 GITDEPS := $(shell [ -d .git ] && echo .git/HEAD .git/refs/heads .git/refs/tags)
 VERSION := $(shell $(GIT2LOG) --version VERSION ; cat VERSION)
 BRANCH  := $(shell [ -d .git ] && git branch | perl -ne 'print $$_ if s/^\*\s*//')
-PREFIX  := libx64emu-$(VERSION)
+PREFIX  := libx86emu-$(VERSION)
 
 MAJOR_VERSION := $(shell $(GIT2LOG) --version VERSION ; cut -d . -f 1 VERSION)
 
