@@ -550,11 +550,10 @@ Byte value read from the absolute memory location.
 u8 fetch_data_byte_abs(sel_t *seg, u32 ofs)
 {
   u32 val;
-  unsigned err;
 
   check_data_access(seg, ofs, 1);
 
-  err = decode_memio(seg->base + ofs, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_R);
+  decode_memio(seg->base + ofs, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_R);
 
   return val;
 }
@@ -570,11 +569,10 @@ Word value read from the absolute memory location.
 u16 fetch_data_word_abs(sel_t *seg, u32 ofs)
 {
   u32 val;
-  unsigned err;
 
   check_data_access(seg, ofs, 2);
 
-  err = decode_memio(seg->base + ofs, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_R);
+  decode_memio(seg->base + ofs, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_R);
 
   return val;
 }
@@ -590,11 +588,10 @@ Long value read from the absolute memory location.
 u32 fetch_data_long_abs(sel_t *seg, u32 ofs)
 {
   u32 val;
-  unsigned err;
 
   check_data_access(seg, ofs, 4);
 
-  err = decode_memio(seg->base + ofs, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_R);
+  decode_memio(seg->base + ofs, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_R);
 
   return val;
 }

@@ -441,11 +441,11 @@ Handles opcode 0x0f,0x33
 ****************************************************************************/
 static void x86emuOp2_rdpmc(u8 op2)
 {
-  unsigned u;
+  // unsigned u;
 
   OP_DECODE("rdpmc");
 
-  u = M.x86.R_ECX;		// counter index
+  // u = M.x86.R_ECX;		// counter index
 
   // not implemented
 

@@ -300,10 +300,10 @@ unsigned vm_r_byte_noperm(x86emu_mem_t *mem, unsigned addr)
 {
   mem2_page_t *page;
   unsigned page_idx = addr & (X86EMU_PAGE_SIZE - 1);
-  unsigned char *attr;
+  // unsigned char *attr;
 
   page = vm_get_page(mem, addr, 1);
-  attr = page->attr + page_idx;
+  // attr = page->attr + page_idx;
 
   return page->data[page_idx];
 }
