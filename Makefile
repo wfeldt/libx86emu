@@ -3,8 +3,13 @@ ifneq ($(filter i386 i486 i586 i686, $(ARCH)),)
 ARCH	:= i386
 endif
 
-GIT2LOG := $(shell if [ -x ./git2log -a -d .git ] ; then echo ./git2log --update ; else echo true ; fi)
+GIT2LOG := $(shell if [ -x ./git2log ] ; then echo ./git2log --update ; else echo true ; fi)
 GITDEPS := $(shell [ -d .git ] && echo .git/HEAD .git/refs/heads .git/refs/tags)
+VERSION := $(shell $(GIT2LOG) --version VERSION ; cat VERSION)
+BRANCH  := $(shell [ -d .git ] && git branch | perl -ne 'print $$_ if s/^\*\s*//')
+PREFIX  := libx64emu-$(VERSION)
+
+MAJOR_VERSION := $(shell $(GIT2LOG) --version VERSION ; cut -d . -f 1 VERSION)
 
 CC	= gcc
 CFLAGS	= -g -O2 -fPIC -fomit-frame-pointer -Wall
@@ -14,9 +19,6 @@ else
 LIBDIR	= /usr/lib
 endif
 LIBX86	= libx86emu
-
-VERSION := $(shell $(GIT2LOG) --version VERSION ; cat VERSION)
-MAJOR_VERSION := $(shell $(GIT2LOG) --version VERSION ; cut -d . -f 1 VERSION)
 
 CFILES	= $(wildcard *.c)
 OBJS	= $(CFILES:.c=.o)
@@ -48,9 +50,17 @@ $(LIB_NAME): .depend $(OBJS)
 test:
 	make -C test
 
+archive: changelog
+	@if [ ! -d .git ] ; then echo no git repo ; false ; fi
+	mkdir -p package
+	git archive --prefix=$(PREFIX)/ $(BRANCH) > package/$(PREFIX).tar
+	tar -r -f package/$(PREFIX).tar --mode=0664 --owner=root --group=root --mtime="`git show -s --format=%ci`" --transform='s:^:$(PREFIX)/:' VERSION changelog
+	xz -f package/$(PREFIX).tar
+
 clean:
 	make -C test clean
 	rm -f *.o *~ include/*~ *.so.* .depend
+	rm -rf package
 
 ifneq "$(MAKECMDGOALS)" "clean"
 .depend: $(CFILES)
