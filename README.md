@@ -293,3 +293,13 @@ Dump emulator state. For flags, see `x86emu_dump()`.
     db 0x05
 
 Reset memory access stats. See `x86emu_reset_access_stats()`.
+
+## openSUSE Development
+
+The package is automatically submitted from the `master` branch to
+[system:install:head](https://build.opensuse.org/package/show/system:install:head/libx86emu)
+OBS project. From that place it is forwarded to
+[openSUSE Factory](https://build.opensuse.org/project/show/openSUSE:Factory).
+
+You can find more information about this workflow in the [linuxrc-devtools
+documentation](https://github.com/openSUSE/linuxrc-devtools#opensuse-development).
