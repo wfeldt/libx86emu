@@ -1,5 +1,7 @@
 # x86 emulation library
 
+libx86emu is a dependency for [hwinfo](https://github.com/openSUSE/hwinfo).
+
 ## API functions
 
 ### x86_new
