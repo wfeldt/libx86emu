@@ -1,5 +1,15 @@
 #! /usr/bin/perl
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+# This script is maintained at https://github.com/openSUSE/ssob
+#
+# If you're in another project, this is just a copy.
+# You may update it to the latest version from time to time...
+#
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
 use strict;
 
 use Getopt::Long;
@@ -155,7 +165,7 @@ for (my $i = @tags - 1; $i > 0; $i--) {
     $detail = 1 if /^    $/;
     $detail = 2 if /^    Conflicts:$/;
     $detail = 0 if /^commit /;
-    if(!$detail || !/^    [^\-\s]/) {
+    if(!$detail) {
       push @t2, $_ if $detail < 2;
     }
   }

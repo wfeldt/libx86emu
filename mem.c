@@ -1,5 +1,7 @@
 #include "include/x86emu_int.h"
+#if defined(__i386__) || defined (__x86_64__)
 #include <sys/io.h>
+#endif
 
 #define PERM16(a)	((a) + ((a) << 8))
 #define PERM32(a)	(PERM16(a) + (PERM16(a) << 16))
