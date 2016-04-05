@@ -2054,7 +2054,7 @@ unsigned decode_memio(u32 addr, u32 *val, unsigned type)
 
   if(
     !((M.log.trace & X86EMU_TRACE_IO) && (type == X86EMU_MEMIO_I || type == X86EMU_MEMIO_O)) &&
-    !((M.log.trace & X86EMU_TRACE_DATA) && (type == X86EMU_MEMIO_R || type == X86EMU_MEMIO_W || X86EMU_MEMIO_X))
+    !((M.log.trace & X86EMU_TRACE_DATA) && (type == X86EMU_MEMIO_R || type == X86EMU_MEMIO_W || type == X86EMU_MEMIO_X))
   ) return err;
 
   lf = LOG_FREE(&M);
@@ -2130,7 +2130,7 @@ unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type)
 
   if(
     !((emu->log.trace & X86EMU_TRACE_IO) && (type == X86EMU_MEMIO_I || type == X86EMU_MEMIO_O)) &&
-    !((emu->log.trace & X86EMU_TRACE_DATA) && (type == X86EMU_MEMIO_R || type == X86EMU_MEMIO_W || X86EMU_MEMIO_X))
+    !((emu->log.trace & X86EMU_TRACE_DATA) && (type == X86EMU_MEMIO_R || type == X86EMU_MEMIO_W || type == X86EMU_MEMIO_X))
   ) return err;
 
   lf = LOG_FREE(emu);

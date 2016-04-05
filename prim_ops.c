@@ -1136,7 +1136,7 @@ u8 rol_byte(u8 d, u8 s)
 		CONDITIONAL_SET_FLAG(s == 1 &&
 							 XOR2((res & 0x1) + ((res >> 6) & 0x2)),
 							 F_OF);
-	} if (s != 0) {
+	} else if (s != 0) {
 		/* set the new carry flag, Note that it is the low order
 		   bit of the result!!!                               */
 		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
@@ -1161,7 +1161,7 @@ u16 rol_word(u16 d, u8 s)
 		CONDITIONAL_SET_FLAG(s == 1 &&
 							 XOR2((res & 0x1) + ((res >> 14) & 0x2)),
 							 F_OF);
-	} if (s != 0) {
+	} else if (s != 0) {
 		/* set the new carry flag, Note that it is the low order
 		   bit of the result!!!                               */
 		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
@@ -1186,7 +1186,7 @@ u32 rol_long(u32 d, u8 s)
 		CONDITIONAL_SET_FLAG(s == 1 &&
 							 XOR2((res & 0x1) + ((res >> 30) & 0x2)),
 							 F_OF);
-	} if (s != 0) {
+	} else if (s != 0) {
 		/* set the new carry flag, Note that it is the low order
 		   bit of the result!!!                               */
 		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
@@ -2534,7 +2534,7 @@ void ins(int size)
           store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_word(M.x86.R_DX));
           break;
         case 4:
-          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_byte(M.x86.R_DX));
+          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_long(M.x86.R_DX));
           break;
       }
       M.x86.R_DI += inc;

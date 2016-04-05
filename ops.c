@@ -3633,17 +3633,15 @@ static void x86emuOp_ret_near_IMM(u8 op1)
   u32 imm;
 
   OP_DECODE("ret ");
-  imm = MODE_DATA32 ? fetch_long() : fetch_word();
+  imm = fetch_word();
+
+  DECODE_HEX4(imm);
 
   if(MODE_DATA32) {
-    DECODE_HEX8(imm);
-
     M.x86.R_EIP = pop_long();
     M.x86.R_ESP += imm;
   }
   else {
-    DECODE_HEX4(imm);
-
     M.x86.R_EIP = pop_word();
     M.x86.R_SP += imm;
   }
@@ -3929,18 +3927,16 @@ static void x86emuOp_ret_far_IMM(u8 op1)
   u32 imm, eip;
 
   OP_DECODE("retf ");
-  imm = MODE_DATA32 ? fetch_long() : fetch_word();
+  imm = fetch_word();
+
+  DECODE_HEX4(imm);
 
   if(MODE_DATA32) {
-    DECODE_HEX8(imm);
-
     eip = pop_long();
     cs = pop_long();
     M.x86.R_ESP += imm;
   }
   else {
-    DECODE_HEX4(imm);
-
     eip = pop_word();
     cs = pop_word();
     M.x86.R_SP += imm;
