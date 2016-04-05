@@ -1101,47 +1101,23 @@ Implements the ROL instruction and side effects.
 ****************************************************************************/
 u8 rol_byte(u8 d, u8 s)
 {
-    register unsigned int res, cnt, mask;
+  unsigned cnt;
 
-    /* rotate left */
-    /* 
-       s is the rotate distance.  It varies from 0 - 8.
-       d is the byte object rotated.  
+  if(!s) return d;
 
-       have 
+  if((cnt = s % 8) != 0) {
+    d = (d << cnt) + ((d >> (8 - cnt)) & ((1 << cnt) - 1));
+  }
 
-       CF  B_7 ... B_0 
+  /* OF flag is set if s == 1; OF = CF _XOR_ MSB of result */
+  if(s == 1) {
+    CONDITIONAL_SET_FLAG((d + (d >> 7)) & 1, F_OF);
+  }
 
-       The new rotate is done mod 8.
-       Much simpler than the "rcl" or "rcr" operations.
+  /* set new CF; note that it is the LSB of the result */
+  CONDITIONAL_SET_FLAG(d & 0x1, F_CF);
 
-       IF n > 0 
-       1) B_(7) .. B_(n)  <-  b_(8-(n+1)) .. b_(0)
-       2) B_(n-1) .. B_(0) <-  b_(7) .. b_(8-n)
-	 */
-    res = d;
-	if ((cnt = s % 8) != 0) {
-		/* B_(7) .. B_(n)  <-  b_(8-(n+1)) .. b_(0) */
-		res = (d << cnt);
-
-		/* B_(n-1) .. B_(0) <-  b_(7) .. b_(8-n) */
-		mask = (1 << cnt) - 1;
-		res |= (d >> (8 - cnt)) & mask;
-
-		/* set the new carry flag, Note that it is the low order
-		   bit of the result!!!                               */
-		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
-		/* OVERFLOW is set *IFF* s==1, then it is the
-		   xor of CF and the most significant bit.  Blecck. */
-		CONDITIONAL_SET_FLAG(s == 1 &&
-							 XOR2((res & 0x1) + ((res >> 6) & 0x2)),
-							 F_OF);
-	} else if (s != 0) {
-		/* set the new carry flag, Note that it is the low order
-		   bit of the result!!!                               */
-		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
-	}
-	return (u8)res;
+  return d;
 }
 
 /****************************************************************************
@@ -1150,23 +1126,23 @@ Implements the ROL instruction and side effects.
 ****************************************************************************/
 u16 rol_word(u16 d, u8 s)
 {
-    register unsigned int res, cnt, mask;
+  unsigned cnt;
 
-	res = d;
-	if ((cnt = s % 16) != 0) {
-		res = (d << cnt);
-		mask = (1 << cnt) - 1;
-		res |= (d >> (16 - cnt)) & mask;
-		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
-		CONDITIONAL_SET_FLAG(s == 1 &&
-							 XOR2((res & 0x1) + ((res >> 14) & 0x2)),
-							 F_OF);
-	} else if (s != 0) {
-		/* set the new carry flag, Note that it is the low order
-		   bit of the result!!!                               */
-		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
-	}
-	return (u16)res;
+  if(!s) return d;
+
+  if((cnt = s % 16) != 0) {
+    d = (d << cnt) + ((d >> (16 - cnt)) & ((1 << cnt) - 1));
+  }
+
+  /* OF flag is set if s == 1; OF = CF _XOR_ MSB of result */
+  if(s == 1) {
+    CONDITIONAL_SET_FLAG((d + (d >> 15)) & 1, F_OF);
+  }
+
+  /* set new CF; note that it is the LSB of the result */
+  CONDITIONAL_SET_FLAG(d & 0x1, F_CF);
+
+  return d;
 }
 
 /****************************************************************************
@@ -1175,23 +1151,23 @@ Implements the ROL instruction and side effects.
 ****************************************************************************/
 u32 rol_long(u32 d, u8 s)
 {
-    register u32 res, cnt, mask;
+  unsigned cnt;
 
-	res = d;
-	if ((cnt = s % 32) != 0) {
-		res = (d << cnt);
-		mask = (1 << cnt) - 1;
-		res |= (d >> (32 - cnt)) & mask;
-		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
-		CONDITIONAL_SET_FLAG(s == 1 &&
-							 XOR2((res & 0x1) + ((res >> 30) & 0x2)),
-							 F_OF);
-	} else if (s != 0) {
-		/* set the new carry flag, Note that it is the low order
-		   bit of the result!!!                               */
-		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
-	}
-	return res;
+  if(!s) return d;
+
+  if((cnt = s % 32) != 0) {
+    d = (d << cnt) + ((d >> (32 - cnt)) & ((1 << cnt) - 1));
+  }
+
+  /* OF flag is set if s == 1; OF = CF _XOR_ MSB of result */
+  if(s == 1) {
+    CONDITIONAL_SET_FLAG((d + (d >> 31)) & 1, F_OF);
+  }
+
+  /* set new CF; note that it is the LSB of the result */
+  CONDITIONAL_SET_FLAG(d & 0x1, F_CF);
+
+  return d;
 }
 
 /****************************************************************************
@@ -1200,44 +1176,23 @@ Implements the ROR instruction and side effects.
 ****************************************************************************/
 u8 ror_byte(u8 d, u8 s)
 {
-    register unsigned int res, cnt, mask;
+  unsigned cnt;
 
-    /* rotate right */
-    /* 
-       s is the rotate distance.  It varies from 0 - 8.
-       d is the byte object rotated.  
+  if(!s) return d;
 
-       have 
+  if((cnt = s % 8) != 0) {
+    d = (d << (8 - cnt)) + ((d >> (cnt)) & ((1 << (8 - cnt)) - 1));
+  }
 
-       B_7 ... B_0 
+  /* OF flag is set if s == 1; OF = MSB _XOR_ (M-1)SB of result */
+  if(s == 1) {
+    CONDITIONAL_SET_FLAG(XOR2(d >> 6), F_OF);
+  }
 
-       The rotate is done mod 8.
+  /* set new CF; note that it is the MSB of the result */
+  CONDITIONAL_SET_FLAG(d & (1 << 7), F_CF);
 
-       IF n > 0 
-       1) B_(8-(n+1)) .. B_(0)  <-  b_(7) .. b_(n)
-       2) B_(7) .. B_(8-n) <-  b_(n-1) .. b_(0)
-	 */
-	res = d;
-	if ((cnt = s % 8) != 0) {           /* not a typo, do nada if cnt==0 */
-        /* B_(7) .. B_(8-n) <-  b_(n-1) .. b_(0) */
-        res = (d << (8 - cnt));
-
-        /* B_(8-(n+1)) .. B_(0)  <-  b_(7) .. b_(n) */
-        mask = (1 << (8 - cnt)) - 1;
-        res |= (d >> (cnt)) & mask;
-
-        /* set the new carry flag, Note that it is the low order 
-           bit of the result!!!                               */
-		CONDITIONAL_SET_FLAG(res & 0x80, F_CF);
-		/* OVERFLOW is set *IFF* s==1, then it is the
-           xor of the two most significant bits.  Blecck. */
-		CONDITIONAL_SET_FLAG(s == 1 && XOR2(res >> 6), F_OF);
-	} else if (s != 0) {
-		/* set the new carry flag, Note that it is the low order
-		   bit of the result!!!                               */
-		CONDITIONAL_SET_FLAG(res & 0x80, F_CF);
-	}
-	return (u8)res;
+  return d;
 }
 
 /****************************************************************************
@@ -1246,21 +1201,23 @@ Implements the ROR instruction and side effects.
 ****************************************************************************/
 u16 ror_word(u16 d, u8 s)
 {
-    register unsigned int res, cnt, mask;
+  unsigned cnt;
 
-	res = d;
-	if ((cnt = s % 16) != 0) {
-		res = (d << (16 - cnt));
-		mask = (1 << (16 - cnt)) - 1;
-		res |= (d >> (cnt)) & mask;
-		CONDITIONAL_SET_FLAG(res & 0x8000, F_CF);
-		CONDITIONAL_SET_FLAG(s == 1 && XOR2(res >> 14), F_OF);
-	} else if (s != 0) {
-		/* set the new carry flag, Note that it is the low order
-		   bit of the result!!!                               */
-		CONDITIONAL_SET_FLAG(res & 0x8000, F_CF);
-	}
-	return (u16)res;
+  if(!s) return d;
+
+  if((cnt = s % 16) != 0) {
+    d = (d << (16 - cnt)) + ((d >> (cnt)) & ((1 << (16 - cnt)) - 1));
+  }
+
+  /* OF flag is set if s == 1; OF = MSB _XOR_ (M-1)SB of result */
+  if(s == 1) {
+    CONDITIONAL_SET_FLAG(XOR2(d >> 14), F_OF);
+  }
+
+  /* set new CF; note that it is the MSB of the result */
+  CONDITIONAL_SET_FLAG(d & (1 << 15), F_CF);
+
+  return d;
 }
 
 /****************************************************************************
@@ -1269,21 +1226,23 @@ Implements the ROR instruction and side effects.
 ****************************************************************************/
 u32 ror_long(u32 d, u8 s)
 {
-	register u32 res, cnt, mask;
+  unsigned cnt;
 
-	res = d;
-	if ((cnt = s % 32) != 0) {
-		res = (d << (32 - cnt));
-		mask = (1 << (32 - cnt)) - 1;
-		res |= (d >> (cnt)) & mask;
-		CONDITIONAL_SET_FLAG(res & 0x80000000, F_CF);
-		CONDITIONAL_SET_FLAG(s == 1 && XOR2(res >> 30), F_OF);
-	} else if (s != 0) {
-		/* set the new carry flag, Note that it is the low order
-		   bit of the result!!!                               */
-		CONDITIONAL_SET_FLAG(res & 0x80000000, F_CF);
-	}
-	return res;
+  if(!s) return d;
+
+  if((cnt = s % 32) != 0) {
+    d = (d << (32 - cnt)) + ((d >> (cnt)) & ((1 << (32 - cnt)) - 1));
+  }
+
+  /* OF flag is set if s == 1; OF = MSB _XOR_ (M-1)SB of result */
+  if(s == 1) {
+    CONDITIONAL_SET_FLAG(XOR2(d >> 30), F_OF);
+  }
+
+  /* set new CF; note that it is the MSB of the result */
+  CONDITIONAL_SET_FLAG(d & (1 << 31), F_CF);
+
+  return d;
 }
 
 /****************************************************************************
