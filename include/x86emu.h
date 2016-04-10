@@ -45,7 +45,7 @@
 extern "C" {            			/* Use "C" linkage when in C++ mode */
 #endif
 
-#include <inttypes.h>
+#include <stdint.h>
 
 
 /*---------------------- Macros and type definitions ----------------------*/
