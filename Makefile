@@ -26,7 +26,7 @@ OBJS	= $(CFILES:.c=.o)
 LIB_NAME	= $(LIBX86).so.$(VERSION)
 LIB_SONAME	= $(LIBX86).so.$(MAJOR_VERSION)
 
-.PHONY: all shared install test clean
+.PHONY: all shared install test demo clean
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
@@ -50,6 +50,9 @@ $(LIB_NAME): .depend $(OBJS)
 test:
 	make -C test
 
+demo:
+	make -C demo
+
 archive: changelog
 	@if [ ! -d .git ] ; then echo no git repo ; false ; fi
 	mkdir -p package
@@ -59,6 +62,7 @@ archive: changelog
 
 clean:
 	make -C test clean
+	make -C demo clean
 	rm -f *.o *~ include/*~ *.so.* .depend
 	rm -rf package
 
