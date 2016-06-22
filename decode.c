@@ -68,15 +68,10 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
   char **p;
   unsigned u, rs = 0;
   time_t t0;
+  int has_prefix;
 #if WITH_TSC
   u64 tsc_ofs;
 #endif
-
-  static unsigned char is_prefix[0x100] = {
-    [0x26] = 1, [0x2e] = 1, [0x36] = 1, [0x3e] = 1,
-    [0x64 ... 0x67] = 1,
-    [0xf0] = 1, [0xf2 ... 0xf3] = 1
-  };
 
   if(emu) M = *emu;
 
@@ -145,8 +140,9 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
     memcpy(M.x86.decode_seg, "[", 1);
 
     /* handle prefixes here */
-    while(is_prefix[op1 = fetch_byte()]) {
-      switch(op1) {
+    has_prefix = 1;
+    while(has_prefix) {
+      switch(op1 = fetch_byte()) {
         case 0x26:
           memcpy(M.x86.decode_seg, "es:[", 4);
           M.x86.default_seg = M.x86.seg + R_ES_INDEX;
@@ -187,6 +183,9 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
         case 0xf3:
           OP_DECODE("repe ");
           M.x86.mode |= _MODE_REPE;
+          break;
+        default:
+          has_prefix = 0;
           break;
       }
     }
