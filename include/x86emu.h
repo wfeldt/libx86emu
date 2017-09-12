@@ -1,10 +1,11 @@
 /****************************************************************************
 *
-*						Realmode X86 Emulator Library
+* Realmode X86 Emulator Library
 *
-*            	Copyright (C) 1996-1999 SciTech Software, Inc.
-* 				     Copyright (C) David Mosberger-Tang
-* 					   Copyright (C) 1999 Egbert Eich
+* Copyright (c) 1996-1999 SciTech Software, Inc.
+* Copyright (c) David Mosberger-Tang
+* Copyright (c) 1999 Egbert Eich
+* Copyright (c) 2007-2017 SUSE LINUX GmbH; Author: Steffen Winterfeldt
 *
 *  ========================================================================
 *
@@ -28,15 +29,13 @@
 *
 *  ========================================================================
 *
-* Language:		ANSI C
-* Environment:	Any
-* Developer:    Kendall Bennett
+* Description:
+*   Header file for public interface functions.
 *
-* Description:  Header file for public specific functions.
-*               Any application linking against us should only
-*               include this header
+*   Applications linking against libx86emu should only include this header.
 *
 ****************************************************************************/
+
 
 #ifndef __X86EMU_X86EMU_H
 #define __X86EMU_X86EMU_H
