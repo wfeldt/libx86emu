@@ -1,10 +1,8 @@
 /****************************************************************************
 *
-*						Realmode X86 Emulator Library
+* Realmode X86 Emulator Library
 *
-*            	Copyright (C) 1996-1999 SciTech Software, Inc.
-* 				     Copyright (C) David Mosberger-Tang
-* 					   Copyright (C) 1999 Egbert Eich
+* Copyright (c) 2007-2017 SUSE LINUX GmbH; Author: Steffen Winterfeldt
 *
 *  ========================================================================
 *
@@ -28,13 +26,8 @@
 *
 *  ========================================================================
 *
-* Language:		ANSI C
-* Environment:	Any
-* Developer:    Kendall Bennett
-*
-* Description:  Header file for system specific functions. These functions
-*				are always compiled and linked in the OS depedent libraries,
-*				and never in a binary portable driver.
+* Description:
+*   Header file for library internal macros and definitions.
 *
 ****************************************************************************/
 

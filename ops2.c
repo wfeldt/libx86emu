@@ -1,10 +1,11 @@
 /****************************************************************************
 *
-*						Realmode X86 Emulator Library
+* Realmode X86 Emulator Library
 *
-*            	Copyright (C) 1996-1999 SciTech Software, Inc.
-* 				     Copyright (C) David Mosberger-Tang
-* 					   Copyright (C) 1999 Egbert Eich
+* Copyright (c) 1996-1999 SciTech Software, Inc.
+* Copyright (c) David Mosberger-Tang
+* Copyright (c) 1999 Egbert Eich
+* Copyright (c) 2007-2017 SUSE LINUX GmbH; Author: Steffen Winterfeldt
 *
 *  ========================================================================
 *
@@ -28,15 +29,12 @@
 *
 *  ========================================================================
 *
-* Language:		ANSI C
-* Environment:	Any
-* Developer:    Kendall Bennett
-*
-* Description:  This file includes subroutines to implement the decoding
-*               and emulation of all the x86 extended two-byte processor
-*               instructions.
+* Description:
+*   Subroutines to implement the decoding and emulation of all the x86
+*   extended two-byte processor instructions.
 *
 ****************************************************************************/
+
 
 #include "include/x86emu_int.h"
 

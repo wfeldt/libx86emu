@@ -1,10 +1,11 @@
 /****************************************************************************
 *
-*						Realmode X86 Emulator Library
+* Realmode X86 Emulator Library
 *
-*            	Copyright (C) 1996-1999 SciTech Software, Inc.
-* 				     Copyright (C) David Mosberger-Tang
-* 					   Copyright (C) 1999 Egbert Eich
+* Copyright (c) 1996-1999 SciTech Software, Inc.
+* Copyright (c) David Mosberger-Tang
+* Copyright (c) 1999 Egbert Eich
+* Copyright (c) 2007-2017 SUSE LINUX GmbH; Author: Steffen Winterfeldt
 *
 *  ========================================================================
 *
@@ -28,13 +29,11 @@
 *
 *  ========================================================================
 *
-* Language:		ANSI C
-* Environment:	Any
-* Developer:    Kendall Bennett
-*
-* Description:  Header file for primitive operation functions.
+* Description:
+*   Header file for primitive operation functions.
 *
 ****************************************************************************/
+
 
 #ifndef __X86EMU_PRIM_OPS_H
 #define __X86EMU_PRIM_OPS_H

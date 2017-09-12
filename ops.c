@@ -1,10 +1,11 @@
 /****************************************************************************
 *
-*						Realmode X86 Emulator Library
+* Realmode X86 Emulator Library
 *
-*            	Copyright (C) 1996-1999 SciTech Software, Inc.
-* 				     Copyright (C) David Mosberger-Tang
-* 					   Copyright (C) 1999 Egbert Eich
+* Copyright (c) 1996-1999 SciTech Software, Inc.
+* Copyright (c) David Mosberger-Tang
+* Copyright (c) 1999 Egbert Eich
+* Copyright (c) 2007-2017 SUSE LINUX GmbH; Author: Steffen Winterfeldt
 *
 *  ========================================================================
 *
@@ -28,43 +29,40 @@
 *
 *  ========================================================================
 *
-* Language:		ANSI C
-* Environment:	Any
-* Developer:    Kendall Bennett
+* Description:
+*   Subroutines to implement the decoding and emulation of all the
+*   x86 processor instructions.
 *
-* Description:  This file includes subroutines to implement the decoding
-*               and emulation of all the x86 processor instructions.
+*   There are approximately 250 subroutines in here, which correspond
+*   to the 256 byte-"opcodes" found on the 8086.  The table which
+*   dispatches this is found in the files optab.[ch].
 *
-* There are approximately 250 subroutines in here, which correspond
-* to the 256 byte-"opcodes" found on the 8086.  The table which
-* dispatches this is found in the files optab.[ch].
+*   Each opcode proc has a comment preceeding it which gives it's table
+*   address.  Several opcodes are missing (undefined) in the table.
 *
-* Each opcode proc has a comment preceeding it which gives it's table
-* address.  Several opcodes are missing (undefined) in the table.
+*   Each proc includes information for decoding (OP_DECODE).
 *
-* Each proc includes information for decoding (OP_DECODE).
-*
-* Many of the procedures are *VERY* similar in coding.  This has
-* allowed for a very large amount of code to be generated in a fairly
-* short amount of time (i.e. cut, paste, and modify).  The result is
-* that much of the code below could have been folded into subroutines
-* for a large reduction in size of this file.  The downside would be
-* that there would be a penalty in execution speed.  The file could
-* also have been *MUCH* larger by inlining certain functions which
-* were called.  This could have resulted even faster execution.  The
-* prime directive I used to decide whether to inline the code or to
-* modularize it, was basically: 1) no unnecessary subroutine calls,
-* 2) no routines more than about 200 lines in size, and 3) modularize
-* any code that I might not get right the first time.  The fetch_*
-* subroutines fall into the latter category.  The The decode_* fall
-* into the second category.  The coding of the "switch(mod){ .... }"
-* in many of the subroutines below falls into the first category.
-* Especially, the coding of {add,and,or,sub,...}_{byte,word}
-* subroutines are an especially glaring case of the third guideline.
-* Since so much of the code is cloned from other modules (compare
-* opcode #00 to opcode #01), making the basic operations subroutine
-* calls is especially important; otherwise mistakes in coding an
-* "add" would represent a nightmare in maintenance.
+*   Many of the procedures are *VERY* similar in coding.  This has
+*   allowed for a very large amount of code to be generated in a fairly
+*   short amount of time (i.e. cut, paste, and modify).  The result is
+*   that much of the code below could have been folded into subroutines
+*   for a large reduction in size of this file.  The downside would be
+*   that there would be a penalty in execution speed.  The file could
+*   also have been *MUCH* larger by inlining certain functions which
+*   were called.  This could have resulted even faster execution.  The
+*   prime directive I used to decide whether to inline the code or to
+*   modularize it, was basically: 1) no unnecessary subroutine calls,
+*   2) no routines more than about 200 lines in size, and 3) modularize
+*   any code that I might not get right the first time.  The fetch_*
+*   subroutines fall into the latter category.  The The decode_* fall
+*   into the second category.  The coding of the "switch(mod){ .... }"
+*   in many of the subroutines below falls into the first category.
+*   Especially, the coding of {add,and,or,sub,...}_{byte,word}
+*   subroutines are an especially glaring case of the third guideline.
+*   Since so much of the code is cloned from other modules (compare
+*   opcode #00 to opcode #01), making the basic operations subroutine
+*   calls is especially important; otherwise mistakes in coding an
+*   "add" would represent a nightmare in maintenance.
 *
 ****************************************************************************/
 

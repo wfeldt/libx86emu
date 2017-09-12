@@ -1,10 +1,11 @@
 /****************************************************************************
 *
-*						Realmode X86 Emulator Library
+* Realmode X86 Emulator Library
 *
-*            	Copyright (C) 1996-1999 SciTech Software, Inc.
-* 				     Copyright (C) David Mosberger-Tang
-* 					   Copyright (C) 1999 Egbert Eich
+* Copyright (c) 1996-1999 SciTech Software, Inc.
+* Copyright (c) David Mosberger-Tang
+* Copyright (c) 1999 Egbert Eich
+* Copyright (c) 2007-2017 SUSE LINUX GmbH; Author: Steffen Winterfeldt
 *
 *  ========================================================================
 *
@@ -28,74 +29,72 @@
 *
 *  ========================================================================
 *
-* Language:		ANSI C
-* Environment:	Any
-* Developer:    Kendall Bennett
+* Description:
+*   Implement the primitive machine operations used by the emulation code
+*   in ops.c
 *
-* Description:  This file contains the code to implement the primitive
-*				machine operations used by the emulation code in ops.c
+*   Carry Chain Calculation
 *
-* Carry Chain Calculation
+*   This represents a somewhat expensive calculation which is
+*   apparently required to emulate the setting of the OF and AF flag.
+*   The latter is not so important, but the former is.  The overflow
+*   flag is the XOR of the top two bits of the carry chain for an
+*   addition (similar for subtraction).  Since we do not want to
+*   simulate the addition in a bitwise manner, we try to calculate the
+*   carry chain given the two operands and the result.
 *
-* This represents a somewhat expensive calculation which is
-* apparently required to emulate the setting of the OF and AF flag.
-* The latter is not so important, but the former is.  The overflow
-* flag is the XOR of the top two bits of the carry chain for an
-* addition (similar for subtraction).  Since we do not want to
-* simulate the addition in a bitwise manner, we try to calculate the
-* carry chain given the two operands and the result.
+*   So, given the following table, which represents the addition of two
+*   bits, we can derive a formula for the carry chain.
 *
-* So, given the following table, which represents the addition of two
-* bits, we can derive a formula for the carry chain.
+*   a   b   cin   r     cout
+*   0   0   0     0     0
+*   0   0   1     1     0
+*   0   1   0     1     0
+*   0   1   1     0     1
+*   1   0   0     1     0
+*   1   0   1     0     1
+*   1   1   0     0     1
+*   1   1   1     1     1
 *
-* a   b   cin   r     cout
-* 0   0   0     0     0
-* 0   0   1     1     0
-* 0   1   0     1     0
-* 0   1   1     0     1
-* 1   0   0     1     0
-* 1   0   1     0     1
-* 1   1   0     0     1
-* 1   1   1     1     1
+*   Construction of table for cout:
 *
-* Construction of table for cout:
+*   ab
+*   r  \  00   01   11  10
+*   |------------------
+*   0  |   0    1    1   1
+*   1  |   0    0    1   0
 *
-* ab
-* r  \  00   01   11  10
-* |------------------
-* 0  |   0    1    1   1
-* 1  |   0    0    1   0
+*   By inspection, one gets:  cc = ab +  r'(a + b)
 *
-* By inspection, one gets:  cc = ab +  r'(a + b)
+*   That represents alot of operations, but NO CHOICE....
 *
-* That represents alot of operations, but NO CHOICE....
+*   Borrow Chain Calculation.
 *
-* Borrow Chain Calculation.
+*   The following table represents the subtraction of two bits, from
+*   which we can derive a formula for the borrow chain.
 *
-* The following table represents the subtraction of two bits, from
-* which we can derive a formula for the borrow chain.
+*   a   b   bin   r     bout
+*   0   0   0     0     0
+*   0   0   1     1     1
+*   0   1   0     1     1
+*   0   1   1     0     1
+*   1   0   0     1     0
+*   1   0   1     0     0
+*   1   1   0     0     0
+*   1   1   1     1     1
 *
-* a   b   bin   r     bout
-* 0   0   0     0     0
-* 0   0   1     1     1
-* 0   1   0     1     1
-* 0   1   1     0     1
-* 1   0   0     1     0
-* 1   0   1     0     0
-* 1   1   0     0     0
-* 1   1   1     1     1
+*   Construction of table for cout:
 *
-* Construction of table for cout:
+*   ab
+*   r  \  00   01   11  10
+*   |------------------
+*   0  |   0    1    0   0
+*   1  |   1    1    1   0
 *
-* ab
-* r  \  00   01   11  10
-* |------------------
-* 0  |   0    1    0   0
-* 1  |   1    1    1   0
-*
-* By inspection, one gets:  bc = a'b +  r(a' + b)
+*   By inspection, one gets:  bc = a'b +  r(a' + b)
 *
 ****************************************************************************/
+
 
 #include "include/x86emu_int.h"
 
