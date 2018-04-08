@@ -50,14 +50,14 @@
   memcpy((emu)->x86.disasm_ptr, (emu)->x86.decode_seg, 4), \
   (emu)->x86.disasm_ptr += (emu)->x86.default_seg ? 4 : 1
 
-#define DECODE_HEX1(ofs) decode_hex1(&(emu)->x86.disasm_ptr, ofs)
-#define DECODE_HEX2(ofs) decode_hex2(&(emu)->x86.disasm_ptr, ofs)
-#define DECODE_HEX4(ofs) decode_hex4(&(emu)->x86.disasm_ptr, ofs)
-#define DECODE_HEX8(ofs) decode_hex8(&(emu)->x86.disasm_ptr, ofs)
-#define DECODE_HEX2S(ofs) decode_hex2s(&(emu)->x86.disasm_ptr, ofs)
-#define DECODE_HEX4S(ofs) decode_hex4s(&(emu)->x86.disasm_ptr, ofs)
-#define DECODE_HEX8S(ofs) decode_hex8s(&(emu)->x86.disasm_ptr, ofs)
-#define DECODE_HEX_ADDR(ofs) decode_hex_addr(&(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX1(ofs) decode_hex1((emu), &(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX2(ofs) decode_hex2((emu), &(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX4(ofs) decode_hex4((emu), &(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX8(ofs) decode_hex8((emu), &(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX2S(ofs) decode_hex2s((emu), &(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX4S(ofs) decode_hex4s((emu), &(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX8S(ofs) decode_hex8s((emu), &(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX_ADDR(ofs) decode_hex_addr((emu), &(emu)->x86.disasm_ptr, ofs)
 
 /*-------------------------- Function Prototypes --------------------------*/
 
@@ -87,27 +87,27 @@ u32 fetch_io_long(x86emu_t *emu, u32 offset) L_SYM;
 void store_io_byte(u32 port, u8 val) L_SYM;
 void store_io_word(u32 port, u16 val) L_SYM;
 void store_io_long(u32 port, u32 val) L_SYM;
-u8* decode_rm_byte_register(int reg) L_SYM;
-u16* decode_rm_word_register(int reg) L_SYM;
-u32* decode_rm_long_register(int reg) L_SYM;
-sel_t *decode_rm_seg_register(int reg) L_SYM;
-u32 decode_rm00_address(int rm) L_SYM;
-u32 decode_rm01_address(int rm) L_SYM;
-u32 decode_rm10_address(int rm) L_SYM;
-u32 decode_sib_address(int sib, int mod) L_SYM;
-u32 decode_rm_address(int mod, int rl) L_SYM;
+u8* decode_rm_byte_register(x86emu_t *emu, int reg) L_SYM;
+u16* decode_rm_word_register(x86emu_t *emu, int reg) L_SYM;
+u32* decode_rm_long_register(x86emu_t *emu, int reg) L_SYM;
+sel_t *decode_rm_seg_register(x86emu_t *emu, int reg) L_SYM;
+u32 decode_rm00_address(x86emu_t *emu, int rm) L_SYM;
+u32 decode_rm01_address(x86emu_t *emu, int rm) L_SYM;
+u32 decode_rm10_address(x86emu_t *emu, int rm) L_SYM;
+u32 decode_sib_address(x86emu_t *emu, int sib, int mod) L_SYM;
+u32 decode_rm_address(x86emu_t *emu, int mod, int rl) L_SYM;
 
-void decode_hex(char **p, u32 ofs) L_SYM;
-void decode_hex1(char **p, u32 ofs) L_SYM;
-void decode_hex2(char **p, u32 ofs) L_SYM;
-void decode_hex4(char **p, u32 ofs) L_SYM;
-void decode_hex8(char **p, u32 ofs) L_SYM;
-void decode_hex_addr(char **p, u32 ofs) L_SYM;
-void decode_hex2s(char **p, s32 ofs) L_SYM;
-void decode_hex4s(char **p, s32 ofs) L_SYM;
-void decode_hex8s(char **p, s32 ofs) L_SYM;
+void decode_hex(x86emu_t *emu, char **p, u32 ofs) L_SYM;
+void decode_hex1(x86emu_t *emu, char **p, u32 ofs) L_SYM;
+void decode_hex2(x86emu_t *emu, char **p, u32 ofs) L_SYM;
+void decode_hex4(x86emu_t *emu, char **p, u32 ofs) L_SYM;
+void decode_hex8(x86emu_t *emu, char **p, u32 ofs) L_SYM;
+void decode_hex_addr(x86emu_t *emu, char **p, u32 ofs) L_SYM;
+void decode_hex2s(x86emu_t *emu, char **p, s32 ofs) L_SYM;
+void decode_hex4s(x86emu_t *emu, char **p, s32 ofs) L_SYM;
+void decode_hex8s(x86emu_t *emu, char **p, s32 ofs) L_SYM;
 
-void decode_descriptor(descr_t *d, u32 dl, u32 dh);
+void decode_descriptor(x86emu_t *emu, descr_t *d, u32 dl, u32 dh);
 
 void emu_process_debug(unsigned start, unsigned len) L_SYM;
 
