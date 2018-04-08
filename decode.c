@@ -252,7 +252,7 @@ unsigned x86emu_run(x86emu_t *emu_, unsigned flags)
     log_code(emu);
 
     if(emu->x86.debug_len) {
-      emu_process_debug(emu->x86.debug_start, emu->x86.debug_len);
+      emu_process_debug(emu, emu->x86.debug_start, emu->x86.debug_len);
       emu->x86.debug_len = emu->x86.debug_start = 0;
     }
 
@@ -2189,7 +2189,7 @@ unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type)
 }
 
 
-void emu_process_debug(unsigned start, unsigned len)
+void emu_process_debug(x86emu_t *emu, unsigned start, unsigned len)
 {
   unsigned lf, type, u;
   char **p = &emu->log.ptr;
