@@ -50,7 +50,7 @@ static void log_code(x86emu_t *emu);
 static void check_data_access(x86emu_t *emu, sel_t *seg, u32 ofs, u32 size);
 static unsigned decode_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type);
 static unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type);
-static void idt_lookup(u8 nr, u32 *new_cs, u32 *new_eip);
+static void idt_lookup(x86emu_t *emu, u8 nr, u32 *new_cs, u32 *new_eip);
 
 
 /****************************************************************************
@@ -1958,7 +1958,7 @@ void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val)
 }
 
 
-void idt_lookup(u8 nr, u32 *new_cs, u32 *new_eip)
+void idt_lookup(x86emu_t *emu, u8 nr, u32 *new_cs, u32 *new_eip)
 {
   unsigned err, ofs;
   u32 dl, dh;
@@ -2013,7 +2013,7 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
     new_cs = cs;
     new_eip = eip;
 
-    idt_lookup(nr, &new_cs, &new_eip);
+    idt_lookup(emu, nr, &new_cs, &new_eip);
 
     if(MODE_PROTECTED(emu) && MODE_CODE32) {
       push_long(emu, emu->x86.R_EFLG);
