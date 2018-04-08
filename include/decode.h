@@ -65,25 +65,25 @@
 extern "C" {            			/* Use "C" linkage when in C++ mode */
 #endif
 
-void fetch_decode_modrm(int *mod, int *regh, int *regl) L_SYM;
-u8 fetch_byte(void) L_SYM;
-u16 fetch_word(void) L_SYM;
-u32 fetch_long(void) L_SYM;
-u8 fetch_data_byte(u32 offset) L_SYM;
-u8 fetch_data_byte_abs(sel_t *seg, u32 offset) L_SYM;
-u16 fetch_data_word(u32 offset) L_SYM;
-u16 fetch_data_word_abs(sel_t *seg, u32 offset) L_SYM;
-u32 fetch_data_long(u32 offset) L_SYM;
-u32 fetch_data_long_abs(sel_t *seg, u32 offset) L_SYM;
+void fetch_decode_modrm(x86emu_t *emu, int *mod, int *regh, int *regl) L_SYM;
+u8 fetch_byte(x86emu_t *emu) L_SYM;
+u16 fetch_word(x86emu_t *emu) L_SYM;
+u32 fetch_long(x86emu_t *emu) L_SYM;
+u8 fetch_data_byte(x86emu_t *emu, u32 offset) L_SYM;
+u8 fetch_data_byte_abs(x86emu_t *emu, sel_t *seg, u32 offset) L_SYM;
+u16 fetch_data_word(x86emu_t *emu, u32 offset) L_SYM;
+u16 fetch_data_word_abs(x86emu_t *emu, sel_t *seg, u32 offset) L_SYM;
+u32 fetch_data_long(x86emu_t *emu, u32 offset) L_SYM;
+u32 fetch_data_long_abs(x86emu_t *emu, sel_t *seg, u32 offset) L_SYM;
 void store_data_byte(u32 offset, u8 val) L_SYM;
 void store_data_byte_abs(sel_t *seg, u32 offset, u8 val) L_SYM;
 void store_data_word(u32 offset, u16 val) L_SYM;
 void store_data_word_abs(sel_t *seg, u32 offset, u16 val) L_SYM;
 void store_data_long(u32 offset, u32 val) L_SYM;
 void store_data_long_abs(sel_t *seg, u32 offset, u32 val) L_SYM;
-u8 fetch_io_byte(u32 offset) L_SYM;
-u16 fetch_io_word(u32 offset) L_SYM;
-u32 fetch_io_long(u32 offset) L_SYM;
+u8 fetch_io_byte(x86emu_t *emu, u32 offset) L_SYM;
+u16 fetch_io_word(x86emu_t *emu, u32 offset) L_SYM;
+u32 fetch_io_long(x86emu_t *emu, u32 offset) L_SYM;
 void store_io_byte(u32 port, u8 val) L_SYM;
 void store_io_word(u32 port, u16 val) L_SYM;
 void store_io_long(u32 port, u32 val) L_SYM;
