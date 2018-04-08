@@ -139,7 +139,7 @@ unsigned x86emu_run(x86emu_t *emu_, unsigned flags)
     /* handle prefixes here */
     has_prefix = 1;
     while(has_prefix) {
-      switch(op1 = fetch_byte()) {
+      switch(op1 = fetch_byte(emu)) {
         case 0x26:
           memcpy(emu->x86.decode_seg, "es:[", 4);
           emu->x86.default_seg = emu->x86.seg + R_ES_INDEX;
@@ -350,11 +350,11 @@ REMARKS:
 Raise the specified interrupt to be handled before the execution of the
 next instruction.
 ****************************************************************************/
-void fetch_decode_modrm(int *mod, int *regh, int *regl)
+void fetch_decode_modrm(x86emu_t *emu, int *mod, int *regh, int *regl)
 {
   u8 fetched;
 
-  fetched = fetch_byte();
+  fetched = fetch_byte(emu);
 
   *mod  = (fetched >> 6) & 0x03;
   *regh = (fetched >> 3) & 0x07;
@@ -369,7 +369,7 @@ REMARKS:
 This function returns the immediate byte from the instruction queue, and
 moves the instruction pointer to the next value.
 ****************************************************************************/
-u8 fetch_byte(void)
+u8 fetch_byte(x86emu_t *emu)
 {
   u32 val;
   unsigned err;
@@ -400,7 +400,7 @@ REMARKS:
 This function returns the immediate byte from the instruction queue, and
 moves the instruction pointer to the next value.
 ****************************************************************************/
-u16 fetch_word(void)
+u16 fetch_word(x86emu_t *emu)
 {
   u32 val;
   unsigned err;
@@ -432,7 +432,7 @@ REMARKS:
 This function returns the immediate byte from the instruction queue, and
 moves the instruction pointer to the next value.
 ****************************************************************************/
-u32 fetch_long(void)
+u32 fetch_long(x86emu_t *emu)
 {
   u32 val;
   unsigned err;
@@ -506,9 +506,9 @@ offset	- Offset to load data from
 RETURNS:
 Byte value read from the absolute memory location.
 ****************************************************************************/
-u8 fetch_data_byte(u32 ofs)
+u8 fetch_data_byte(x86emu_t *emu, u32 ofs)
 {
-  return fetch_data_byte_abs(get_data_segment(), ofs);
+  return fetch_data_byte_abs(emu, get_data_segment(), ofs);
 }
 
 /****************************************************************************
@@ -518,9 +518,9 @@ offset	- Offset to load data from
 RETURNS:
 Word value read from the absolute memory location.
 ****************************************************************************/
-u16 fetch_data_word(u32 ofs)
+u16 fetch_data_word(x86emu_t *emu, u32 ofs)
 {
-  return fetch_data_word_abs(get_data_segment(), ofs);
+  return fetch_data_word_abs(emu, get_data_segment(), ofs);
 }
 
 /****************************************************************************
@@ -530,9 +530,9 @@ offset	- Offset to load data from
 RETURNS:
 Long value read from the absolute memory location.
 ****************************************************************************/
-u32 fetch_data_long(u32 ofs)
+u32 fetch_data_long(x86emu_t *emu, u32 ofs)
 {
-  return fetch_data_long_abs(get_data_segment(), ofs);
+  return fetch_data_long_abs(emu, get_data_segment(), ofs);
 }
 
 /****************************************************************************
@@ -543,7 +543,7 @@ offset	- Offset to load data from
 RETURNS:
 Byte value read from the absolute memory location.
 ****************************************************************************/
-u8 fetch_data_byte_abs(sel_t *seg, u32 ofs)
+u8 fetch_data_byte_abs(x86emu_t *emu, sel_t *seg, u32 ofs)
 {
   u32 val;
 
@@ -562,7 +562,7 @@ offset	- Offset to load data from
 RETURNS:
 Word value read from the absolute memory location.
 ****************************************************************************/
-u16 fetch_data_word_abs(sel_t *seg, u32 ofs)
+u16 fetch_data_word_abs(x86emu_t *emu, sel_t *seg, u32 ofs)
 {
   u32 val;
 
@@ -581,7 +581,7 @@ offset	- Offset to load data from
 RETURNS:
 Long value read from the absolute memory location.
 ****************************************************************************/
-u32 fetch_data_long_abs(sel_t *seg, u32 ofs)
+u32 fetch_data_long_abs(x86emu_t *emu, sel_t *seg, u32 ofs)
 {
   u32 val;
 
@@ -687,7 +687,7 @@ void store_data_long_abs(sel_t *seg, u32 ofs, u32 val)
 }
 
 
-u8 fetch_io_byte(u32 port)
+u8 fetch_io_byte(x86emu_t *emu, u32 port)
 {
   u32 val;
 
@@ -697,7 +697,7 @@ u8 fetch_io_byte(u32 port)
 }
 
 
-u16 fetch_io_word(u32 port)
+u16 fetch_io_word(x86emu_t *emu, u32 port)
 {
   u32 val;
 
@@ -707,7 +707,7 @@ u16 fetch_io_word(u32 port)
 }
 
 
-u32 fetch_io_long(u32 port)
+u32 fetch_io_long(x86emu_t *emu, u32 port)
 {
   u32 val;
 
@@ -1149,13 +1149,13 @@ u32 decode_rm00_address(int rm)
         return emu->x86.R_EBX;
 
       case 4:
-        sib = fetch_byte();
+        sib = fetch_byte(emu);
         base = decode_sib_address(sib, 0);
         OP_DECODE("]");
         return base;
 
       case 5:
-        offset = fetch_long();
+        offset = fetch_long(emu);
         SEGPREF_DECODE;
         DECODE_HEX8(offset);
         OP_DECODE("]");
@@ -1208,7 +1208,7 @@ u32 decode_rm00_address(int rm)
         return emu->x86.R_DI;
 
       case 6:
-        offset = fetch_word();
+        offset = fetch_word(emu);
         SEGPREF_DECODE;
         DECODE_HEX4(offset);
         OP_DECODE("]");
@@ -1233,7 +1233,7 @@ u32 decode_rm01_address(int rm)
 
   /* Fetch disp8 if no SIB byte */
   if(!(MODE_ADDR32 && (rm == 4))) {
-    displacement = (s8) fetch_byte();
+    displacement = (s8) fetch_byte(emu);
   }
 
   if(MODE_ADDR32) {
@@ -1268,9 +1268,9 @@ u32 decode_rm01_address(int rm)
         return emu->x86.R_EBX + displacement;
 
       case 4:
-        sib = fetch_byte();
+        sib = fetch_byte(emu);
         base = decode_sib_address(sib, 1);
-        displacement = (s8) fetch_byte();
+        displacement = (s8) fetch_byte(emu);
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
         return base + displacement;
@@ -1373,11 +1373,11 @@ u32 decode_rm10_address(int rm)
 
   /* Fetch disp16 if 16-bit addr mode */
   if(!MODE_ADDR32) {
-    displacement = (s16) fetch_word();
+    displacement = (s16) fetch_word(emu);
   }
   else {
     /* Fetch disp32 if no SIB byte */
-    if(rm != 4) displacement = (s32) fetch_long();
+    if(rm != 4) displacement = (s32) fetch_long(emu);
   }
 
   if(MODE_ADDR32) {
@@ -1412,9 +1412,9 @@ u32 decode_rm10_address(int rm)
         return emu->x86.R_EBX + displacement;
 
       case 4:
-        sib = fetch_byte();
+        sib = fetch_byte(emu);
         base = decode_sib_address(sib, 2);
-        displacement = (s32) fetch_long();
+        displacement = (s32) fetch_long(emu);
         DECODE_HEX8S(displacement);
         OP_DECODE("]");
         return base + displacement;
@@ -1555,7 +1555,7 @@ u32 decode_sib_address(int sib, int mod)
     case 5:
       SEGPREF_DECODE;
       if(mod == 0) {
-        base = fetch_long();
+        base = fetch_long(emu);
         DECODE_HEX8(base);
       }
       else {
