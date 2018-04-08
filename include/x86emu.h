@@ -519,11 +519,11 @@ x86emu_t *x86emu_done(x86emu_t *emu);
 x86emu_t *x86emu_clone(x86emu_t *emu);
 
 void x86emu_reset(x86emu_t *emu);
-unsigned x86emu_run(x86emu_t *emu, unsigned flags);
+unsigned x86emu_run(x86emu_t *emu, unsigned flags) __attribute__ ((nonnull (1)));
 void x86emu_stop(x86emu_t *emu);
 
 void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush);
-unsigned x86emu_clear_log(x86emu_t *emu, int flush);
+unsigned x86emu_clear_log(x86emu_t *emu, int flush) __attribute__ ((nonnull (1)));
 void x86emu_log(x86emu_t *emu, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 void x86emu_dump(x86emu_t *emu, int flags);
 
