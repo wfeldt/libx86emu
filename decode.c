@@ -2016,17 +2016,17 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
     idt_lookup(nr, &new_cs, &new_eip);
 
     if(MODE_PROTECTED(emu) && MODE_CODE32) {
-      push_long(emu->x86.R_EFLG);
-      push_long(cs);
-      push_long(eip);
+      push_long(emu, emu->x86.R_EFLG);
+      push_long(emu, cs);
+      push_long(emu, eip);
     }
     else {
-      push_word(emu->x86.R_FLG);
-      push_word(cs);
-      push_word(eip);
+      push_word(emu, emu->x86.R_FLG);
+      push_word(emu, cs);
+      push_word(emu, eip);
     }
 
-    if(type & INTR_MODE_ERRCODE) push_long(errcode);
+    if(type & INTR_MODE_ERRCODE) push_long(emu, errcode);
 
     CLEAR_FLAG(F_IF);
     CLEAR_FLAG(F_TF);
