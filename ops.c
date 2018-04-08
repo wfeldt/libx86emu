@@ -72,15 +72,15 @@
 /*----------------------------- Implementation ----------------------------*/
 
 
-static u8 (*op_A_byte[8])(u8 d, u8 s) = {
+static u8 (*op_A_byte[8])(x86emu_t *emu, u8 d, u8 s) = {
   add_byte, or_byte, adc_byte, sbb_byte, and_byte, sub_byte, xor_byte, cmp_byte
 };
 
-static u16 (*op_A_word[8])(u16 d, u16 s) = {
+static u16 (*op_A_word[8])(x86emu_t *emu, u16 d, u16 s) = {
   add_word, or_word, adc_word, sbb_word, and_word, sub_word, xor_word, cmp_word
 };
 
-static u32 (*op_A_long[8])(u32 d, u32 s) = {
+static u32 (*op_A_long[8])(x86emu_t *emu, u32 d, u32 s) = {
   add_long, or_long, adc_long, sbb_long, and_long, sub_long, xor_long, cmp_long
 };
 
@@ -115,15 +115,15 @@ static void decode_op_A(int type)
 }
 
 
-static u8 (*op_B_byte[8])(u8 d, u8 s) = {
+static u8 (*op_B_byte[8])(x86emu_t *emu, u8 d, u8 s) = {
   rol_byte, ror_byte, rcl_byte, rcr_byte, shl_byte, shr_byte, shl_byte, sar_byte
 };
 
-static u16 (*op_B_word[8])(u16 s, u8 d) = {
+static u16 (*op_B_word[8])(x86emu_t *emu, u16 s, u8 d) = {
   rol_word, ror_word, rcl_word, rcr_word, shl_word, shr_word, shl_word, sar_word
 };
 
-static u32 (*op_B_long[8])(u32 s, u8 d) = {
+static u32 (*op_B_long[8])(x86emu_t *emu, u32 s, u8 d) = {
   rol_long, ror_long, rcl_long, rcr_long, shl_long, shr_long, shl_long, sar_long
 };
 
@@ -245,14 +245,14 @@ static void x86emuOp_op_A_byte_RM_R(x86emu_t *emu, u8 op1)
     dst = decode_rm_byte_register(rl);
     OP_DECODE(",");
     src = decode_rm_byte_register(rh);
-    *dst = (*op_A_byte[type])(*dst, *src);
+    *dst = (*op_A_byte[type])(emu, *dst, *src);
   }
   else {
     addr = decode_rm_address(mod, rl);
     OP_DECODE(",");
     val = fetch_data_byte(emu, addr);
     src = decode_rm_byte_register(rh);
-    val = (*op_A_byte[type])(val, *src);
+    val = (*op_A_byte[type])(emu, val, *src);
     if(type != 7) store_data_byte(addr, val);
   }
 }
@@ -277,13 +277,13 @@ static void x86emuOp_op_A_word_RM_R(x86emu_t *emu, u8 op1)
       dst32 = decode_rm_long_register(rl);
       OP_DECODE(",");
       src32 = decode_rm_long_register(rh);
-      *dst32 = (*op_A_long[type])(*dst32, *src32);
+      *dst32 = (*op_A_long[type])(emu, *dst32, *src32);
     }
     else {
       dst16 = decode_rm_word_register(rl);
       OP_DECODE(",");
       src16 = decode_rm_word_register(rh);
-      *dst16 = (*op_A_word[type])(*dst16, *src16);
+      *dst16 = (*op_A_word[type])(emu, *dst16, *src16);
     }
   }
   else {
@@ -292,13 +292,13 @@ static void x86emuOp_op_A_word_RM_R(x86emu_t *emu, u8 op1)
     if(MODE_DATA32) {
       val = fetch_data_long(emu, addr);
       src32 = decode_rm_long_register(rh);
-      val = (*op_A_long[type])(val, *src32);
+      val = (*op_A_long[type])(emu, val, *src32);
       if(type != 7) store_data_long(addr, val);
     }
     else {
       val = fetch_data_word(emu, addr);
       src16 = decode_rm_word_register(rh);
-      val = (*op_A_word[type])(val, *src16);
+      val = (*op_A_word[type])(emu, val, *src16);
       if(type != 7) store_data_word(addr, val);
     }
   }
@@ -323,14 +323,14 @@ static void x86emuOp_op_A_byte_R_RM(x86emu_t *emu, u8 op1)
     dst = decode_rm_byte_register(rh);
     OP_DECODE(",");
     src = decode_rm_byte_register(rl);
-    *dst = (*op_A_byte[type])(*dst, *src);
+    *dst = (*op_A_byte[type])(emu, *dst, *src);
   }
   else {
     dst = decode_rm_byte_register(rh);
     OP_DECODE(",");
     addr = decode_rm_address(mod, rl);
     val = fetch_data_byte(emu, addr);
-    *dst = (*op_A_byte[type])(*dst, val);
+    *dst = (*op_A_byte[type])(emu, *dst, val);
   }
 }
 
@@ -354,13 +354,13 @@ static void x86emuOp_op_A_word_R_RM(x86emu_t *emu, u8 op1)
       dst32 = decode_rm_long_register(rh);
       OP_DECODE(",");
       src32 = decode_rm_long_register(rl);
-      *dst32 = (*op_A_long[type])(*dst32, *src32);
+      *dst32 = (*op_A_long[type])(emu, *dst32, *src32);
     }
     else {
       dst16 = decode_rm_word_register(rh);
       OP_DECODE(",");
       src16 = decode_rm_word_register(rl);
-      *dst16 = (*op_A_word[type])(*dst16, *src16);
+      *dst16 = (*op_A_word[type])(emu, *dst16, *src16);
     }
   }
   else {
@@ -369,14 +369,14 @@ static void x86emuOp_op_A_word_R_RM(x86emu_t *emu, u8 op1)
       OP_DECODE(",");
       addr = decode_rm_address(mod, rl);
       val = fetch_data_long(emu, addr);
-      *dst32 = (*op_A_long[type])(*dst32, val);
+      *dst32 = (*op_A_long[type])(emu, *dst32, val);
     }
     else {
       dst16 = decode_rm_word_register(rh);
       OP_DECODE(",");
       addr = decode_rm_address(mod, rl);
       val = fetch_data_word(emu, addr);
-      *dst16 = (*op_A_word[type])(*dst16, val);
+      *dst16 = (*op_A_word[type])(emu, *dst16, val);
     }
   }
 }
@@ -397,7 +397,7 @@ static void x86emuOp_op_A_byte_AL_IMM(x86emu_t *emu, u8 op1)
 
   val = fetch_byte(emu);
   DECODE_HEX2(val);
-  emu->x86.R_AL = (*op_A_byte[type])(emu->x86.R_AL, val);
+  emu->x86.R_AL = (*op_A_byte[type])(emu, emu->x86.R_AL, val);
 }
 
 
@@ -417,13 +417,13 @@ static void x86emuOp_op_A_word_AX_IMM(x86emu_t *emu, u8 op1)
     OP_DECODE("eax,");
     val = fetch_long(emu);
     DECODE_HEX8(val);
-    emu->x86.R_EAX = (*op_A_long[type])(emu->x86.R_EAX, val);
+    emu->x86.R_EAX = (*op_A_long[type])(emu, emu->x86.R_EAX, val);
   }
   else {
     OP_DECODE("ax,");
     val = fetch_word(emu);
     DECODE_HEX4(val);
-    emu->x86.R_AX = (*op_A_word[type])(emu->x86.R_AX, val);
+    emu->x86.R_AX = (*op_A_word[type])(emu, emu->x86.R_AX, val);
   }
 }
 
@@ -437,10 +437,10 @@ static void x86emuOp_push_ES(x86emu_t *emu, u8 op1)
   OP_DECODE("push es");
 
   if(MODE_DATA32) {
-    push_long(emu->x86.R_ES);
+    push_long(emu, emu->x86.R_ES);
   }
   else {
-    push_word(emu->x86.R_ES);
+    push_word(emu, emu->x86.R_ES);
   }
 }
 
@@ -452,7 +452,7 @@ Handles opcode 0x07
 static void x86emuOp_pop_ES(x86emu_t *emu, u8 op1)
 {
   OP_DECODE("pop es");
-  x86emu_set_seg_register(emu, emu->x86.R_ES_SEL, MODE_DATA32 ? pop_long() : pop_word());
+  x86emu_set_seg_register(emu, emu->x86.R_ES_SEL, MODE_DATA32 ? pop_long(emu) : pop_word(emu));
 }
 
 
@@ -464,10 +464,10 @@ static void x86emuOp_push_CS(x86emu_t *emu, u8 op1)
 {
   OP_DECODE("push cs");
   if(MODE_DATA32) {
-    push_long(emu->x86.R_CS);
+    push_long(emu, emu->x86.R_CS);
   }
   else {
-    push_word(emu->x86.R_CS);
+    push_word(emu, emu->x86.R_CS);
   }
 }
 
@@ -493,10 +493,10 @@ static void x86emuOp_push_SS(x86emu_t *emu, u8 op1)
   OP_DECODE("push ss");
 
   if(MODE_DATA32) {
-    push_long(emu->x86.R_SS);
+    push_long(emu, emu->x86.R_SS);
   }
   else {
-    push_word(emu->x86.R_SS);
+    push_word(emu, emu->x86.R_SS);
   }
 }
 
@@ -508,7 +508,7 @@ Handles opcode 0x17
 static void x86emuOp_pop_SS(x86emu_t *emu, u8 op1)
 {
   OP_DECODE("pop ss");
-  x86emu_set_seg_register(emu, emu->x86.R_SS_SEL, MODE_DATA32 ? pop_long() : pop_word());
+  x86emu_set_seg_register(emu, emu->x86.R_SS_SEL, MODE_DATA32 ? pop_long(emu) : pop_word(emu));
 }
 
 
@@ -521,10 +521,10 @@ static void x86emuOp_push_DS(x86emu_t *emu, u8 op1)
   OP_DECODE("push ds");
 
   if(MODE_DATA32) {
-    push_long(emu->x86.R_DS);
+    push_long(emu, emu->x86.R_DS);
   }
   else {
-    push_word(emu->x86.R_DS);
+    push_word(emu, emu->x86.R_DS);
   }
 }
 
@@ -536,7 +536,7 @@ Handles opcode 0x1f
 static void x86emuOp_pop_DS(x86emu_t *emu, u8 op1)
 {
   OP_DECODE("pop ds");
-  x86emu_set_seg_register(emu, emu->x86.R_DS_SEL, MODE_DATA32 ? pop_long() : pop_word());
+  x86emu_set_seg_register(emu, emu->x86.R_DS_SEL, MODE_DATA32 ? pop_long(emu) : pop_word(emu));
 }
 
 
@@ -547,7 +547,7 @@ Handles opcode 0x27
 static void x86emuOp_daa(x86emu_t *emu, u8 op1)
 {
   OP_DECODE("daa");
-  emu->x86.R_AL = daa_byte(emu->x86.R_AL);
+  emu->x86.R_AL = daa_byte(emu, emu->x86.R_AL);
 }
 
 
@@ -558,7 +558,7 @@ Handles opcode 0x2f
 static void x86emuOp_das(x86emu_t *emu, u8 op1)
 {
   OP_DECODE("das");
-  emu->x86.R_AL = das_byte(emu->x86.R_AL);
+  emu->x86.R_AL = das_byte(emu, emu->x86.R_AL);
 }
 
 
@@ -569,7 +569,7 @@ Handles opcode 0x37
 static void x86emuOp_aaa(x86emu_t *emu, u8 op1)
 {
   OP_DECODE("aaa");
-  emu->x86.R_AX = aaa_word(emu->x86.R_AX);
+  emu->x86.R_AX = aaa_word(emu, emu->x86.R_AX);
 }
 
 
@@ -580,7 +580,7 @@ Handles opcode 0x3f
 static void x86emuOp_aas(x86emu_t *emu, u8 op1)
 {
   OP_DECODE("aas");
-  emu->x86.R_AX = aas_word(emu->x86.R_AX);
+  emu->x86.R_AX = aas_word(emu, emu->x86.R_AX);
 }
 
 
@@ -592,11 +592,11 @@ static void x86emuOp_inc_AX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("inc eax");
-    emu->x86.R_EAX = inc_long(emu->x86.R_EAX);
+    emu->x86.R_EAX = inc_long(emu, emu->x86.R_EAX);
   }
   else {
     OP_DECODE("inc ax");
-    emu->x86.R_AX = inc_word(emu->x86.R_AX);
+    emu->x86.R_AX = inc_word(emu, emu->x86.R_AX);
   }
 }
 
@@ -609,11 +609,11 @@ static void x86emuOp_inc_CX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("inc ecx");
-    emu->x86.R_ECX = inc_long(emu->x86.R_ECX);
+    emu->x86.R_ECX = inc_long(emu, emu->x86.R_ECX);
   }
   else {
     OP_DECODE("inc cx");
-    emu->x86.R_CX = inc_word(emu->x86.R_CX);
+    emu->x86.R_CX = inc_word(emu, emu->x86.R_CX);
   }
 }
 
@@ -626,11 +626,11 @@ static void x86emuOp_inc_DX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("inc edx");
-    emu->x86.R_EDX = inc_long(emu->x86.R_EDX);
+    emu->x86.R_EDX = inc_long(emu, emu->x86.R_EDX);
   }
   else {
     OP_DECODE("inc dx");
-    emu->x86.R_DX = inc_word(emu->x86.R_DX);
+    emu->x86.R_DX = inc_word(emu, emu->x86.R_DX);
   }
 }
 
@@ -643,11 +643,11 @@ static void x86emuOp_inc_BX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("inc ebx");
-    emu->x86.R_EBX = inc_long(emu->x86.R_EBX);
+    emu->x86.R_EBX = inc_long(emu, emu->x86.R_EBX);
   }
   else {
     OP_DECODE("inc bx");
-    emu->x86.R_BX = inc_word(emu->x86.R_BX);
+    emu->x86.R_BX = inc_word(emu, emu->x86.R_BX);
   }
 }
 
@@ -660,11 +660,11 @@ static void x86emuOp_inc_SP(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("inc esp");
-    emu->x86.R_ESP = inc_long(emu->x86.R_ESP);
+    emu->x86.R_ESP = inc_long(emu, emu->x86.R_ESP);
   }
   else {
     OP_DECODE("inc sp");
-    emu->x86.R_SP = inc_word(emu->x86.R_SP);
+    emu->x86.R_SP = inc_word(emu, emu->x86.R_SP);
   }
 }
 
@@ -677,11 +677,11 @@ static void x86emuOp_inc_BP(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("inc ebp");
-    emu->x86.R_EBP = inc_long(emu->x86.R_EBP);
+    emu->x86.R_EBP = inc_long(emu, emu->x86.R_EBP);
   }
   else {
     OP_DECODE("inc bp");
-    emu->x86.R_BP = inc_word(emu->x86.R_BP);
+    emu->x86.R_BP = inc_word(emu, emu->x86.R_BP);
   }
 }
 
@@ -694,11 +694,11 @@ static void x86emuOp_inc_SI(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("inc esi");
-    emu->x86.R_ESI = inc_long(emu->x86.R_ESI);
+    emu->x86.R_ESI = inc_long(emu, emu->x86.R_ESI);
   }
   else {
     OP_DECODE("inc si");
-    emu->x86.R_SI = inc_word(emu->x86.R_SI);
+    emu->x86.R_SI = inc_word(emu, emu->x86.R_SI);
   }
 }
 
@@ -711,11 +711,11 @@ static void x86emuOp_inc_DI(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("inc edi");
-    emu->x86.R_EDI = inc_long(emu->x86.R_EDI);
+    emu->x86.R_EDI = inc_long(emu, emu->x86.R_EDI);
   }
   else {
     OP_DECODE("inc di");
-    emu->x86.R_DI = inc_word(emu->x86.R_DI);
+    emu->x86.R_DI = inc_word(emu, emu->x86.R_DI);
   }
 }
 
@@ -728,11 +728,11 @@ static void x86emuOp_dec_AX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("dec eax");
-    emu->x86.R_EAX = dec_long(emu->x86.R_EAX);
+    emu->x86.R_EAX = dec_long(emu, emu->x86.R_EAX);
   }
   else {
     OP_DECODE("dec ax");
-    emu->x86.R_AX = dec_word(emu->x86.R_AX);
+    emu->x86.R_AX = dec_word(emu, emu->x86.R_AX);
   }
 }
 
@@ -745,11 +745,11 @@ static void x86emuOp_dec_CX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("dec ecx");
-    emu->x86.R_ECX = dec_long(emu->x86.R_ECX);
+    emu->x86.R_ECX = dec_long(emu, emu->x86.R_ECX);
   }
   else {
     OP_DECODE("dec cx");
-    emu->x86.R_CX = dec_word(emu->x86.R_CX);
+    emu->x86.R_CX = dec_word(emu, emu->x86.R_CX);
   }
 }
 
@@ -762,11 +762,11 @@ static void x86emuOp_dec_DX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("dec edx");
-    emu->x86.R_EDX = dec_long(emu->x86.R_EDX);
+    emu->x86.R_EDX = dec_long(emu, emu->x86.R_EDX);
   }
   else {
     OP_DECODE("dec dx");
-    emu->x86.R_DX = dec_word(emu->x86.R_DX);
+    emu->x86.R_DX = dec_word(emu, emu->x86.R_DX);
   }
 }
 
@@ -779,11 +779,11 @@ static void x86emuOp_dec_BX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("dec ebx");
-    emu->x86.R_EBX = dec_long(emu->x86.R_EBX);
+    emu->x86.R_EBX = dec_long(emu, emu->x86.R_EBX);
   }
   else {
     OP_DECODE("dec bx");
-    emu->x86.R_BX = dec_word(emu->x86.R_BX);
+    emu->x86.R_BX = dec_word(emu, emu->x86.R_BX);
   }
 }
 
@@ -796,11 +796,11 @@ static void x86emuOp_dec_SP(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("dec esp");
-    emu->x86.R_ESP = dec_long(emu->x86.R_ESP);
+    emu->x86.R_ESP = dec_long(emu, emu->x86.R_ESP);
   }
   else {
     OP_DECODE("dec sp");
-    emu->x86.R_SP = dec_word(emu->x86.R_SP);
+    emu->x86.R_SP = dec_word(emu, emu->x86.R_SP);
   }
 }
 
@@ -813,11 +813,11 @@ static void x86emuOp_dec_BP(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("dec ebp");
-    emu->x86.R_EBP = dec_long(emu->x86.R_EBP);
+    emu->x86.R_EBP = dec_long(emu, emu->x86.R_EBP);
   }
   else {
     OP_DECODE("dec bp");
-    emu->x86.R_BP = dec_word(emu->x86.R_BP);
+    emu->x86.R_BP = dec_word(emu, emu->x86.R_BP);
   }
 }
 
@@ -830,11 +830,11 @@ static void x86emuOp_dec_SI(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("dec esi");
-    emu->x86.R_ESI = dec_long(emu->x86.R_ESI);
+    emu->x86.R_ESI = dec_long(emu, emu->x86.R_ESI);
   }
   else {
     OP_DECODE("dec si");
-    emu->x86.R_SI = dec_word(emu->x86.R_SI);
+    emu->x86.R_SI = dec_word(emu, emu->x86.R_SI);
   }
 }
 
@@ -847,11 +847,11 @@ static void x86emuOp_dec_DI(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("dec edi");
-    emu->x86.R_EDI = dec_long(emu->x86.R_EDI);
+    emu->x86.R_EDI = dec_long(emu, emu->x86.R_EDI);
   }
   else {
     OP_DECODE("dec di");
-    emu->x86.R_DI = dec_word(emu->x86.R_DI);
+    emu->x86.R_DI = dec_word(emu, emu->x86.R_DI);
   }
 }
 
@@ -864,11 +864,11 @@ static void x86emuOp_push_AX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("push eax");
-    push_long(emu->x86.R_EAX);
+    push_long(emu, emu->x86.R_EAX);
   }
   else {
     OP_DECODE("push ax");
-    push_word(emu->x86.R_AX);
+    push_word(emu, emu->x86.R_AX);
   }
 }
 
@@ -881,11 +881,11 @@ static void x86emuOp_push_CX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("push ecx");
-    push_long(emu->x86.R_ECX);
+    push_long(emu, emu->x86.R_ECX);
   }
   else {
     OP_DECODE("push cx");
-    push_word(emu->x86.R_CX);
+    push_word(emu, emu->x86.R_CX);
   }
 }
 
@@ -898,11 +898,11 @@ static void x86emuOp_push_DX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("push edx");
-    push_long(emu->x86.R_EDX);
+    push_long(emu, emu->x86.R_EDX);
   }
   else {
     OP_DECODE("push dx");
-    push_word(emu->x86.R_DX);
+    push_word(emu, emu->x86.R_DX);
   }
 }
 
@@ -915,11 +915,11 @@ static void x86emuOp_push_BX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("push ebx");
-    push_long(emu->x86.R_EBX);
+    push_long(emu, emu->x86.R_EBX);
   }
   else {
     OP_DECODE("push bx");
-    push_word(emu->x86.R_BX);
+    push_word(emu, emu->x86.R_BX);
   }
 }
 
@@ -932,11 +932,11 @@ static void x86emuOp_push_SP(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("push esp");
-    push_long(emu->x86.R_ESP);
+    push_long(emu, emu->x86.R_ESP);
   }
   else {
     OP_DECODE("push sp");
-    push_word(emu->x86.R_SP);
+    push_word(emu, emu->x86.R_SP);
   }
 }
 
@@ -949,11 +949,11 @@ static void x86emuOp_push_BP(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("push ebp");
-    push_long(emu->x86.R_EBP);
+    push_long(emu, emu->x86.R_EBP);
   }
   else {
     OP_DECODE("push bp");
-    push_word(emu->x86.R_BP);
+    push_word(emu, emu->x86.R_BP);
   }
 }
 
@@ -966,11 +966,11 @@ static void x86emuOp_push_SI(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("push esi");
-    push_long(emu->x86.R_ESI);
+    push_long(emu, emu->x86.R_ESI);
   }
   else {
     OP_DECODE("push si");
-    push_word(emu->x86.R_SI);
+    push_word(emu, emu->x86.R_SI);
   }
 }
 
@@ -983,11 +983,11 @@ static void x86emuOp_push_DI(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("push edi");
-    push_long(emu->x86.R_EDI);
+    push_long(emu, emu->x86.R_EDI);
   }
   else {
     OP_DECODE("push di");
-    push_word(emu->x86.R_DI);
+    push_word(emu, emu->x86.R_DI);
   }
 }
 
@@ -1000,11 +1000,11 @@ static void x86emuOp_pop_AX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("pop eax");
-    emu->x86.R_EAX = pop_long();
+    emu->x86.R_EAX = pop_long(emu);
   }
   else {
     OP_DECODE("pop ax");
-    emu->x86.R_AX = pop_word();
+    emu->x86.R_AX = pop_word(emu);
   }
 }
 
@@ -1017,11 +1017,11 @@ static void x86emuOp_pop_CX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("pop ecx");
-    emu->x86.R_ECX = pop_long();
+    emu->x86.R_ECX = pop_long(emu);
   }
   else {
     OP_DECODE("pop cx");
-    emu->x86.R_CX = pop_word();
+    emu->x86.R_CX = pop_word(emu);
   }
 }
 
@@ -1034,11 +1034,11 @@ static void x86emuOp_pop_DX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("pop edx");
-    emu->x86.R_EDX = pop_long();
+    emu->x86.R_EDX = pop_long(emu);
   }
   else {
     OP_DECODE("pop dx");
-    emu->x86.R_DX = pop_word();
+    emu->x86.R_DX = pop_word(emu);
   }
 }
 
@@ -1051,11 +1051,11 @@ static void x86emuOp_pop_BX(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("pop ebx");
-    emu->x86.R_EBX = pop_long();
+    emu->x86.R_EBX = pop_long(emu);
   }
   else {
     OP_DECODE("pop bx");
-    emu->x86.R_BX = pop_word();
+    emu->x86.R_BX = pop_word(emu);
   }
 }
 
@@ -1068,11 +1068,11 @@ static void x86emuOp_pop_SP(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("pop esp");
-    emu->x86.R_ESP = pop_long();
+    emu->x86.R_ESP = pop_long(emu);
   }
   else {
     OP_DECODE("pop sp");
-    emu->x86.R_SP = pop_word();
+    emu->x86.R_SP = pop_word(emu);
   }
 }
 
@@ -1085,11 +1085,11 @@ static void x86emuOp_pop_BP(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("pop ebp");
-    emu->x86.R_EBP = pop_long();
+    emu->x86.R_EBP = pop_long(emu);
   }
   else {
     OP_DECODE("pop bp");
-    emu->x86.R_BP = pop_word();
+    emu->x86.R_BP = pop_word(emu);
   }
 }
 
@@ -1102,11 +1102,11 @@ static void x86emuOp_pop_SI(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("pop esi");
-    emu->x86.R_ESI = pop_long();
+    emu->x86.R_ESI = pop_long(emu);
   }
   else {
     OP_DECODE("pop si");
-    emu->x86.R_SI = pop_word();
+    emu->x86.R_SI = pop_word(emu);
   }
 }
 
@@ -1119,11 +1119,11 @@ static void x86emuOp_pop_DI(x86emu_t *emu, u8 op1)
 {
   if(MODE_DATA32) {
     OP_DECODE("pop edi");
-    emu->x86.R_EDI = pop_long();
+    emu->x86.R_EDI = pop_long(emu);
   }
   else {
     OP_DECODE("pop di");
-    emu->x86.R_DI = pop_word();
+    emu->x86.R_DI = pop_word(emu);
   }
 }
 
@@ -1139,26 +1139,26 @@ static void x86emuOp_push_all(x86emu_t *emu, u8 op1)
   if(MODE_DATA32) {
     OP_DECODE("pushad");
 
-    push_long(emu->x86.R_EAX);
-    push_long(emu->x86.R_ECX);
-    push_long(emu->x86.R_EDX);
-    push_long(emu->x86.R_EBX);
-    push_long(esp);
-    push_long(emu->x86.R_EBP);
-    push_long(emu->x86.R_ESI);
-    push_long(emu->x86.R_EDI);
+    push_long(emu, emu->x86.R_EAX);
+    push_long(emu, emu->x86.R_ECX);
+    push_long(emu, emu->x86.R_EDX);
+    push_long(emu, emu->x86.R_EBX);
+    push_long(emu, esp);
+    push_long(emu, emu->x86.R_EBP);
+    push_long(emu, emu->x86.R_ESI);
+    push_long(emu, emu->x86.R_EDI);
   }
   else {
     OP_DECODE("pusha");
 
-    push_word(emu->x86.R_AX);
-    push_word(emu->x86.R_CX);
-    push_word(emu->x86.R_DX);
-    push_word(emu->x86.R_BX);
-    push_word(esp);
-    push_word(emu->x86.R_BP);
-    push_word(emu->x86.R_SI);
-    push_word(emu->x86.R_DI);
+    push_word(emu, emu->x86.R_AX);
+    push_word(emu, emu->x86.R_CX);
+    push_word(emu, emu->x86.R_DX);
+    push_word(emu, emu->x86.R_BX);
+    push_word(emu, esp);
+    push_word(emu, emu->x86.R_BP);
+    push_word(emu, emu->x86.R_SI);
+    push_word(emu, emu->x86.R_DI);
   }
 }
 
@@ -1172,26 +1172,26 @@ static void x86emuOp_pop_all(x86emu_t *emu, u8 op1)
   if(MODE_DATA32) {
     OP_DECODE("popad");
 
-    emu->x86.R_EDI = pop_long();
-    emu->x86.R_ESI = pop_long();
-    emu->x86.R_EBP = pop_long();
+    emu->x86.R_EDI = pop_long(emu);
+    emu->x86.R_ESI = pop_long(emu);
+    emu->x86.R_EBP = pop_long(emu);
     emu->x86.R_ESP += 4;
-    emu->x86.R_EBX = pop_long();
-    emu->x86.R_EDX = pop_long();
-    emu->x86.R_ECX = pop_long();
-    emu->x86.R_EAX = pop_long();
+    emu->x86.R_EBX = pop_long(emu);
+    emu->x86.R_EDX = pop_long(emu);
+    emu->x86.R_ECX = pop_long(emu);
+    emu->x86.R_EAX = pop_long(emu);
   }
   else {
     OP_DECODE("popa");
 
-    emu->x86.R_DI = pop_word();
-    emu->x86.R_SI = pop_word();
-    emu->x86.R_BP = pop_word();
+    emu->x86.R_DI = pop_word(emu);
+    emu->x86.R_SI = pop_word(emu);
+    emu->x86.R_BP = pop_word(emu);
     emu->x86.R_SP += 2;
-    emu->x86.R_BX = pop_word();
-    emu->x86.R_DX = pop_word();
-    emu->x86.R_CX = pop_word();
-    emu->x86.R_AX = pop_word();
+    emu->x86.R_BX = pop_word(emu);
+    emu->x86.R_DX = pop_word(emu);
+    emu->x86.R_CX = pop_word(emu);
+    emu->x86.R_AX = pop_word(emu);
   }
 }
 
@@ -1213,12 +1213,12 @@ static void x86emuOp_push_word_IMM(x86emu_t *emu, u8 op1)
   if(MODE_DATA32) {
     imm = fetch_long(emu);
     DECODE_HEX8(imm);
-    push_long(imm);
+    push_long(emu, imm);
   }
   else {
     imm = fetch_word(emu);
     DECODE_HEX4(imm);
-    push_word(imm);
+    push_word(emu, imm);
   }
 }
 
@@ -1330,10 +1330,10 @@ static void x86emuOp_push_byte_IMM(x86emu_t *emu, u8 op1)
   imm = (s8) fetch_byte(emu);
   DECODE_HEX2S(imm);
   if(MODE_DATA32) {
-    push_long(imm);
+    push_long(emu, imm);
   }
   else {
-    push_word(imm);
+    push_word(emu, imm);
   }
 }
 
@@ -1443,7 +1443,7 @@ static void x86emuOp_ins_byte(x86emu_t *emu, u8 op1)
   }
 
   OP_DECODE("insb");
-  ins(1);
+  ins(emu, 1);
 }
 
 
@@ -1459,11 +1459,11 @@ static void x86emuOp_ins_word(x86emu_t *emu, u8 op1)
 
   if(MODE_DATA32) {
     OP_DECODE("insd");
-    ins(4);
+    ins(emu, 4);
   }
   else {
     OP_DECODE("insw");
-    ins(2);
+    ins(emu, 2);
   }
 }
 
@@ -1479,7 +1479,7 @@ static void x86emuOp_outs_byte(x86emu_t *emu, u8 op1)
   }
 
   OP_DECODE("outsb");
-  outs(1);
+  outs(emu, 1);
 }
 
 
@@ -1495,11 +1495,11 @@ static void x86emuOp_outs_word(x86emu_t *emu, u8 op1)
 
   if(MODE_DATA32) {
     OP_DECODE("outsd");
-    outs(4);
+    outs(emu, 4);
   }
   else {
     OP_DECODE("outsw");
-    outs(2);
+    outs(emu, 2);
   }
 }
 
@@ -1544,7 +1544,7 @@ static void x86emuOp_opc80_byte_RM_IMM(x86emu_t *emu, u8 op1)
     OP_DECODE(",");
     imm = fetch_byte(emu);
     DECODE_HEX2(imm);
-    val = (*op_A_byte[rh])(*reg8, imm);
+    val = (*op_A_byte[rh])(emu, *reg8, imm);
     if(rh != 7) *reg8 = val;
   }
   else {
@@ -1554,7 +1554,7 @@ static void x86emuOp_opc80_byte_RM_IMM(x86emu_t *emu, u8 op1)
     val = fetch_data_byte(emu, addr);
     imm = fetch_byte(emu);
     DECODE_HEX2(imm);
-    val = (*op_A_byte[rh])(val, imm);
+    val = (*op_A_byte[rh])(emu, val, imm);
     if(rh != 7) store_data_byte(addr, val);
   }
 }
@@ -1580,7 +1580,7 @@ static void x86emuOp_opc81_word_RM_IMM(x86emu_t *emu, u8 op1)
       OP_DECODE(",");
       imm = fetch_long(emu);
       DECODE_HEX8(imm);
-      val = (*op_A_long[rh])(*reg32, imm);
+      val = (*op_A_long[rh])(emu, *reg32, imm);
       if(rh != 7) *reg32 = val;
     }
     else {
@@ -1588,7 +1588,7 @@ static void x86emuOp_opc81_word_RM_IMM(x86emu_t *emu, u8 op1)
       OP_DECODE(",");
       imm = fetch_word(emu);
       DECODE_HEX4(imm);
-      val = (*op_A_word[rh])(*reg16, imm);
+      val = (*op_A_word[rh])(emu, *reg16, imm);
       if(rh != 7) *reg16 = val;
     }
   }
@@ -1600,7 +1600,7 @@ static void x86emuOp_opc81_word_RM_IMM(x86emu_t *emu, u8 op1)
       val = fetch_data_long(emu, addr);
       imm = fetch_long(emu);
       DECODE_HEX8(imm);
-      val = (*op_A_long[rh])(val, imm);
+      val = (*op_A_long[rh])(emu, val, imm);
       if(rh != 7) store_data_long(addr, val);
     }
     else {
@@ -1610,7 +1610,7 @@ static void x86emuOp_opc81_word_RM_IMM(x86emu_t *emu, u8 op1)
       val = fetch_data_word(emu, addr);
       imm = fetch_word(emu);
       DECODE_HEX4(imm);
-      val = (*op_A_word[rh])(val, imm);
+      val = (*op_A_word[rh])(emu, val, imm);
       if(rh != 7) store_data_word(addr, val);
     }
   }
@@ -1640,7 +1640,7 @@ static void x86emuOp_opc83_word_RM_IMM(x86emu_t *emu, u8 op1)
       OP_DECODE(",");
       imm = (s8) fetch_byte(emu);
       DECODE_HEX2S(imm);
-      val = (*op_A_long[rh])(*reg32, imm);
+      val = (*op_A_long[rh])(emu, *reg32, imm);
       if(rh != 7) *reg32 = val;
     }
     else {
@@ -1648,7 +1648,7 @@ static void x86emuOp_opc83_word_RM_IMM(x86emu_t *emu, u8 op1)
       OP_DECODE(",");
       imm = (s8) fetch_byte(emu);
       DECODE_HEX2S(imm);
-      val = (*op_A_word[rh])(*reg16, imm);
+      val = (*op_A_word[rh])(emu, *reg16, imm);
       if(rh != 7) *reg16 = val;
     }
   }
@@ -1660,7 +1660,7 @@ static void x86emuOp_opc83_word_RM_IMM(x86emu_t *emu, u8 op1)
       val = fetch_data_long(emu, addr);
       imm = (s8) fetch_byte(emu);
       DECODE_HEX2S(imm);
-      val = (*op_A_long[rh])(val, imm);
+      val = (*op_A_long[rh])(emu, val, imm);
       if(rh != 7) store_data_long(addr, val);
     }
     else {
@@ -1670,7 +1670,7 @@ static void x86emuOp_opc83_word_RM_IMM(x86emu_t *emu, u8 op1)
       val = fetch_data_word(emu, addr);
       imm = (s8) fetch_byte(emu);
       DECODE_HEX2S(imm);
-      val = (*op_A_word[rh])(val, imm);
+      val = (*op_A_word[rh])(emu, val, imm);
       if(rh != 7) store_data_word(addr, val);
     }
   }
@@ -1694,14 +1694,14 @@ static void x86emuOp_test_byte_RM_R(x86emu_t *emu, u8 op1)
     dst = decode_rm_byte_register(rl);
     OP_DECODE(",");
     src = decode_rm_byte_register(rh);
-    test_byte(*dst, *src);
+    test_byte(emu, *dst, *src);
   }
   else {
     addr = decode_rm_address(mod, rl);
     OP_DECODE(",");
     val = fetch_data_byte(emu, addr);
     src = decode_rm_byte_register(rh);
-    test_byte(val, *src);
+    test_byte(emu, val, *src);
   }
 }
 
@@ -1724,13 +1724,13 @@ static void x86emuOp_test_word_RM_R(x86emu_t *emu, u8 op1)
       dst32 = decode_rm_long_register(rl);
       OP_DECODE(",");
       src32 = decode_rm_long_register(rh);
-      test_long(*dst32, *src32);
+      test_long(emu, *dst32, *src32);
     }
     else {
       dst16 = decode_rm_word_register(rl);
       OP_DECODE(",");
       src16 = decode_rm_word_register(rh);
-      test_word(*dst16, *src16);
+      test_word(emu, *dst16, *src16);
     }
   }
   else {
@@ -1740,12 +1740,12 @@ static void x86emuOp_test_word_RM_R(x86emu_t *emu, u8 op1)
     if(MODE_DATA32) {
       val = fetch_data_long(emu, addr);
       src32 = decode_rm_long_register(rh);
-      test_long(val, *src32);
+      test_long(emu, val, *src32);
     }
     else {
       val = fetch_data_word(emu, addr);
       src16 = decode_rm_word_register(rh);
-      test_word(val, *src16);
+      test_word(emu, val, *src16);
     }
   }
 }
@@ -2091,22 +2091,22 @@ static void x86emuOp_pop_RM(x86emu_t *emu, u8 op1)
   if(mod == 3) {
     if(MODE_DATA32) {
       reg32 = decode_rm_long_register(rl);
-      *reg32 = pop_long();
+      *reg32 = pop_long(emu);
     }
     else {
       reg16 = decode_rm_word_register(rl);
-      *reg16 = pop_word();
+      *reg16 = pop_word(emu);
     }
   }
   else {
     addr = decode_rm_address(mod, rl);
 
     if(MODE_DATA32) {
-      val = pop_long();
+      val = pop_long(emu);
       store_data_long(addr, val);
     }
     else {
-      val = pop_word();
+      val = pop_word(emu);
       store_data_word(addr, val);
     }
   }
@@ -2354,14 +2354,14 @@ static void x86emuOp_call_far_IMM(x86emu_t *emu, u8 op1)
   if(MODE_DATA32) {
     DECODE_HEX8(eip);
 
-    push_long(emu->x86.R_CS);
-    push_long(emu->x86.R_EIP);
+    push_long(emu, emu->x86.R_CS);
+    push_long(emu, emu->x86.R_EIP);
   }
   else {
     DECODE_HEX4(eip);
 
-    push_word(emu->x86.R_CS);
-    push_word(emu->x86.R_IP);
+    push_word(emu, emu->x86.R_CS);
+    push_word(emu, emu->x86.R_IP);
   }
 
   x86emu_set_seg_register(emu, emu->x86.R_CS_SEL, cs);
@@ -2393,12 +2393,12 @@ static void x86emuOp_pushf_word(x86emu_t *emu, u8 op1)
   if(MODE_DATA32) {
     OP_DECODE("pushfd");
 
-    push_long(flags);
+    push_long(emu, flags);
   }
   else {
     OP_DECODE("pushf");
 
-    push_word(flags);
+    push_word(emu, flags);
   }
 }
 
@@ -2412,12 +2412,12 @@ static void x86emuOp_popf_word(x86emu_t *emu, u8 op1)
   if(MODE_DATA32) {
     OP_DECODE("popfd");
 
-    emu->x86.R_EFLG = pop_long() | F_ALWAYS_ON;
+    emu->x86.R_EFLG = pop_long(emu) | F_ALWAYS_ON;
   }
   else {
     OP_DECODE("popf");
 
-    emu->x86.R_FLG = pop_word() | F_ALWAYS_ON;
+    emu->x86.R_FLG = pop_word(emu) | F_ALWAYS_ON;
   }
 }
 
@@ -2702,7 +2702,7 @@ static void x86emuOp_cmps_byte(x86emu_t *emu, u8 op1)
       while(emu->x86.R_ECX) {
         val1 = fetch_data_byte(emu, emu->x86.R_ESI);
         val2 = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-        cmp_byte(val1, val2);
+        cmp_byte(emu, val1, val2);
         emu->x86.R_ECX--;
         emu->x86.R_ESI += inc;
         emu->x86.R_EDI += inc;
@@ -2712,7 +2712,7 @@ static void x86emuOp_cmps_byte(x86emu_t *emu, u8 op1)
     else {
       val1 = fetch_data_byte(emu, emu->x86.R_ESI);
       val2 = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-      cmp_byte(val1, val2);
+      cmp_byte(emu, val1, val2);
       emu->x86.R_ESI += inc;
       emu->x86.R_EDI += inc;
     }
@@ -2725,7 +2725,7 @@ static void x86emuOp_cmps_byte(x86emu_t *emu, u8 op1)
       while(emu->x86.R_CX) {
         val1 = fetch_data_byte(emu, emu->x86.R_SI);
         val2 = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-        cmp_byte(val1, val2);
+        cmp_byte(emu, val1, val2);
         emu->x86.R_CX--;
         emu->x86.R_SI += inc;
         emu->x86.R_DI += inc;
@@ -2735,7 +2735,7 @@ static void x86emuOp_cmps_byte(x86emu_t *emu, u8 op1)
     else {
       val1 = fetch_data_byte(emu, emu->x86.R_SI);
       val2 = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-      cmp_byte(val1, val2);
+      cmp_byte(emu, val1, val2);
       emu->x86.R_SI += inc;
       emu->x86.R_DI += inc;
     }
@@ -2774,12 +2774,12 @@ static void x86emuOp_cmps_word(x86emu_t *emu, u8 op1)
         if(MODE_DATA32) {
           val1 = fetch_data_long(emu, emu->x86.R_ESI);
           val2 = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-          cmp_long(val1, val2);
+          cmp_long(emu, val1, val2);
         }
         else {
           val1 = fetch_data_word(emu, emu->x86.R_ESI);
           val2 = fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-          cmp_word(val1, val2);
+          cmp_word(emu, val1, val2);
         }
         emu->x86.R_ECX--;
         emu->x86.R_ESI += inc;
@@ -2791,12 +2791,12 @@ static void x86emuOp_cmps_word(x86emu_t *emu, u8 op1)
       if(MODE_DATA32) {
         val1 = fetch_data_long(emu, emu->x86.R_ESI);
         val2 = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-        cmp_long(val1, val2);
+        cmp_long(emu, val1, val2);
       }
       else {
         val1 = fetch_data_word(emu, emu->x86.R_ESI);
         val2 = fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-        cmp_word(val1, val2);
+        cmp_word(emu, val1, val2);
       }
       emu->x86.R_ESI += inc;
       emu->x86.R_EDI += inc;
@@ -2808,12 +2808,12 @@ static void x86emuOp_cmps_word(x86emu_t *emu, u8 op1)
         if(MODE_DATA32) {
           val1 = fetch_data_long(emu, emu->x86.R_SI);
           val2 = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-          cmp_long(val1, val2);
+          cmp_long(emu, val1, val2);
         }
         else {
           val1 = fetch_data_word(emu, emu->x86.R_SI);
           val2 = fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-          cmp_word(val1, val2);
+          cmp_word(emu, val1, val2);
         }
         emu->x86.R_CX--;
         emu->x86.R_SI += inc;
@@ -2825,12 +2825,12 @@ static void x86emuOp_cmps_word(x86emu_t *emu, u8 op1)
       if(MODE_DATA32) {
         val1 = fetch_data_long(emu, emu->x86.R_SI);
         val2 = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-        cmp_long(val1, val2);
+        cmp_long(emu, val1, val2);
       }
       else {
         val1 = fetch_data_word(emu, emu->x86.R_SI);
         val2 = fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-        cmp_word(val1, val2);
+        cmp_word(emu, val1, val2);
       }
       emu->x86.R_SI += inc;
       emu->x86.R_DI += inc;
@@ -2850,7 +2850,7 @@ static void x86emuOp_test_AL_IMM(x86emu_t *emu, u8 op1)
   OP_DECODE("test al,");
   imm = fetch_byte(emu);
   DECODE_HEX2(imm);
-  test_byte(emu->x86.R_AL, imm);
+  test_byte(emu, emu->x86.R_AL, imm);
 }
 
 
@@ -2866,13 +2866,13 @@ static void x86emuOp_test_AX_IMM(x86emu_t *emu, u8 op1)
     OP_DECODE("test eax,");
     imm = fetch_long(emu);
     DECODE_HEX8(imm);
-    test_long(emu->x86.R_EAX, imm);
+    test_long(emu, emu->x86.R_EAX, imm);
   }
   else {
     OP_DECODE("test ax,");
     imm = fetch_word(emu);
     DECODE_HEX4(imm);
-    test_word(emu->x86.R_AX, imm);
+    test_word(emu, emu->x86.R_AX, imm);
   }
 }
 
@@ -3107,7 +3107,7 @@ static void x86emuOp_scas_byte(x86emu_t *emu, u8 op1)
     if(MODE_REP) {
       while(emu->x86.R_ECX) {
         val = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-        cmp_byte(emu->x86.R_AL, val);
+        cmp_byte(emu, emu->x86.R_AL, val);
         emu->x86.R_ECX--;
         emu->x86.R_EDI += inc;
         if(eval_condition(cond)) break;
@@ -3115,7 +3115,7 @@ static void x86emuOp_scas_byte(x86emu_t *emu, u8 op1)
     }
     else {
       val = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-      cmp_byte(emu->x86.R_AL, val);
+      cmp_byte(emu, emu->x86.R_AL, val);
       emu->x86.R_EDI += inc;
     }
   }
@@ -3126,7 +3126,7 @@ static void x86emuOp_scas_byte(x86emu_t *emu, u8 op1)
     if(MODE_REP) {
       while(emu->x86.R_CX) {
         val = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-        cmp_byte(emu->x86.R_AL, val);
+        cmp_byte(emu, emu->x86.R_AL, val);
         emu->x86.R_CX--;
         emu->x86.R_DI += inc;
         if(eval_condition(cond)) break;
@@ -3134,7 +3134,7 @@ static void x86emuOp_scas_byte(x86emu_t *emu, u8 op1)
     }
     else {
       val = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-      cmp_byte(emu->x86.R_AL, val);
+      cmp_byte(emu, emu->x86.R_AL, val);
       emu->x86.R_DI += inc;
     }
   }
@@ -3171,11 +3171,11 @@ static void x86emuOp_scas_word(x86emu_t *emu, u8 op1)
       while(emu->x86.R_ECX) {
         if(MODE_DATA32) {
           val = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-          cmp_long(emu->x86.R_EAX, val);
+          cmp_long(emu, emu->x86.R_EAX, val);
         }
         else {
           val = fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-          cmp_word(emu->x86.R_AX, val);
+          cmp_word(emu, emu->x86.R_AX, val);
         }
         emu->x86.R_ECX--;
         emu->x86.R_EDI += inc;
@@ -3185,11 +3185,11 @@ static void x86emuOp_scas_word(x86emu_t *emu, u8 op1)
     else {
       if(MODE_DATA32) {
         val = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-        cmp_long(emu->x86.R_EAX, val);
+        cmp_long(emu, emu->x86.R_EAX, val);
       }
       else {
         val = fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
-        cmp_word(emu->x86.R_AX, val);
+        cmp_word(emu, emu->x86.R_AX, val);
       }
       emu->x86.R_EDI += inc;
     }
@@ -3199,11 +3199,11 @@ static void x86emuOp_scas_word(x86emu_t *emu, u8 op1)
       while(emu->x86.R_CX) {
         if(MODE_DATA32) {
           val = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-          cmp_long(emu->x86.R_EAX, val);
+          cmp_long(emu, emu->x86.R_EAX, val);
         }
         else {
           val = fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-          cmp_word(emu->x86.R_AX, val);
+          cmp_word(emu, emu->x86.R_AX, val);
         }
         emu->x86.R_CX--;
         emu->x86.R_DI += inc;
@@ -3213,11 +3213,11 @@ static void x86emuOp_scas_word(x86emu_t *emu, u8 op1)
     else {
       if(MODE_DATA32) {
         val = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-        cmp_long(emu->x86.R_EAX, val);
+        cmp_long(emu, emu->x86.R_EAX, val);
       }
       else {
         val = fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
-        cmp_word(emu->x86.R_AX, val);
+        cmp_word(emu, emu->x86.R_AX, val);
       }
       emu->x86.R_DI += inc;
     }
@@ -3548,7 +3548,7 @@ static void x86emuOp_opcC0_byte_RM_MEM(x86emu_t *emu, u8 op1)
     OP_DECODE(",");
     imm = fetch_byte(emu);
     DECODE_HEX2(imm);
-    val = (*op_B_byte[rh])(*reg8, imm);
+    val = (*op_B_byte[rh])(emu, *reg8, imm);
     *reg8 = val;
   }
   else {
@@ -3558,7 +3558,7 @@ static void x86emuOp_opcC0_byte_RM_MEM(x86emu_t *emu, u8 op1)
     val = fetch_data_byte(emu, addr);
     imm = fetch_byte(emu);
     DECODE_HEX2(imm);
-    val = (*op_B_byte[rh])(val, imm);
+    val = (*op_B_byte[rh])(emu, val, imm);
     store_data_byte(addr, val);
   }
 }
@@ -3585,7 +3585,7 @@ static void x86emuOp_opcC1_word_RM_MEM(x86emu_t *emu, u8 op1)
       OP_DECODE(",");
       imm = fetch_byte(emu);
       DECODE_HEX2(imm);
-      val = (*op_B_long[rh])(*reg32, imm);
+      val = (*op_B_long[rh])(emu, *reg32, imm);
       *reg32 = val;
     }
     else {
@@ -3593,7 +3593,7 @@ static void x86emuOp_opcC1_word_RM_MEM(x86emu_t *emu, u8 op1)
       OP_DECODE(",");
       imm = fetch_byte(emu);
       DECODE_HEX2(imm);
-      val = (*op_B_word[rh])(*reg16, imm);
+      val = (*op_B_word[rh])(emu, *reg16, imm);
       *reg16 = val;
     }
   }
@@ -3605,7 +3605,7 @@ static void x86emuOp_opcC1_word_RM_MEM(x86emu_t *emu, u8 op1)
       val = fetch_data_long(emu, addr);
       imm = fetch_byte(emu);
       DECODE_HEX2(imm);
-      val = (*op_B_long[rh])(val, imm);
+      val = (*op_B_long[rh])(emu, val, imm);
       store_data_long(addr, val);
     }
     else {
@@ -3615,7 +3615,7 @@ static void x86emuOp_opcC1_word_RM_MEM(x86emu_t *emu, u8 op1)
       val = fetch_data_word(emu, addr);
       imm = fetch_byte(emu);
       DECODE_HEX2(imm);
-      val = (*op_B_word[rh])(val, imm);
+      val = (*op_B_word[rh])(emu, val, imm);
       store_data_word(addr, val);
     }
   }
@@ -3636,11 +3636,11 @@ static void x86emuOp_ret_near_IMM(x86emu_t *emu, u8 op1)
   DECODE_HEX4(imm);
 
   if(MODE_DATA32) {
-    emu->x86.R_EIP = pop_long();
+    emu->x86.R_EIP = pop_long(emu);
     emu->x86.R_ESP += imm;
   }
   else {
-    emu->x86.R_EIP = pop_word();
+    emu->x86.R_EIP = pop_word(emu);
     emu->x86.R_SP += imm;
   }
 }
@@ -3655,10 +3655,10 @@ static void x86emuOp_ret_near(x86emu_t *emu, u8 op1)
   OP_DECODE("ret");
 
   if(MODE_DATA32) {
-    emu->x86.R_EIP = pop_long();
+    emu->x86.R_EIP = pop_long(emu);
   }
   else {
-    emu->x86.R_EIP = pop_word();
+    emu->x86.R_EIP = pop_word(emu);
   }
 }
 
@@ -3837,11 +3837,11 @@ static void x86emuOp_enter(x86emu_t *emu, u8 op1)
   nesting &= 0x1f;
 
   if(MODE_STACK32) {
-    push_long(emu->x86.R_EBP);
+    push_long(emu, emu->x86.R_EBP);
     frame_pointer = emu->x86.R_ESP;
   }
   else {
-    push_word(emu->x86.R_BP);
+    push_word(emu, emu->x86.R_BP);
     frame_pointer = emu->x86.R_SP;
   }
 
@@ -3850,11 +3850,11 @@ static void x86emuOp_enter(x86emu_t *emu, u8 op1)
       for(i = 1; i < nesting; i++) {
         if(MODE_STACK32) {
           emu->x86.R_EBP -= 4;
-          push_long(fetch_data_long_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_EBP));
+          push_long(emu, fetch_data_long_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_EBP));
         }
         else {
           emu->x86.R_BP -= 4;
-          push_long(fetch_data_long_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_BP));
+          push_long(emu, fetch_data_long_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_BP));
         }
       }
     }
@@ -3862,20 +3862,20 @@ static void x86emuOp_enter(x86emu_t *emu, u8 op1)
       for(i = 1; i < nesting; i++) {
         if(MODE_STACK32) {
           emu->x86.R_EBP -= 2;
-          push_word(fetch_data_word_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_EBP));
+          push_word(emu, fetch_data_word_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_EBP));
         }
         else {
           emu->x86.R_BP -= 2;
-          push_word(fetch_data_word_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_BP));
+          push_word(emu, fetch_data_word_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_BP));
         }
       }
     }
 
     if(MODE_DATA32) {
-      push_long(frame_pointer);
+      push_long(emu, frame_pointer);
     }
     else {
-      push_word(frame_pointer);
+      push_word(emu, frame_pointer);
     }
   }
 
@@ -3907,10 +3907,10 @@ static void x86emuOp_leave(x86emu_t *emu, u8 op1)
   }
 
   if(MODE_DATA32) {
-    emu->x86.R_EBP = pop_long();
+    emu->x86.R_EBP = pop_long(emu);
   }
   else {
-    emu->x86.R_BP = pop_word();
+    emu->x86.R_BP = pop_word(emu);
   }
 }
 
@@ -3930,13 +3930,13 @@ static void x86emuOp_ret_far_IMM(x86emu_t *emu, u8 op1)
   DECODE_HEX4(imm);
 
   if(MODE_DATA32) {
-    eip = pop_long();
-    cs = pop_long();
+    eip = pop_long(emu);
+    cs = pop_long(emu);
     emu->x86.R_ESP += imm;
   }
   else {
-    eip = pop_word();
-    cs = pop_word();
+    eip = pop_word(emu);
+    cs = pop_word(emu);
     emu->x86.R_SP += imm;
   }
 
@@ -3957,12 +3957,12 @@ static void x86emuOp_ret_far(x86emu_t *emu, u8 op1)
   OP_DECODE("retf");
 
   if(MODE_DATA32) {
-    eip = pop_long();
-    cs = pop_long();
+    eip = pop_long(emu);
+    cs = pop_long(emu);
   }
   else {
-    eip = pop_word();
-    cs = pop_word();
+    eip = pop_word(emu);
+    cs = pop_word(emu);
   }
 
   x86emu_set_seg_register(emu, emu->x86.R_CS_SEL, cs);
@@ -4022,14 +4022,14 @@ static void x86emuOp_iret(x86emu_t *emu, u8 op1)
   OP_DECODE("iret");
 
   if(MODE_DATA32) {   
-    eip = pop_long();
-    cs = pop_long();
-    emu->x86.R_EFLG = pop_long() | F_ALWAYS_ON;
+    eip = pop_long(emu);
+    cs = pop_long(emu);
+    emu->x86.R_EFLG = pop_long(emu) | F_ALWAYS_ON;
   }
   else {
-    eip = pop_word();
-    cs = pop_word();
-    emu->x86.R_FLG = pop_word() | F_ALWAYS_ON;
+    eip = pop_word(emu);
+    cs = pop_word(emu);
+    emu->x86.R_FLG = pop_word(emu) | F_ALWAYS_ON;
   }
  
   x86emu_set_seg_register(emu, emu->x86.R_CS_SEL, cs);
@@ -4054,7 +4054,7 @@ static void x86emuOp_opcD0_byte_RM_1(x86emu_t *emu, u8 op1)
   if(mod == 3) {
     reg8 = decode_rm_byte_register(rl);
     OP_DECODE(",1");
-    val = (*op_B_byte[rh])(*reg8, 1);
+    val = (*op_B_byte[rh])(emu, *reg8, 1);
     *reg8 = val;
   }
   else {
@@ -4062,7 +4062,7 @@ static void x86emuOp_opcD0_byte_RM_1(x86emu_t *emu, u8 op1)
     addr = decode_rm_address(mod, rl);
     OP_DECODE(",1");
     val = fetch_data_byte(emu, addr);
-    val = (*op_B_byte[rh])(val, 1);
+    val = (*op_B_byte[rh])(emu, val, 1);
     store_data_byte(addr, val);
   }
 }
@@ -4086,13 +4086,13 @@ static void x86emuOp_opcD1_word_RM_1(x86emu_t *emu, u8 op1)
     if(MODE_DATA32) {
       reg32 = decode_rm_long_register(rl);
       OP_DECODE(",1");
-      val = (*op_B_long[rh])(*reg32, 1);
+      val = (*op_B_long[rh])(emu, *reg32, 1);
       *reg32 = val;
     }
     else {
       reg16 = decode_rm_word_register(rl);
       OP_DECODE(",1");
-      val = (*op_B_word[rh])(*reg16, 1);
+      val = (*op_B_word[rh])(emu, *reg16, 1);
       *reg16 = val;
     }
   }
@@ -4102,7 +4102,7 @@ static void x86emuOp_opcD1_word_RM_1(x86emu_t *emu, u8 op1)
       addr = decode_rm_address(mod, rl);
       OP_DECODE(",1");
       val = fetch_data_long(emu, addr);
-      val = (*op_B_long[rh])(val, 1);
+      val = (*op_B_long[rh])(emu, val, 1);
       store_data_long(addr, val);
     }
     else {
@@ -4110,7 +4110,7 @@ static void x86emuOp_opcD1_word_RM_1(x86emu_t *emu, u8 op1)
       addr = decode_rm_address(mod, rl);
       OP_DECODE(",1");
       val = fetch_data_word(emu, addr);
-      val = (*op_B_word[rh])(val, 1);
+      val = (*op_B_word[rh])(emu, val, 1);
       store_data_word(addr, val);
     }
   }
@@ -4136,7 +4136,7 @@ static void x86emuOp_opcD2_byte_RM_CL(x86emu_t *emu, u8 op1)
   if(mod == 3) {
     reg8 = decode_rm_byte_register(rl);
     OP_DECODE(",cl");
-    val = (*op_B_byte[rh])(*reg8, imm);
+    val = (*op_B_byte[rh])(emu, *reg8, imm);
     *reg8 = val;
   }
   else {
@@ -4144,7 +4144,7 @@ static void x86emuOp_opcD2_byte_RM_CL(x86emu_t *emu, u8 op1)
     addr = decode_rm_address(mod, rl);
     OP_DECODE(",cl");
     val = fetch_data_byte(emu, addr);
-    val = (*op_B_byte[rh])(val, imm);
+    val = (*op_B_byte[rh])(emu, val, imm);
     store_data_byte(addr, val);
   }
 }
@@ -4171,13 +4171,13 @@ static void x86emuOp_opcD3_word_RM_CL(x86emu_t *emu, u8 op1)
     if(MODE_DATA32) {
       reg32 = decode_rm_long_register(rl);
       OP_DECODE(",cl");
-      val = (*op_B_long[rh])(*reg32, imm);
+      val = (*op_B_long[rh])(emu, *reg32, imm);
       *reg32 = val;
     }
     else {
       reg16 = decode_rm_word_register(rl);
       OP_DECODE(",cl");
-      val = (*op_B_word[rh])(*reg16, imm);
+      val = (*op_B_word[rh])(emu, *reg16, imm);
       *reg16 = val;
     }
   }
@@ -4187,7 +4187,7 @@ static void x86emuOp_opcD3_word_RM_CL(x86emu_t *emu, u8 op1)
       addr = decode_rm_address(mod, rl);
       OP_DECODE(",cl");
       val = fetch_data_long(emu, addr);
-      val = (*op_B_long[rh])(val, imm);
+      val = (*op_B_long[rh])(emu, val, imm);
       store_data_long(addr, val);
     }
     else {
@@ -4195,7 +4195,7 @@ static void x86emuOp_opcD3_word_RM_CL(x86emu_t *emu, u8 op1)
       addr = decode_rm_address(mod, rl);
       OP_DECODE(",cl");
       val = fetch_data_word(emu, addr);
-      val = (*op_B_word[rh])(val, imm);
+      val = (*op_B_word[rh])(emu, val, imm);
       store_data_word(addr, val);
     }
   }
@@ -4215,7 +4215,7 @@ static void x86emuOp_aam(x86emu_t *emu, u8 op1)
   base = fetch_byte(emu);
   if(base == 0) INTR_RAISE_DIV0(emu);
 
-  emu->x86.R_AX = aam_word(emu->x86.R_AL, base);
+  emu->x86.R_AX = aam_word(emu, emu->x86.R_AL, base);
 }
 
 
@@ -4230,7 +4230,7 @@ static void x86emuOp_aad(x86emu_t *emu, u8 op1)
   OP_DECODE("aad");
   base = fetch_byte(emu);
 
-  emu->x86.R_AX = aad_word(emu->x86.R_AX, base);
+  emu->x86.R_AX = aad_word(emu, emu->x86.R_AX, base);
 }
 
 
@@ -4470,13 +4470,13 @@ static void x86emuOp_call_near_IMM(x86emu_t *emu, u8 op1)
   if(MODE_DATA32) {
     DECODE_HEX_ADDR(eip);
 
-    push_long(emu->x86.R_EIP);
+    push_long(emu, emu->x86.R_EIP);
   }
   else {
     eip &= 0xffff;	// FIXME: is not correct
     DECODE_HEX_ADDR(eip);
 
-    push_word(emu->x86.R_IP);
+    push_word(emu, emu->x86.R_IP);
   }
 
   emu->x86.R_EIP = eip;
@@ -4670,43 +4670,43 @@ static void x86emuOp_opcF6_byte_RM(x86emu_t *emu, u8 op1)
         OP_DECODE(",");
         imm = fetch_byte(emu);
         DECODE_HEX2(imm);
-        test_byte(*reg8, imm);
+        test_byte(emu, *reg8, imm);
         break;
 
       case 2:	/* not */
         OP_DECODE("not ");
         reg8 = decode_rm_byte_register(rl);
-        *reg8 = not_byte(*reg8);
+        *reg8 = not_byte(emu, *reg8);
         break;
 
       case 3:	/* neg */
         OP_DECODE("neg ");
         reg8 = decode_rm_byte_register(rl);
-        *reg8 = neg_byte(*reg8);
+        *reg8 = neg_byte(emu, *reg8);
         break;
 
       case 4:	/* mul al, */
         OP_DECODE("mul ");
         reg8 = decode_rm_byte_register(rl);
-        mul_byte(*reg8);
+        mul_byte(emu, *reg8);
         break;
 
       case 5:	/* imul al, */
         OP_DECODE("imul ");
         reg8 = decode_rm_byte_register(rl);
-        imul_byte(*reg8);
+        imul_byte(emu, *reg8);
         break;
 
       case 6:	/* div ax, */
         OP_DECODE("div ");
         reg8 = decode_rm_byte_register(rl);
-        div_byte(*reg8);
+        div_byte(emu, *reg8);
         break;
 
       case 7:	/* idiv ax, */
         OP_DECODE("idiv ");
         reg8 = decode_rm_byte_register(rl);
-        idiv_byte(*reg8);
+        idiv_byte(emu, *reg8);
         break;
     }
   }
@@ -4720,14 +4720,14 @@ static void x86emuOp_opcF6_byte_RM(x86emu_t *emu, u8 op1)
         imm = fetch_byte(emu);
         DECODE_HEX2(imm);
         val = fetch_data_byte(emu, addr);
-        test_byte(val, imm);
+        test_byte(emu, val, imm);
         break;
 
       case 2:	/* not */
         OP_DECODE("not byte ");
         addr = decode_rm_address(mod, rl);
         val = fetch_data_byte(emu, addr);
-        val = not_byte(val);
+        val = not_byte(emu, val);
         store_data_byte(addr, val);
         break;
 
@@ -4735,7 +4735,7 @@ static void x86emuOp_opcF6_byte_RM(x86emu_t *emu, u8 op1)
         OP_DECODE("neg byte ");
         addr = decode_rm_address(mod, rl);
         val = fetch_data_byte(emu, addr);
-        val = neg_byte(val);
+        val = neg_byte(emu, val);
         store_data_byte(addr, val);
         break;
 
@@ -4743,28 +4743,28 @@ static void x86emuOp_opcF6_byte_RM(x86emu_t *emu, u8 op1)
         OP_DECODE("mul byte ");
         addr = decode_rm_address(mod, rl);
         val = fetch_data_byte(emu, addr);
-        mul_byte(val);
+        mul_byte(emu, val);
         break;
 
       case 5:	/* imul al, */
         OP_DECODE("imul byte ");
         addr = decode_rm_address(mod, rl);
         val = fetch_data_byte(emu, addr);
-        imul_byte(val);
+        imul_byte(emu, val);
         break;
 
       case 6:	/* div ax, */
         OP_DECODE("div byte ");
         addr = decode_rm_address(mod, rl);
         val = fetch_data_byte(emu, addr);
-        div_byte(val);
+        div_byte(emu, val);
         break;
 
       case 7:	/* idiv ax, */
         OP_DECODE("idiv byte ");
         addr = decode_rm_address(mod, rl);
         val = fetch_data_byte(emu, addr);
-        idiv_byte(val);
+        idiv_byte(emu, val);
         break;
     }
   }
@@ -4793,14 +4793,14 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
           OP_DECODE(",");
           imm = fetch_long(emu);
           DECODE_HEX8(imm);
-          test_long(*reg32, imm);
+          test_long(emu, *reg32, imm);
         }
         else {
           reg16 = decode_rm_word_register(rl);
           OP_DECODE(",");
           imm = fetch_word(emu);
           DECODE_HEX4(imm);
-          test_word(*reg16, imm);
+          test_word(emu, *reg16, imm);
         }
         break;
 
@@ -4809,11 +4809,11 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
 
         if(MODE_DATA32) {
           reg32 = decode_rm_long_register(rl);
-          *reg32 = not_long(*reg32);
+          *reg32 = not_long(emu, *reg32);
         }
         else {
           reg16 = decode_rm_word_register(rl);
-          *reg16 = not_word(*reg16);
+          *reg16 = not_word(emu, *reg16);
         }
         break;
 
@@ -4822,11 +4822,11 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
 
         if(MODE_DATA32) {
           reg32 = decode_rm_long_register(rl);
-          *reg32 = neg_long(*reg32);
+          *reg32 = neg_long(emu, *reg32);
         }
         else {
           reg16 = decode_rm_word_register(rl);
-          *reg16 = neg_word(*reg16);
+          *reg16 = neg_word(emu, *reg16);
         }
         break;
 
@@ -4835,11 +4835,11 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
 
         if(MODE_DATA32) {
           reg32 = decode_rm_long_register(rl);
-          mul_long(*reg32);
+          mul_long(emu, *reg32);
         }
         else {
           reg16 = decode_rm_word_register(rl);
-          mul_word(*reg16);
+          mul_word(emu, *reg16);
         }
         break;
 
@@ -4848,11 +4848,11 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
 
         if(MODE_DATA32) {
           reg32 = decode_rm_long_register(rl);
-          imul_long(*reg32);
+          imul_long(emu, *reg32);
         }
         else {
           reg16 = decode_rm_word_register(rl);
-          imul_word(*reg16);
+          imul_word(emu, *reg16);
         }
         break;
 
@@ -4861,11 +4861,11 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
 
         if(MODE_DATA32) {
           reg32 = decode_rm_long_register(rl);
-          div_long(*reg32);
+          div_long(emu, *reg32);
         }
         else {
           reg16 = decode_rm_word_register(rl);
-          div_word(*reg16);
+          div_word(emu, *reg16);
         }
         break;
 
@@ -4874,11 +4874,11 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
 
         if(MODE_DATA32) {
           reg32 = decode_rm_long_register(rl);
-          idiv_long(*reg32);
+          idiv_long(emu, *reg32);
         }
         else {
           reg16 = decode_rm_word_register(rl);
-          idiv_word(*reg16);
+          idiv_word(emu, *reg16);
         }
         break;
     }
@@ -4894,7 +4894,7 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
           imm = fetch_long(emu);
           DECODE_HEX8(imm);
           val = fetch_data_long(emu, addr);
-          test_long(val, imm);
+          test_long(emu, val, imm);
         }
         else {
           OP_DECODE("test word ");
@@ -4903,7 +4903,7 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
           imm = fetch_word(emu);
           DECODE_HEX4(imm);
           val = fetch_data_word(emu, addr);
-          test_word(val, imm);
+          test_word(emu, val, imm);
         }
         break;
 
@@ -4912,14 +4912,14 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
           OP_DECODE("not dword ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_long(emu, addr);
-          val = not_long(val);
+          val = not_long(emu, val);
           store_data_long(addr, val);
         }
         else {
           OP_DECODE("not word ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_word(emu, addr);
-          val = not_word(val);
+          val = not_word(emu, val);
           store_data_word(addr, val);
         }
         break;
@@ -4929,14 +4929,14 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
           OP_DECODE("neg dword ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_long(emu, addr);
-          val = neg_long(val);
+          val = neg_long(emu, val);
           store_data_long(addr, val);
         }
         else {
           OP_DECODE("neg word ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_word(emu, addr);
-          val = neg_word(val);
+          val = neg_word(emu, val);
           store_data_word(addr, val);
         }
         break;
@@ -4946,13 +4946,13 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
           OP_DECODE("mul dword ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_long(emu, addr);
-          mul_long(val);
+          mul_long(emu, val);
         }
         else {
           OP_DECODE("mul word ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_word(emu, addr);
-          mul_word(val);
+          mul_word(emu, val);
         }
         break;
 
@@ -4961,13 +4961,13 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
           OP_DECODE("imul dword ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_long(emu, addr);
-          imul_long(val);
+          imul_long(emu, val);
         }
         else {
           OP_DECODE("imul word ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_word(emu, addr);
-          imul_word(val);
+          imul_word(emu, val);
         }
         break;
 
@@ -4976,13 +4976,13 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
           OP_DECODE("div dword ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_long(emu, addr);
-          div_long(val);
+          div_long(emu, val);
         }
         else {
           OP_DECODE("div word ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_word(emu, addr);
-          div_word(val);
+          div_word(emu, val);
         }
         break;
 
@@ -4991,13 +4991,13 @@ static void x86emuOp_opcF7_word_RM(x86emu_t *emu, u8 op1)
           OP_DECODE("idiv dword ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_long(emu, addr);
-          idiv_long(val);
+          idiv_long(emu, val);
         }
         else {
           OP_DECODE("idiv word ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_word(emu, addr);
-          idiv_word(val);
+          idiv_word(emu, val);
         }
         break;
     }
@@ -5105,13 +5105,13 @@ static void x86emuOp_opcFE_byte_RM(x86emu_t *emu, u8 op1)
 
   if(mod == 3) {
     reg8 = decode_rm_byte_register(rl);
-    *reg8 = rh == 0 ? inc_byte(*reg8) : dec_byte(*reg8);
+    *reg8 = rh == 0 ? inc_byte(emu, *reg8) : dec_byte(emu, *reg8);
   }
   else {
     OP_DECODE("byte ");
     addr = decode_rm_address(mod, rl);
     val = fetch_data_byte(emu, addr);
-    val = rh == 0 ? inc_byte(val) : dec_byte(val);
+    val = rh == 0 ? inc_byte(emu, val) : dec_byte(emu, val);
     store_data_byte(addr, val);
   }
 }
@@ -5136,11 +5136,11 @@ static void x86emuOp_opcFF_word_RM(x86emu_t *emu, u8 op1)
 
         if(MODE_DATA32) {
           reg32 = decode_rm_long_register(rl);
-          *reg32 = inc_long(*reg32);
+          *reg32 = inc_long(emu, *reg32);
         }
         else {
           reg16 = decode_rm_word_register(rl);
-          *reg16 = inc_word(*reg16);
+          *reg16 = inc_word(emu, *reg16);
         }
         break;
 
@@ -5149,11 +5149,11 @@ static void x86emuOp_opcFF_word_RM(x86emu_t *emu, u8 op1)
 
         if(MODE_DATA32) {
           reg32 = decode_rm_long_register(rl);
-          *reg32 = dec_long(*reg32);
+          *reg32 = dec_long(emu, *reg32);
         }
         else {
           reg16 = decode_rm_word_register(rl);
-          *reg16 = dec_word(*reg16);
+          *reg16 = dec_word(emu, *reg16);
         }
         break;
 
@@ -5162,12 +5162,12 @@ static void x86emuOp_opcFF_word_RM(x86emu_t *emu, u8 op1)
 
       	if(MODE_DATA32) {
           reg32 = decode_rm_long_register(rl);
-          push_long(emu->x86.R_EIP);
+          push_long(emu, emu->x86.R_EIP);
           emu->x86.R_EIP = *reg32;
       	}
       	else {
           reg16 = decode_rm_word_register(rl);
-          push_word(emu->x86.R_IP);
+          push_word(emu, emu->x86.R_IP);
           emu->x86.R_EIP = *reg16;
         }
         break;
@@ -5190,11 +5190,11 @@ static void x86emuOp_opcFF_word_RM(x86emu_t *emu, u8 op1)
 
         if(MODE_DATA32) {
           reg32 = decode_rm_long_register(rl);
-          push_long(*reg32);
+          push_long(emu, *reg32);
         }
         else {
           reg16 = decode_rm_word_register(rl);
-          push_word(*reg16);
+          push_word(emu, *reg16);
         }
         break;
 
@@ -5213,7 +5213,7 @@ static void x86emuOp_opcFF_word_RM(x86emu_t *emu, u8 op1)
 
           addr = decode_rm_address(mod, rl);
           val = fetch_data_long(emu, addr);
-          val = inc_long(val);
+          val = inc_long(emu, val);
           store_data_long(addr, val);
         }
         else {
@@ -5221,7 +5221,7 @@ static void x86emuOp_opcFF_word_RM(x86emu_t *emu, u8 op1)
 
           addr = decode_rm_address(mod, rl);
           val = fetch_data_word(emu, addr);
-          val = inc_word(val);
+          val = inc_word(emu, val);
           store_data_word(addr, val);
         }
         break;
@@ -5233,14 +5233,14 @@ static void x86emuOp_opcFF_word_RM(x86emu_t *emu, u8 op1)
           OP_DECODE("dword ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_long(emu, addr);
-          val = dec_long(val);
+          val = dec_long(emu, val);
           store_data_long(addr, val);
         }
         else {
           OP_DECODE("word ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_word(emu, addr);
-          val = dec_word(val);
+          val = dec_word(emu, val);
           store_data_word(addr, val);
         }
         break;
@@ -5252,13 +5252,13 @@ static void x86emuOp_opcFF_word_RM(x86emu_t *emu, u8 op1)
           OP_DECODE("dword ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_long(emu, addr);
-          push_long(emu->x86.R_EIP);
+          push_long(emu, emu->x86.R_EIP);
         }
         else {
           OP_DECODE("word ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_word(emu, addr);
-          push_word(emu->x86.R_IP);
+          push_word(emu, emu->x86.R_IP);
         }
         emu->x86.R_EIP = val;
         break;
@@ -5272,8 +5272,8 @@ static void x86emuOp_opcFF_word_RM(x86emu_t *emu, u8 op1)
           val = fetch_data_long(emu, addr);
           cs = fetch_data_word(emu, addr + 4);
 
-          push_long(emu->x86.R_CS);
-          push_long(emu->x86.R_EIP);
+          push_long(emu, emu->x86.R_CS);
+          push_long(emu, emu->x86.R_EIP);
         }
         else {
           if(MODE_CODE32) OP_DECODE("dword ");
@@ -5281,8 +5281,8 @@ static void x86emuOp_opcFF_word_RM(x86emu_t *emu, u8 op1)
           val = fetch_data_word(emu, addr);
           cs = fetch_data_word(emu, addr + 2);
 
-          push_word(emu->x86.R_CS);
-          push_word(emu->x86.R_IP);
+          push_word(emu, emu->x86.R_CS);
+          push_word(emu, emu->x86.R_IP);
         }
 
         x86emu_set_seg_register(emu, emu->x86.R_CS_SEL, cs);
@@ -5331,13 +5331,13 @@ static void x86emuOp_opcFF_word_RM(x86emu_t *emu, u8 op1)
           OP_DECODE("dword ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_long(emu, addr);
-          push_long(val);
+          push_long(emu, val);
         }
         else {
           OP_DECODE("word ");
           addr = decode_rm_address(mod, rl);
           val = fetch_data_word(emu, addr);
-          push_word(val);
+          push_word(emu, val);
         }
         break;
 
