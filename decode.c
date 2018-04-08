@@ -47,7 +47,7 @@ static void handle_interrupt(x86emu_t *emu);
 static void generate_int(u8 nr, unsigned type, unsigned errcode);
 static void log_regs(x86emu_t *emu);
 static void log_code(x86emu_t *emu);
-static void check_data_access(sel_t *seg, u32 ofs, u32 size);
+static void check_data_access(x86emu_t *emu, sel_t *seg, u32 ofs, u32 size);
 static unsigned decode_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type);
 static unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type);
 static void idt_lookup(u8 nr, u32 *new_cs, u32 *new_eip);
@@ -547,7 +547,7 @@ u8 fetch_data_byte_abs(x86emu_t *emu, sel_t *seg, u32 ofs)
 {
   u32 val;
 
-  check_data_access(seg, ofs, 1);
+  check_data_access(emu, seg, ofs, 1);
 
   decode_memio(emu, seg->base + ofs, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_R);
 
@@ -566,7 +566,7 @@ u16 fetch_data_word_abs(x86emu_t *emu, sel_t *seg, u32 ofs)
 {
   u32 val;
 
-  check_data_access(seg, ofs, 2);
+  check_data_access(emu, seg, ofs, 2);
 
   decode_memio(emu, seg->base + ofs, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_R);
 
@@ -585,7 +585,7 @@ u32 fetch_data_long_abs(x86emu_t *emu, sel_t *seg, u32 ofs)
 {
   u32 val;
 
-  check_data_access(seg, ofs, 4);
+  check_data_access(emu, seg, ofs, 4);
 
   decode_memio(emu, seg->base + ofs, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_R);
 
@@ -647,7 +647,7 @@ void store_data_byte_abs(x86emu_t *emu, sel_t *seg, u32 ofs, u8 val)
 {
   u32 val32 = val;
 
-  check_data_access(seg, ofs, 1);
+  check_data_access(emu, seg, ofs, 1);
 
   decode_memio(emu, seg->base + ofs, &val32, X86EMU_MEMIO_8 + X86EMU_MEMIO_W);
 }
@@ -665,7 +665,7 @@ void store_data_word_abs(x86emu_t *emu, sel_t *seg, u32 ofs, u16 val)
 {
   u32 val32 = val;
 
-  check_data_access(seg, ofs, 2);
+  check_data_access(emu, seg, ofs, 2);
 
   decode_memio(emu, seg->base + ofs, &val32, X86EMU_MEMIO_16 + X86EMU_MEMIO_W);
 }
@@ -681,7 +681,7 @@ Writes a long value to an absolute memory location.
 ****************************************************************************/
 void store_data_long_abs(x86emu_t *emu, sel_t *seg, u32 ofs, u32 val)
 {
-  check_data_access(seg, ofs, 4);
+  check_data_access(emu, seg, ofs, 4);
 
   decode_memio(emu, seg->base + ofs, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_W);
 }
@@ -1738,7 +1738,7 @@ void log_regs(emu)
 }
 
 
-void check_data_access(sel_t *seg, u32 ofs, u32 size)
+void check_data_access(x86emu_t *emu, sel_t *seg, u32 ofs, u32 size)
 {
   char **p = &emu->log.ptr;
   static char seg_name[7] = "ecsdfg?";
