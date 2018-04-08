@@ -506,7 +506,7 @@ static void x86emuOp2_long_jump(x86emu_t *emu, u8 op2)
 
   DECODE_HEX_ADDR(eip);
 
-  if(eval_condition(type)) emu->x86.R_EIP = eip;
+  if(eval_condition(emu, type)) emu->x86.R_EIP = eip;
 }
 
 
@@ -528,11 +528,11 @@ static void x86emuOp2_set_byte(x86emu_t *emu, u8 op2)
 
   if(mod == 3) {
     reg8 = decode_rm_byte_register(emu, rl);
-    *reg8 = eval_condition(type) ? 1 : 0;
+    *reg8 = eval_condition(emu, type) ? 1 : 0;
   }
   else {
     addr = decode_rm_address(emu, mod, rl);
-    store_data_byte(emu, addr, eval_condition(type) ? 1 : 0);
+    store_data_byte(emu, addr, eval_condition(emu, type) ? 1 : 0);
   }
 }
 

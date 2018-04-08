@@ -2668,7 +2668,7 @@ u32 pop_long(x86emu_t *emu)
 }
 
 
-int eval_condition(unsigned type)
+int eval_condition(x86emu_t *emu, unsigned type)
 {
   int cond = 0;
   unsigned flags = emu->x86.R_EFLG;
