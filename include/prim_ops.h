@@ -131,7 +131,7 @@ void    push_word (x86emu_t *emu, u16 w) L_SYM;
 void    push_long (x86emu_t *emu, u32 w) L_SYM;
 u16     pop_word (x86emu_t *emu) L_SYM;
 u32     pop_long (x86emu_t *emu) L_SYM;
-int eval_condition(unsigned type) L_SYM;
+int eval_condition(x86emu_t *emu, unsigned type) L_SYM;
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/

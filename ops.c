@@ -1521,7 +1521,7 @@ static void x86emuOp_jump_short_cc(x86emu_t *emu, u8 op1)
   eip = emu->x86.R_EIP + ofs;
   DECODE_HEX_ADDR(eip);
   if(!MODE_DATA32) eip &= 0xffff;
-  if(eval_condition(type)) emu->x86.R_EIP = eip;
+  if(eval_condition(emu, type)) emu->x86.R_EIP = eip;
 }
 
 
@@ -2706,7 +2706,7 @@ static void x86emuOp_cmps_byte(x86emu_t *emu, u8 op1)
         emu->x86.R_ECX--;
         emu->x86.R_ESI += inc;
         emu->x86.R_EDI += inc;
-        if(eval_condition(cond)) break;
+        if(eval_condition(emu, cond)) break;
       }
     }
     else {
@@ -2729,7 +2729,7 @@ static void x86emuOp_cmps_byte(x86emu_t *emu, u8 op1)
         emu->x86.R_CX--;
         emu->x86.R_SI += inc;
         emu->x86.R_DI += inc;
-        if(eval_condition(cond)) break;
+        if(eval_condition(emu, cond)) break;
       }
     }
     else {
@@ -2784,7 +2784,7 @@ static void x86emuOp_cmps_word(x86emu_t *emu, u8 op1)
         emu->x86.R_ECX--;
         emu->x86.R_ESI += inc;
         emu->x86.R_EDI += inc;
-        if(eval_condition(cond)) break;
+        if(eval_condition(emu, cond)) break;
       }
     }
     else {
@@ -2818,7 +2818,7 @@ static void x86emuOp_cmps_word(x86emu_t *emu, u8 op1)
         emu->x86.R_CX--;
         emu->x86.R_SI += inc;
         emu->x86.R_DI += inc;
-        if(eval_condition(cond)) break;
+        if(eval_condition(emu, cond)) break;
       }
     }
     else {
@@ -3110,7 +3110,7 @@ static void x86emuOp_scas_byte(x86emu_t *emu, u8 op1)
         cmp_byte(emu, emu->x86.R_AL, val);
         emu->x86.R_ECX--;
         emu->x86.R_EDI += inc;
-        if(eval_condition(cond)) break;
+        if(eval_condition(emu, cond)) break;
       }
     }
     else {
@@ -3129,7 +3129,7 @@ static void x86emuOp_scas_byte(x86emu_t *emu, u8 op1)
         cmp_byte(emu, emu->x86.R_AL, val);
         emu->x86.R_CX--;
         emu->x86.R_DI += inc;
-        if(eval_condition(cond)) break;
+        if(eval_condition(emu, cond)) break;
       }
     }
     else {
@@ -3179,7 +3179,7 @@ static void x86emuOp_scas_word(x86emu_t *emu, u8 op1)
         }
         emu->x86.R_ECX--;
         emu->x86.R_EDI += inc;
-        if(eval_condition(cond)) break;
+        if(eval_condition(emu, cond)) break;
       }
     }
     else {
@@ -3207,7 +3207,7 @@ static void x86emuOp_scas_word(x86emu_t *emu, u8 op1)
         }
         emu->x86.R_CX--;
         emu->x86.R_DI += inc;
-        if(eval_condition(cond)) break;
+        if(eval_condition(emu, cond)) break;
       }
     }
     else {
