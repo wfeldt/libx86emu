@@ -266,8 +266,6 @@ void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flu
 
 unsigned x86emu_clear_log(x86emu_t *emu, int flush)
 {
-  if(!emu) emu = &M;
-
   if(flush && emu->log.flush) {
     if(emu->log.ptr && emu->log.ptr != emu->log.buf) {
       emu->log.flush(emu, emu->log.buf, emu->log.ptr - emu->log.buf);

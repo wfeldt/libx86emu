@@ -41,8 +41,6 @@
 
 /*----------------------------- Implementation ----------------------------*/
 
-x86emu_t M L_SYM;
-
 static void handle_interrupt(x86emu_t *emu);
 static void generate_int(x86emu_t *emu, u8 nr, unsigned type, unsigned errcode);
 static void log_regs(x86emu_t *emu);
@@ -58,7 +56,7 @@ REMARKS:
 Main execution loop for the emulator. We return from here when the system
 halts, timeouts, or one of the conditions in flags are met.
 ****************************************************************************/
-unsigned x86emu_run(x86emu_t *emu_, unsigned flags)
+unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 {
   u8 op1, u_m1;
   s32 ofs32;
@@ -69,8 +67,6 @@ unsigned x86emu_run(x86emu_t *emu_, unsigned flags)
 #if WITH_TSC
   u64 tsc_ofs;
 #endif
-
-  if(emu_) M = *emu_;
 
   p = &emu->log.ptr;
 
@@ -283,8 +279,6 @@ unsigned x86emu_run(x86emu_t *emu_, unsigned flags)
 #if WITH_TSC
   emu->x86.R_REAL_TSC = tsc() - tsc_ofs;
 #endif
-
-  if(emu_) *emu_ = M;
 
   return rs;
 }
