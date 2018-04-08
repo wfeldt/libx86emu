@@ -56,12 +56,12 @@ static void vm_w_word(x86emu_mem_t *vm, unsigned addr, unsigned val);
 static void vm_w_dword(x86emu_mem_t *vm, unsigned addr, unsigned val);
 
 static mem2_page_t *vm_get_page(x86emu_mem_t *mem, unsigned addr, int create);
-static unsigned vm_i_byte(unsigned addr);
-static unsigned vm_i_dword(unsigned addr);
-static unsigned vm_i_word(unsigned addr);
-static void vm_o_byte(unsigned addr, unsigned val);
-static void vm_o_dword(unsigned addr, unsigned val);
-static void vm_o_word(unsigned addr, unsigned val);
+static unsigned vm_i_byte(x86emu_t *emu, unsigned addr);
+static unsigned vm_i_dword(x86emu_t *emu, unsigned addr);
+static unsigned vm_i_word(x86emu_t *emu, unsigned addr);
+static void vm_o_byte(x86emu_t *emu, unsigned addr, unsigned val);
+static void vm_o_dword(x86emu_t *emu, unsigned addr, unsigned val);
+static void vm_o_word(x86emu_t *emu, unsigned addr, unsigned val);
 
 void *mem_dup(const void *src, size_t n)
 {
@@ -563,7 +563,7 @@ void vm_w_dword(x86emu_mem_t *mem, unsigned addr, unsigned val)
 }
 
 
-unsigned vm_i_byte(unsigned addr)
+unsigned vm_i_byte(x86emu_t *emu, unsigned addr)
 {
   unsigned char *perm;
 
@@ -590,7 +590,7 @@ unsigned vm_i_byte(unsigned addr)
 }
 
 
-unsigned vm_i_word(unsigned addr)
+unsigned vm_i_word(x86emu_t *emu, unsigned addr)
 {
   unsigned char *perm;
   unsigned val;
@@ -604,8 +604,8 @@ unsigned vm_i_word(unsigned addr)
     !(perm[0] & X86EMU_PERM_R) ||
     !(perm[1] & X86EMU_PERM_R)
   ) {
-    val = vm_i_byte(addr);
-    val += (vm_i_byte(addr + 1) << 8);
+    val = vm_i_byte(emu, addr);
+    val += (vm_i_byte(emu, addr + 1) << 8);
 
     return val;
   }
@@ -620,7 +620,7 @@ unsigned vm_i_word(unsigned addr)
 }
 
 
-unsigned vm_i_dword(unsigned addr)
+unsigned vm_i_dword(x86emu_t *emu, unsigned addr)
 {
   unsigned char *perm;
   unsigned val;
@@ -636,10 +636,10 @@ unsigned vm_i_dword(unsigned addr)
     !(perm[2] & X86EMU_PERM_R) ||
     !(perm[3] & X86EMU_PERM_R)
   ) {
-    val = vm_i_byte(addr);
-    val += (vm_i_byte(addr + 1) << 8);
-    val += (vm_i_byte(addr + 2) << 16);
-    val += (vm_i_byte(addr + 3) << 24);
+    val = vm_i_byte(emu, addr);
+    val += (vm_i_byte(emu, addr + 1) << 8);
+    val += (vm_i_byte(emu, addr + 2) << 16);
+    val += (vm_i_byte(emu, addr + 3) << 24);
 
     return val;
   }
@@ -658,7 +658,7 @@ unsigned vm_i_dword(unsigned addr)
 }
 
 
-void vm_o_byte(unsigned addr, unsigned val)
+void vm_o_byte(x86emu_t *emu, unsigned addr, unsigned val)
 {
   unsigned char *perm;
 
@@ -683,7 +683,7 @@ void vm_o_byte(unsigned addr, unsigned val)
 }
 
 
-void vm_o_word(unsigned addr, unsigned val)
+void vm_o_word(x86emu_t *emu, unsigned addr, unsigned val)
 {
   unsigned char *perm;
 
@@ -696,8 +696,8 @@ void vm_o_word(unsigned addr, unsigned val)
     !(perm[0] & X86EMU_PERM_W) ||
     !(perm[1] & X86EMU_PERM_W)
   ) {
-    vm_o_byte(addr, val);
-    vm_o_byte(addr + 1, val);
+    vm_o_byte(emu, addr, val);
+    vm_o_byte(emu, addr + 1, val);
 
     return;
   }
@@ -712,7 +712,7 @@ void vm_o_word(unsigned addr, unsigned val)
 }
 
 
-void vm_o_dword(unsigned addr, unsigned val)
+void vm_o_dword(x86emu_t *emu, unsigned addr, unsigned val)
 {
   unsigned char *perm;
 
@@ -727,10 +727,10 @@ void vm_o_dword(unsigned addr, unsigned val)
     !(perm[2] & X86EMU_PERM_W) ||
     !(perm[3] & X86EMU_PERM_W)
   ) {
-    vm_o_byte(addr, val);
-    vm_o_byte(addr + 1, val);
-    vm_o_byte(addr + 2, val);
-    vm_o_byte(addr + 3, val);
+    vm_o_byte(emu, addr, val);
+    vm_o_byte(emu, addr + 1, val);
+    vm_o_byte(emu, addr + 2, val);
+    vm_o_byte(emu, addr + 3, val);
 
     return;
   }
@@ -810,13 +810,13 @@ unsigned vm_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type)
     case X86EMU_MEMIO_I:
       switch(bits) {
         case X86EMU_MEMIO_8:
-          *val = vm_i_byte(addr);
+          *val = vm_i_byte(emu, addr);
           break;
         case X86EMU_MEMIO_16:
-          *val = vm_i_word(addr);
+          *val = vm_i_word(emu, addr);
           break;
         case X86EMU_MEMIO_32:
-          *val = vm_i_dword(addr);
+          *val = vm_i_dword(emu, addr);
           break;
       }
       break;
@@ -824,13 +824,13 @@ unsigned vm_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type)
     case X86EMU_MEMIO_O:
       switch(bits) {
         case X86EMU_MEMIO_8:
-          vm_o_byte(addr, *val);
+          vm_o_byte(emu, addr, *val);
           break;
         case X86EMU_MEMIO_16:
-          vm_o_word(addr, *val);
+          vm_o_word(emu, addr, *val);
           break;
         case X86EMU_MEMIO_32:
-          vm_o_dword(addr, *val);
+          vm_o_dword(emu, addr, *val);
           break;
       }
       break;
