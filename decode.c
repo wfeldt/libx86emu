@@ -601,9 +601,9 @@ REMARKS:
 Writes a word value to an segmented memory location. The segment used is
 the current 'default' segment, which may have been overridden.
 ****************************************************************************/
-void store_data_byte(u32 ofs, u8 val)
+void store_data_byte(x86emu_t *emu, u32 ofs, u8 val)
 {
-  store_data_byte_abs(get_data_segment(), ofs, val);
+  store_data_byte_abs(emu, get_data_segment(), ofs, val);
 }
 
 /****************************************************************************
@@ -615,9 +615,9 @@ REMARKS:
 Writes a word value to an segmented memory location. The segment used is
 the current 'default' segment, which may have been overridden.
 ****************************************************************************/
-void store_data_word(u32 ofs, u16 val)
+void store_data_word(x86emu_t *emu, u32 ofs, u16 val)
 {
-  store_data_word_abs(get_data_segment(), ofs, val);
+  store_data_word_abs(emu, get_data_segment(), ofs, val);
 }
 
 /****************************************************************************
@@ -629,9 +629,9 @@ REMARKS:
 Writes a long value to an segmented memory location. The segment used is
 the current 'default' segment, which may have been overridden.
 ****************************************************************************/
-void store_data_long(u32 ofs, u32 val)
+void store_data_long(x86emu_t *emu, u32 ofs, u32 val)
 {
-  store_data_long_abs(get_data_segment(), ofs, val);
+  store_data_long_abs(emu, get_data_segment(), ofs, val);
 }
 
 /****************************************************************************
@@ -643,7 +643,7 @@ val		- Value to store
 REMARKS:
 Writes a byte value to an absolute memory location.
 ****************************************************************************/
-void store_data_byte_abs(sel_t *seg, u32 ofs, u8 val)
+void store_data_byte_abs(x86emu_t *emu, sel_t *seg, u32 ofs, u8 val)
 {
   u32 val32 = val;
 
@@ -661,7 +661,7 @@ val		- Value to store
 REMARKS:
 Writes a word value to an absolute memory location.
 ****************************************************************************/
-void store_data_word_abs(sel_t *seg, u32 ofs, u16 val)
+void store_data_word_abs(x86emu_t *emu, sel_t *seg, u32 ofs, u16 val)
 {
   u32 val32 = val;
 
@@ -679,7 +679,7 @@ val		- Value to store
 REMARKS:
 Writes a long value to an absolute memory location.
 ****************************************************************************/
-void store_data_long_abs(sel_t *seg, u32 ofs, u32 val)
+void store_data_long_abs(x86emu_t *emu, sel_t *seg, u32 ofs, u32 val)
 {
   check_data_access(seg, ofs, 4);
 
@@ -717,7 +717,7 @@ u32 fetch_io_long(x86emu_t *emu, u32 port)
 }
 
 
-void store_io_byte(u32 port, u8 val)
+void store_io_byte(x86emu_t *emu, u32 port, u8 val)
 {
   u32 val32 = val;
 
@@ -725,7 +725,7 @@ void store_io_byte(u32 port, u8 val)
 }
 
 
-void store_io_word(u32 port, u16 val)
+void store_io_word(x86emu_t *emu, u32 port, u16 val)
 {
   u32 val32 = val;
 
@@ -733,7 +733,7 @@ void store_io_word(u32 port, u16 val)
 }
 
 
-void store_io_long(u32 port, u32 val)
+void store_io_long(x86emu_t *emu, u32 port, u32 val)
 {
   decode_memio(emu, port, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_O);
 }

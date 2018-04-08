@@ -124,11 +124,11 @@ static void x86emuOp2_opc_00(x86emu_t *emu, u8 op2)
     addr = decode_rm_address(emu, mod, rl);
     switch(rh) {
       case 0:	/* sldt */
-        store_data_word(addr, emu->x86.R_LDT);
+        store_data_word(emu, addr, emu->x86.R_LDT);
         break;
 
       case 1:	/* str */
-        store_data_word(addr, emu->x86.R_TR);
+        store_data_word(emu, addr, emu->x86.R_TR);
         break;
 
       case 2:	/* lldt */
@@ -178,8 +178,8 @@ static void x86emuOp2_opc_01(x86emu_t *emu, u8 op2)
         addr = decode_rm_address(emu, mod, rl);
         base = emu->x86.gdt.base;
         if(!MODE_DATA32) base &= 0xffffff;
-        store_data_word(addr, emu->x86.gdt.limit);
-        store_data_long(addr + 2, base);
+        store_data_word(emu, addr, emu->x86.gdt.limit);
+        store_data_long(emu, addr + 2, base);
         break;
 
       case 1:	/* sidt */
@@ -187,8 +187,8 @@ static void x86emuOp2_opc_01(x86emu_t *emu, u8 op2)
         addr = decode_rm_address(emu, mod, rl);
         base = emu->x86.idt.base;
         if(!MODE_DATA32) base &= 0xffffff;
-        store_data_word(addr, emu->x86.idt.limit);
-        store_data_long(addr + 2, base);
+        store_data_word(emu, addr, emu->x86.idt.limit);
+        store_data_long(emu, addr + 2, base);
         break;
 
       case 2:	/* lgdt */
@@ -219,7 +219,7 @@ static void x86emuOp2_opc_01(x86emu_t *emu, u8 op2)
         }
         else {
           addr = decode_rm_address(emu, mod, rl);
-          store_data_word(addr, emu->x86.R_CR0);
+          store_data_word(emu, addr, emu->x86.R_CR0);
         }
         break;
 
@@ -532,7 +532,7 @@ static void x86emuOp2_set_byte(x86emu_t *emu, u8 op2)
   }
   else {
     addr = decode_rm_address(emu, mod, rl);
-    store_data_byte(addr, eval_condition(type) ? 1 : 0);
+    store_data_byte(emu, addr, eval_condition(type) ? 1 : 0);
   }
 }
 
@@ -660,7 +660,7 @@ static void x86emuOp2_shld_IMM(x86emu_t *emu, u8 op2)
       DECODE_HEX2(imm);
       val = fetch_data_long(emu, addr);
       val = shld_long(emu, val, *src32, imm);
-      store_data_long(addr, val);
+      store_data_long(emu, addr, val);
     }
     else {
       src16 = decode_rm_word_register(emu, rh);
@@ -669,7 +669,7 @@ static void x86emuOp2_shld_IMM(x86emu_t *emu, u8 op2)
       DECODE_HEX2(imm);
       val = fetch_data_word(emu, addr);
       val = shld_word(emu, val, *src16, imm);
-      store_data_word(addr, val);
+      store_data_word(emu, addr, val);
     }
   }
 }
@@ -714,14 +714,14 @@ static void x86emuOp2_shld_CL(x86emu_t *emu, u8 op2)
       OP_DECODE(",cl");
       val = fetch_data_long(emu, addr);
       val = shld_long(emu, val, *src32, emu->x86.R_CL);
-      store_data_long(addr, val);
+      store_data_long(emu, addr, val);
     }
     else {
       src16 = decode_rm_word_register(emu, rh);
       OP_DECODE(",cl");
       val = fetch_data_word(emu, addr);
       val = shld_word(emu, val, *src16, emu->x86.R_CL);
-      store_data_word(addr, val);
+      store_data_word(emu, addr, val);
     }
   }
 }
@@ -795,7 +795,7 @@ static void x86emuOp2_bts_R(x86emu_t *emu, u8 op2)
       disp >>= 5;
       val = fetch_data_long(emu, addr + disp);
       CONDITIONAL_SET_FLAG(val & mask, F_CF);
-      store_data_long(addr + disp, val | mask);
+      store_data_long(emu, addr + disp, val | mask);
     }
     else {
       disp = (s16) *decode_rm_word_register(emu, rh);
@@ -803,7 +803,7 @@ static void x86emuOp2_bts_R(x86emu_t *emu, u8 op2)
       disp >>= 5;
       val = fetch_data_word(emu, addr + disp);
       CONDITIONAL_SET_FLAG(val & mask, F_CF);
-      store_data_word(addr + disp, val | mask);
+      store_data_word(emu, addr + disp, val | mask);
     }
   }
 }
@@ -854,7 +854,7 @@ static void x86emuOp2_shrd_IMM(x86emu_t *emu, u8 op2)
       DECODE_HEX2(imm);
       val = fetch_data_long(emu, addr);
       val = shrd_long(emu, val, *src32, imm);
-      store_data_long(addr, val);
+      store_data_long(emu, addr, val);
     }
     else {
       src16 = decode_rm_word_register(emu, rh);
@@ -863,7 +863,7 @@ static void x86emuOp2_shrd_IMM(x86emu_t *emu, u8 op2)
       DECODE_HEX2(imm);
       val = fetch_data_word(emu, addr);
       val = shrd_word(emu, val, *src16, imm);
-      store_data_word(addr, val);
+      store_data_word(emu, addr, val);
     }
   }
 }
@@ -908,14 +908,14 @@ static void x86emuOp2_shrd_CL(x86emu_t *emu, u8 op2)
       OP_DECODE(",cl");
       val = fetch_data_long(emu, addr);
       val = shrd_long(emu, val, *src32, emu->x86.R_CL);
-      store_data_long(addr, val);
+      store_data_long(emu, addr, val);
     }
     else {
       src16 = decode_rm_word_register(emu, rh);
       OP_DECODE(",cl");
       val = fetch_data_word(emu, addr);
       val = shrd_word(emu, val, *src16, emu->x86.R_CL);
-      store_data_word(addr, val);
+      store_data_word(emu, addr, val);
     }
   }
 }
@@ -1078,7 +1078,7 @@ static void x86emuOp2_btr_R(x86emu_t *emu, u8 op2)
       disp >>= 5;
       val = fetch_data_long(emu, addr + disp);
       CONDITIONAL_SET_FLAG(val & mask, F_CF);
-      store_data_long(addr + disp, val & ~mask);
+      store_data_long(emu, addr + disp, val & ~mask);
     }
     else {
       disp = (s16) *decode_rm_word_register(emu, rh);
@@ -1086,7 +1086,7 @@ static void x86emuOp2_btr_R(x86emu_t *emu, u8 op2)
       disp >>= 5;
       val = fetch_data_word(emu, addr + disp);
       CONDITIONAL_SET_FLAG(val & mask, F_CF);
-      store_data_word(addr + disp, val & ~mask);
+      store_data_word(emu, addr + disp, val & ~mask);
     }
   }
 }
@@ -1337,13 +1337,13 @@ static void x86emuOp2_btX_I(x86emu_t *emu, u8 op2)
       CONDITIONAL_SET_FLAG(val & mask, F_CF);
       switch(rh) {
         case 5:
-          store_data_long(addr, val | mask);
+          store_data_long(emu, addr, val | mask);
           break;
         case 6:
-          store_data_long(addr, val & ~mask);
+          store_data_long(emu, addr, val & ~mask);
           break;
         case 7:
-          store_data_long(addr, val ^ mask);
+          store_data_long(emu, addr, val ^ mask);
           break;
         }
     }
@@ -1353,13 +1353,13 @@ static void x86emuOp2_btX_I(x86emu_t *emu, u8 op2)
       CONDITIONAL_SET_FLAG(val & mask, F_CF);
       switch(rh) {
         case 5:
-          store_data_word(addr, val | mask);
+          store_data_word(emu, addr, val | mask);
           break;
         case 6:
-          store_data_word(addr, val & ~mask);
+          store_data_word(emu, addr, val & ~mask);
           break;
         case 7:
-          store_data_word(addr, val ^ mask);
+          store_data_word(emu, addr, val ^ mask);
           break;
       }
     }
@@ -1407,7 +1407,7 @@ static void x86emuOp2_btc_R(x86emu_t *emu, u8 op2)
       disp >>= 5;
       val = fetch_data_long(emu, addr + disp);
       CONDITIONAL_SET_FLAG(val & mask, F_CF);
-      store_data_long(addr + disp, val ^ mask);
+      store_data_long(emu, addr + disp, val ^ mask);
     }
     else {
       disp = (s16) *decode_rm_word_register(emu, rh);
@@ -1415,7 +1415,7 @@ static void x86emuOp2_btc_R(x86emu_t *emu, u8 op2)
       disp >>= 5;
       val = fetch_data_word(emu, addr + disp);
       CONDITIONAL_SET_FLAG(val & mask, F_CF);
-      store_data_word(addr + disp, val ^ mask);
+      store_data_word(emu, addr + disp, val ^ mask);
     }
   }
 }
