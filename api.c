@@ -330,7 +330,7 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
       (flags == 2 && (attr[u] & X86EMU_ACC_INVALID))
     ) {
       ok = 1;
-      decode_hex2(&str_data, u1 = data[u]);
+      decode_hex2(emu, &str_data, u1 = data[u]);
 
       c = (attr[u] & X86EMU_PERM_R) ? (attr[u] & X86EMU_ACC_R) ? 'R' : 'r' : ' ';
       *str_attr++ = c;
