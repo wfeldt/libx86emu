@@ -43,21 +43,21 @@
 /* Instruction Decoding */
 
 #define OP_DECODE(a) \
-  memcpy(M.x86.disasm_ptr, a, sizeof a - 1), \
-  M.x86.disasm_ptr += sizeof a - 1
+  memcpy((emu)->x86.disasm_ptr, a, sizeof a - 1), \
+  (emu)->x86.disasm_ptr += sizeof a - 1
 
 #define SEGPREF_DECODE \
-  memcpy(M.x86.disasm_ptr, M.x86.decode_seg, 4), \
-  M.x86.disasm_ptr += M.x86.default_seg ? 4 : 1
+  memcpy((emu)->x86.disasm_ptr, (emu)->x86.decode_seg, 4), \
+  (emu)->x86.disasm_ptr += (emu)->x86.default_seg ? 4 : 1
 
-#define DECODE_HEX1(ofs) decode_hex1(&M.x86.disasm_ptr, ofs)
-#define DECODE_HEX2(ofs) decode_hex2(&M.x86.disasm_ptr, ofs)
-#define DECODE_HEX4(ofs) decode_hex4(&M.x86.disasm_ptr, ofs)
-#define DECODE_HEX8(ofs) decode_hex8(&M.x86.disasm_ptr, ofs)
-#define DECODE_HEX2S(ofs) decode_hex2s(&M.x86.disasm_ptr, ofs)
-#define DECODE_HEX4S(ofs) decode_hex4s(&M.x86.disasm_ptr, ofs)
-#define DECODE_HEX8S(ofs) decode_hex8s(&M.x86.disasm_ptr, ofs)
-#define DECODE_HEX_ADDR(ofs) decode_hex_addr(&M.x86.disasm_ptr, ofs)
+#define DECODE_HEX1(ofs) decode_hex1(&(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX2(ofs) decode_hex2(&(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX4(ofs) decode_hex4(&(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX8(ofs) decode_hex8(&(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX2S(ofs) decode_hex2s(&(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX4S(ofs) decode_hex4s(&(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX8S(ofs) decode_hex8s(&(emu)->x86.disasm_ptr, ofs)
+#define DECODE_HEX_ADDR(ofs) decode_hex_addr(&(emu)->x86.disasm_ptr, ofs)
 
 /*-------------------------- Function Prototypes --------------------------*/
 

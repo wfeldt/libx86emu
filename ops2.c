@@ -52,7 +52,7 @@ static void x86emuOp2_illegal_op(u8 op2)
 {
   OP_DECODE("illegal opcode");
 
-  INTR_RAISE_UD(&M);
+  INTR_RAISE_UD(emu);
 }
 
 
@@ -88,7 +88,7 @@ static void x86emuOp2_opc_00(u8 op2)
       OP_DECODE("verw ");
       break;
     default:
-      INTR_RAISE_UD(&M);
+      INTR_RAISE_UD(emu);
       return;
   }
 
@@ -96,19 +96,19 @@ static void x86emuOp2_opc_00(u8 op2)
     reg16 = decode_rm_word_register(rl);
     switch(rh) {
       case 0:	/* sldt */
-        *reg16 = M.x86.R_LDT;
+        *reg16 = emu->x86.R_LDT;
         break;
 
       case 1:	/* str */
-        *reg16 = M.x86.R_TR;
+        *reg16 = emu->x86.R_TR;
         break;
 
       case 2:	/* lldt */
-        x86emu_set_seg_register(&M, &M.x86.ldt, *reg16);
+        x86emu_set_seg_register(emu, &emu->x86.ldt, *reg16);
         break;
 
       case 3:	/* ltr */
-        M.x86.R_TR = *reg16;
+        emu->x86.R_TR = *reg16;
         break;
 
       case 4:	/* verr */
@@ -124,21 +124,21 @@ static void x86emuOp2_opc_00(u8 op2)
     addr = decode_rm_address(mod, rl);
     switch(rh) {
       case 0:	/* sldt */
-        store_data_word(addr, M.x86.R_LDT);
+        store_data_word(addr, emu->x86.R_LDT);
         break;
 
       case 1:	/* str */
-        store_data_word(addr, M.x86.R_TR);
+        store_data_word(addr, emu->x86.R_TR);
         break;
 
       case 2:	/* lldt */
         val = fetch_data_word(addr);
-        x86emu_set_seg_register(&M, &M.x86.ldt, val);
+        x86emu_set_seg_register(emu, &emu->x86.ldt, val);
         break;
 
       case 3:	/* ltr */
         val = fetch_data_word(addr);
-        M.x86.R_TR = val;
+        emu->x86.R_TR = val;
         break;
 
       case 4:	/* verr */
@@ -169,25 +169,25 @@ static void x86emuOp2_opc_01(u8 op2)
   fetch_decode_modrm(&mod, &rh, &rl);
 
   if(mod == 3 && rh != 4 && rh != 6) {
-    INTR_RAISE_UD(&M);
+    INTR_RAISE_UD(emu);
   }
   else {
     switch(rh) {
       case 0:	/* sgdt */
         OP_DECODE("sgdt ");
         addr = decode_rm_address(mod, rl);
-        base = M.x86.gdt.base;
+        base = emu->x86.gdt.base;
         if(!MODE_DATA32) base &= 0xffffff;
-        store_data_word(addr, M.x86.gdt.limit);
+        store_data_word(addr, emu->x86.gdt.limit);
         store_data_long(addr + 2, base);
         break;
 
       case 1:	/* sidt */
         OP_DECODE("sidt ");
         addr = decode_rm_address(mod, rl);
-        base = M.x86.idt.base;
+        base = emu->x86.idt.base;
         if(!MODE_DATA32) base &= 0xffffff;
-        store_data_word(addr, M.x86.idt.limit);
+        store_data_word(addr, emu->x86.idt.limit);
         store_data_long(addr + 2, base);
         break;
 
@@ -197,8 +197,8 @@ static void x86emuOp2_opc_01(u8 op2)
         limit = fetch_data_word(addr);
         base = fetch_data_long(addr + 2);
         if(!MODE_DATA32) base &= 0xffffff;
-        M.x86.gdt.limit = limit;
-        M.x86.gdt.base = base;
+        emu->x86.gdt.limit = limit;
+        emu->x86.gdt.base = base;
         break;
 
       case 3:	/* lidt */
@@ -207,36 +207,36 @@ static void x86emuOp2_opc_01(u8 op2)
         limit = fetch_data_word(addr);
         base = fetch_data_long(addr + 2);
         if(!MODE_DATA32) base &= 0xffffff;
-        M.x86.idt.limit = limit;
-        M.x86.idt.base = base;
+        emu->x86.idt.limit = limit;
+        emu->x86.idt.base = base;
         break;
 
       case 4:
         OP_DECODE("smsw ");
         if(mod == 3) {
           reg16 = decode_rm_word_register(rl);
-          *reg16 = M.x86.R_CR0;
+          *reg16 = emu->x86.R_CR0;
         }
         else {
           addr = decode_rm_address(mod, rl);
-          store_data_word(addr, M.x86.R_CR0);
+          store_data_word(addr, emu->x86.R_CR0);
         }
         break;
 
       case 5:
-        INTR_RAISE_UD(&M);
+        INTR_RAISE_UD(emu);
         break;
 
       case 6:
         OP_DECODE("lmsw ");
         if(mod == 3) {
           reg16 = decode_rm_word_register(rl);
-          M.x86.R_CR0 = (M.x86.R_CR0 & ~0xffff) + *reg16;
+          emu->x86.R_CR0 = (emu->x86.R_CR0 & ~0xffff) + *reg16;
         }
         else {
           addr = decode_rm_address(mod, rl);
           val = fetch_data_word(addr);
-          M.x86.R_CR0 = (M.x86.R_CR0 & ~0xffff) + val;
+          emu->x86.R_CR0 = (emu->x86.R_CR0 & ~0xffff) + val;
         }
         break;
 
@@ -257,7 +257,7 @@ static void x86emuOp2_clts(u8 op2)
 {
   OP_DECODE("clts");
 
-  M.x86.R_CR0 &= ~8;
+  emu->x86.R_CR0 &= ~8;
 }
 
 
@@ -297,10 +297,10 @@ static void x86emuOp2_mov_word_RM_CRx(u8 op2)
     reg32 = decode_rm_long_register(rl);
     OP_DECODE(",cr");
     DECODE_HEX1(rh);
-    *reg32 = M.x86.crx[rh];
+    *reg32 = emu->x86.crx[rh];
   }
   else {
-    INTR_RAISE_UD(&M);
+    INTR_RAISE_UD(emu);
   }
 }
 
@@ -321,10 +321,10 @@ static void x86emuOp2_mov_word_RM_DRx(u8 op2)
     reg32 = decode_rm_long_register(rl);
     OP_DECODE(",dr");
     DECODE_HEX1(rh);
-    *reg32 = M.x86.drx[rh];
+    *reg32 = emu->x86.drx[rh];
   }
   else {
-    INTR_RAISE_UD(&M);
+    INTR_RAISE_UD(emu);
   }
 }
 
@@ -343,10 +343,10 @@ static void x86emuOp2_mov_word_CRx_RM(u8 op2)
   OP_DECODE(",");
 
   if(mod == 3) {
-    M.x86.crx[rh] = *decode_rm_long_register(rl);
+    emu->x86.crx[rh] = *decode_rm_long_register(rl);
   }
   else {
-    INTR_RAISE_UD(&M);
+    INTR_RAISE_UD(emu);
   }
 }
 
@@ -365,10 +365,10 @@ static void x86emuOp2_mov_word_DRx_RM(u8 op2)
   OP_DECODE(",");
 
   if(mod == 3) {
-    M.x86.drx[rh] = *decode_rm_long_register(rl);
+    emu->x86.drx[rh] = *decode_rm_long_register(rl);
   }
   else {
-    INTR_RAISE_UD(&M);
+    INTR_RAISE_UD(emu);
   }
 }
 
@@ -383,14 +383,14 @@ static void x86emuOp2_wrmsr(u8 op2)
 
   OP_DECODE("wrmsr");
 
-  u = M.x86.R_ECX;
+  u = emu->x86.R_ECX;
 
   if(u >= X86EMU_MSRS) {
-    INTR_RAISE_UD(&M);
+    INTR_RAISE_UD(emu);
   }
   else {
-    M.x86.msr[u] = ((u64) M.x86.R_EDX << 32) + M.x86.R_EAX;
-    M.x86.msr_perm[u] |= X86EMU_ACC_W;
+    emu->x86.msr[u] = ((u64) emu->x86.R_EDX << 32) + emu->x86.R_EAX;
+    emu->x86.msr_perm[u] |= X86EMU_ACC_W;
   }
 }
 
@@ -403,10 +403,10 @@ static void x86emuOp2_rdtsc(u8 op2)
 {
   OP_DECODE("rdtsc");
 
-  M.x86.R_EAX = M.x86.R_TSC;
-  M.x86.R_EDX = M.x86.R_TSC >> 32;
+  emu->x86.R_EAX = emu->x86.R_TSC;
+  emu->x86.R_EDX = emu->x86.R_TSC >> 32;
 
-  M.x86.msr_perm[0x10] |= X86EMU_ACC_R;
+  emu->x86.msr_perm[0x10] |= X86EMU_ACC_R;
 }
 
 
@@ -420,15 +420,15 @@ static void x86emuOp2_rdmsr(u8 op2)
 
   OP_DECODE("rdmsr");
 
-  u = M.x86.R_ECX;
+  u = emu->x86.R_ECX;
 
   if(u >= X86EMU_MSRS) {
-    INTR_RAISE_UD(&M);
+    INTR_RAISE_UD(emu);
   }
   else {
-    M.x86.R_EDX = M.x86.msr[u] >> 32;
-    M.x86.R_EAX = M.x86.msr[u];
-    M.x86.msr_perm[u] |= X86EMU_ACC_R;
+    emu->x86.R_EDX = emu->x86.msr[u] >> 32;
+    emu->x86.R_EAX = emu->x86.msr[u];
+    emu->x86.msr_perm[u] |= X86EMU_ACC_R;
   }
 }
 
@@ -443,12 +443,12 @@ static void x86emuOp2_rdpmc(u8 op2)
 
   OP_DECODE("rdpmc");
 
-  // u = M.x86.R_ECX;		// counter index
+  // u = emu->x86.R_ECX;		// counter index
 
   // not implemented
 
-  M.x86.R_EDX = 0;
-  M.x86.R_EAX = 0;
+  emu->x86.R_EDX = 0;
+  emu->x86.R_EAX = 0;
 }
 
 
@@ -462,7 +462,7 @@ static void x86emuOp2_sysenter(u8 op2)
 
   // not implemented
 
-  INTR_RAISE_UD(&M);
+  INTR_RAISE_UD(emu);
 }
 
 
@@ -476,7 +476,7 @@ static void x86emuOp2_sysexit(u8 op2)
 
   // not implemented
 
-  INTR_RAISE_UD(&M);
+  INTR_RAISE_UD(emu);
 }
 
 
@@ -500,13 +500,13 @@ static void x86emuOp2_long_jump(u8 op2)
     ofs = (s16) fetch_word();
   }
 
-  eip = M.x86.R_EIP + ofs;
+  eip = emu->x86.R_EIP + ofs;
 
   if(!MODE_DATA32) eip &= 0xffff;
 
   DECODE_HEX_ADDR(eip);
 
-  if(eval_condition(type)) M.x86.R_EIP = eip;
+  if(eval_condition(type)) emu->x86.R_EIP = eip;
 }
 
 
@@ -546,10 +546,10 @@ static void x86emuOp2_push_FS(u8 op2)
   OP_DECODE("push fs");
 
   if(MODE_DATA32) {
-    push_long(M.x86.R_FS);
+    push_long(emu->x86.R_FS);
   }
   else {
-    push_word(M.x86.R_FS);
+    push_word(emu->x86.R_FS);
   }
 }
 
@@ -561,7 +561,7 @@ Handles opcode 0x0f,0xa1
 static void x86emuOp2_pop_FS(u8 op2)
 {
   OP_DECODE("pop fs");
-  x86emu_set_seg_register(&M, M.x86.R_FS_SEL, MODE_DATA32 ? pop_long() : pop_word());
+  x86emu_set_seg_register(emu, emu->x86.R_FS_SEL, MODE_DATA32 ? pop_long() : pop_word());
 }
 
 
@@ -695,14 +695,14 @@ static void x86emuOp2_shld_CL(u8 op2)
       OP_DECODE(",");
       src32 = decode_rm_long_register(rh);
       OP_DECODE(",cl");
-      *dst32 = shld_long(*dst32, *src32, M.x86.R_CL);
+      *dst32 = shld_long(*dst32, *src32, emu->x86.R_CL);
     }
     else {
       dst16 = decode_rm_word_register(rl);
       OP_DECODE(",");
       src16 = decode_rm_word_register(rh);
       OP_DECODE(",cl");
-      *dst16 = shld_word(*dst16, *src16, M.x86.R_CL);
+      *dst16 = shld_word(*dst16, *src16, emu->x86.R_CL);
     }
   }
   else {
@@ -713,14 +713,14 @@ static void x86emuOp2_shld_CL(u8 op2)
       src32 = decode_rm_long_register(rh);
       OP_DECODE(",cl");
       val = fetch_data_long(addr);
-      val = shld_long(val, *src32, M.x86.R_CL);
+      val = shld_long(val, *src32, emu->x86.R_CL);
       store_data_long(addr, val);
     }
     else {
       src16 = decode_rm_word_register(rh);
       OP_DECODE(",cl");
       val = fetch_data_word(addr);
-      val = shld_word(val, *src16, M.x86.R_CL);
+      val = shld_word(val, *src16, emu->x86.R_CL);
       store_data_word(addr, val);
     }
   }
@@ -736,10 +736,10 @@ static void x86emuOp2_push_GS(u8 op2)
   OP_DECODE("push gs");
 
   if(MODE_DATA32) {
-    push_long(M.x86.R_GS);
+    push_long(emu->x86.R_GS);
   }
   else {
-    push_word(M.x86.R_GS);
+    push_word(emu->x86.R_GS);
   }
 }
 
@@ -751,7 +751,7 @@ Handles opcode 0x0f,0xa9
 static void x86emuOp2_pop_GS(u8 op2)
 {
   OP_DECODE("pop gs");
-  x86emu_set_seg_register(&M, M.x86.R_GS_SEL, MODE_DATA32 ? pop_long() : pop_word());
+  x86emu_set_seg_register(emu, emu->x86.R_GS_SEL, MODE_DATA32 ? pop_long() : pop_word());
 }
 
 
@@ -889,14 +889,14 @@ static void x86emuOp2_shrd_CL(u8 op2)
       OP_DECODE(",");
       src32 = decode_rm_long_register(rh);
       OP_DECODE(",cl");
-      *dst32 = shrd_long(*dst32, *src32, M.x86.R_CL);
+      *dst32 = shrd_long(*dst32, *src32, emu->x86.R_CL);
     }
     else {
       dst16 = decode_rm_word_register(rl);
       OP_DECODE(",");
       src16 = decode_rm_word_register(rh);
       OP_DECODE(",cl");
-      *dst16 = shrd_word(*dst16, *src16, M.x86.R_CL);
+      *dst16 = shrd_word(*dst16, *src16, emu->x86.R_CL);
     }
   }
   else {
@@ -907,14 +907,14 @@ static void x86emuOp2_shrd_CL(u8 op2)
       src32 = decode_rm_long_register(rh);
       OP_DECODE(",cl");
       val = fetch_data_long(addr);
-      val = shrd_long(val, *src32, M.x86.R_CL);
+      val = shrd_long(val, *src32, emu->x86.R_CL);
       store_data_long(addr, val);
     }
     else {
       src16 = decode_rm_word_register(rh);
       OP_DECODE(",cl");
       val = fetch_data_word(addr);
-      val = shrd_word(val, *src16, M.x86.R_CL);
+      val = shrd_word(val, *src16, emu->x86.R_CL);
       store_data_word(addr, val);
     }
   }
@@ -1016,7 +1016,7 @@ static void x86emuOp2_lss_R_IMM(u8 op2)
   OP_DECODE("lss ");
   fetch_decode_modrm(&mod, &rh, &rl);
   if(mod == 3) {
-    INTR_RAISE_UD(&M);
+    INTR_RAISE_UD(emu);
   }
   else {
     if(MODE_DATA32){
@@ -1033,7 +1033,7 @@ static void x86emuOp2_lss_R_IMM(u8 op2)
       *reg16 = fetch_data_word(addr);
       addr += 2;
     }
-    x86emu_set_seg_register(&M, M.x86.R_SS_SEL, fetch_data_word(addr));
+    x86emu_set_seg_register(emu, emu->x86.R_SS_SEL, fetch_data_word(addr));
   }
 }
 
@@ -1105,7 +1105,7 @@ static void x86emuOp2_lfs_R_IMM(u8 op2)
   OP_DECODE("lfs ");
   fetch_decode_modrm(&mod, &rh, &rl);
   if(mod == 3) {
-    INTR_RAISE_UD(&M);
+    INTR_RAISE_UD(emu);
   }
   else {
     if(MODE_DATA32){
@@ -1122,7 +1122,7 @@ static void x86emuOp2_lfs_R_IMM(u8 op2)
       *reg16 = fetch_data_word(addr);
       addr += 2;
     }
-    x86emu_set_seg_register(&M, M.x86.R_FS_SEL, fetch_data_word(addr));
+    x86emu_set_seg_register(emu, emu->x86.R_FS_SEL, fetch_data_word(addr));
   }
 }
 
@@ -1140,7 +1140,7 @@ static void x86emuOp2_lgs_R_IMM(u8 op2)
   OP_DECODE("lgs ");
   fetch_decode_modrm(&mod, &rh, &rl);
   if(mod == 3) {
-    INTR_RAISE_UD(&M);
+    INTR_RAISE_UD(emu);
   }
   else {
     if(MODE_DATA32){
@@ -1157,7 +1157,7 @@ static void x86emuOp2_lgs_R_IMM(u8 op2)
       *reg16 = fetch_data_word(addr);
       addr += 2;
     }
-    x86emu_set_seg_register(&M, M.x86.R_GS_SEL, fetch_data_word(addr));
+    x86emu_set_seg_register(emu, emu->x86.R_GS_SEL, fetch_data_word(addr));
   }
 }
 
@@ -1281,7 +1281,7 @@ static void x86emuOp2_btX_I(u8 op2)
       OP_DECODE("btc ");
       break;
     default:
-      INTR_RAISE_UD(&M);
+      INTR_RAISE_UD(emu);
       return;
   }
 

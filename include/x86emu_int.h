@@ -52,29 +52,30 @@
 
 // global emulator state
 extern x86emu_t M;
+static x86emu_t *const emu = &M;
 
 #define INTR_RAISE_DIV0(a)	x86emu_intr_raise(a, 0, INTR_TYPE_SOFT | INTR_MODE_RESTART, 0)
 #define INTR_RAISE_SOFT(a, n)	x86emu_intr_raise(a, n, INTR_TYPE_SOFT, 0)
 #define INTR_RAISE_GP(a, err)	x86emu_intr_raise(a, 0x0d, INTR_TYPE_FAULT | INTR_MODE_RESTART | INTR_MODE_ERRCODE, err)
 #define INTR_RAISE_UD(a)	x86emu_intr_raise(a, 0x06, INTR_TYPE_FAULT | INTR_MODE_RESTART, 0)
 
-#define MODE_REPE		(M.x86.mode & _MODE_REPE)
-#define MODE_REPNE		(M.x86.mode & _MODE_REPNE)
-#define MODE_REP		(M.x86.mode & (_MODE_REPE | _MODE_REPNE))
-#define MODE_DATA32		(M.x86.mode & _MODE_DATA32)
-#define MODE_ADDR32		(M.x86.mode & _MODE_ADDR32)
-#define MODE_STACK32		(M.x86.mode & _MODE_STACK32)
-#define MODE_CODE32		(M.x86.mode & _MODE_CODE32)
-#define MODE_HALTED		(M.x86.mode & _MODE_HALTED)
+#define MODE_REPE		((emu)->x86.mode & _MODE_REPE)
+#define MODE_REPNE		((emu)->x86.mode & _MODE_REPNE)
+#define MODE_REP		((emu)->x86.mode & (_MODE_REPE | _MODE_REPNE))
+#define MODE_DATA32		((emu)->x86.mode & _MODE_DATA32)
+#define MODE_ADDR32		((emu)->x86.mode & _MODE_ADDR32)
+#define MODE_STACK32		((emu)->x86.mode & _MODE_STACK32)
+#define MODE_CODE32		((emu)->x86.mode & _MODE_CODE32)
+#define MODE_HALTED		((emu)->x86.mode & _MODE_HALTED)
 
 #define MODE_PROTECTED(a)	((a)->x86.R_CR0 & 1)
 #define MODE_REAL(a)		(!MODE_PROTECTED(a))
 
-#define TOGGLE_FLAG(flag)     	(M.x86.R_FLG ^= (flag))
-#define SET_FLAG(flag)        	(M.x86.R_FLG |= (flag))
-#define CLEAR_FLAG(flag)      	(M.x86.R_FLG &= ~(flag))
-#define ACCESS_FLAG(flag)     	(M.x86.R_FLG & (flag))
-#define CLEARALL_FLAG(m)    	(M.x86.R_FLG = 0)
+#define TOGGLE_FLAG(flag)     	((emu)->x86.R_FLG ^= (flag))
+#define SET_FLAG(flag)        	((emu)->x86.R_FLG |= (flag))
+#define CLEAR_FLAG(flag)      	((emu)->x86.R_FLG &= ~(flag))
+#define ACCESS_FLAG(flag)     	((emu)->x86.R_FLG & (flag))
+#define CLEARALL_FLAG(m)    	((emu)->x86.R_FLG = 0)
 
 #define CONDITIONAL_SET_FLAG(COND,FLAG) \
   if(COND) SET_FLAG(FLAG); else CLEAR_FLAG(FLAG)

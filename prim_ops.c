@@ -1272,7 +1272,7 @@ u8 shl_byte(u8 d, u8 s)
 			CONDITIONAL_SET_FLAG(
 									(((res & 0x80) == 0x80) ^
 									 (ACCESS_FLAG(F_CF) != 0)),
-			/* was (M.x86.R_FLG&F_CF)==F_CF)), */
+			/* was (emu->x86.R_FLG&F_CF)==F_CF)), */
 									F_OF);
 		} else {
 			CLEAR_FLAG(F_OF);
@@ -1997,11 +1997,11 @@ Implements the IMUL instruction and side effects.
 ****************************************************************************/
 void imul_byte(u8 s)
 {
-	s16 res = (s16)((s8)M.x86.R_AL * (s8)s);
+	s16 res = (s16)((s8)emu->x86.R_AL * (s8)s);
 
-	M.x86.R_AX = res;
-	if (((M.x86.R_AL & 0x80) == 0 && M.x86.R_AH == 0x00) ||
-		((M.x86.R_AL & 0x80) != 0 && M.x86.R_AH == 0xFF)) {
+	emu->x86.R_AX = res;
+	if (((emu->x86.R_AL & 0x80) == 0 && emu->x86.R_AH == 0x00) ||
+		((emu->x86.R_AL & 0x80) != 0 && emu->x86.R_AH == 0xFF)) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
 	} else {
@@ -2016,12 +2016,12 @@ Implements the IMUL instruction and side effects.
 ****************************************************************************/
 void imul_word(u16 s)
 {
-	s32 res = (s16)M.x86.R_AX * (s16)s;
+	s32 res = (s16)emu->x86.R_AX * (s16)s;
 
-	M.x86.R_AX = (u16)res;
-	M.x86.R_DX = (u16)(res >> 16);
-	if (((M.x86.R_AX & 0x8000) == 0 && M.x86.R_DX == 0x00) ||
-		((M.x86.R_AX & 0x8000) != 0 && M.x86.R_DX == 0xFF)) {
+	emu->x86.R_AX = (u16)res;
+	emu->x86.R_DX = (u16)(res >> 16);
+	if (((emu->x86.R_AX & 0x8000) == 0 && emu->x86.R_DX == 0x00) ||
+		((emu->x86.R_AX & 0x8000) != 0 && emu->x86.R_DX == 0xFF)) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
 	} else {
@@ -2074,9 +2074,9 @@ Implements the IMUL instruction and side effects.
 ****************************************************************************/
 void imul_long(u32 s)
 {
-	imul_long_direct(&M.x86.R_EAX,&M.x86.R_EDX,M.x86.R_EAX,s);
-	if (((M.x86.R_EAX & 0x80000000) == 0 && M.x86.R_EDX == 0x00) ||
-		((M.x86.R_EAX & 0x80000000) != 0 && M.x86.R_EDX == 0xFF)) {
+	imul_long_direct(&emu->x86.R_EAX,&emu->x86.R_EDX,emu->x86.R_EAX,s);
+	if (((emu->x86.R_EAX & 0x80000000) == 0 && emu->x86.R_EDX == 0x00) ||
+		((emu->x86.R_EAX & 0x80000000) != 0 && emu->x86.R_EDX == 0xFF)) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
 	} else {
@@ -2091,10 +2091,10 @@ Implements the MUL instruction and side effects.
 ****************************************************************************/
 void mul_byte(u8 s)
 {
-	u16 res = (u16)(M.x86.R_AL * s);
+	u16 res = (u16)(emu->x86.R_AL * s);
 
-	M.x86.R_AX = res;
-	if (M.x86.R_AH == 0) {
+	emu->x86.R_AX = res;
+	if (emu->x86.R_AH == 0) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
 	} else {
@@ -2109,11 +2109,11 @@ Implements the MUL instruction and side effects.
 ****************************************************************************/
 void mul_word(u16 s)
 {
-	u32 res = M.x86.R_AX * s;
+	u32 res = emu->x86.R_AX * s;
 
-	M.x86.R_AX = (u16)res;
-	M.x86.R_DX = (u16)(res >> 16);
-	if (M.x86.R_DX == 0) {
+	emu->x86.R_AX = (u16)res;
+	emu->x86.R_DX = (u16)(res >> 16);
+	if (emu->x86.R_DX == 0) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
     } else {
@@ -2129,16 +2129,16 @@ Implements the MUL instruction and side effects.
 void mul_long(u32 s)
 {
 #ifdef	__HAS_LONG_LONG__
-	u64 res = (u32)M.x86.R_EAX * (u32)s;
+	u64 res = (u32)emu->x86.R_EAX * (u32)s;
 
-	M.x86.R_EAX = (u32)res;
-	M.x86.R_EDX = (u32)(res >> 32);
+	emu->x86.R_EAX = (u32)res;
+	emu->x86.R_EDX = (u32)(res >> 32);
 #else
 	u32	a,a_lo,a_hi;
 	u32	s_lo,s_hi;
 	u32	rlo_lo,rlo_hi,rhi_lo;
 
-	a = M.x86.R_EAX;
+	a = emu->x86.R_EAX;
 	a_lo = a & 0xFFFF;
 	a_hi = a >> 16;
 	s_lo = s & 0xFFFF;
@@ -2146,11 +2146,11 @@ void mul_long(u32 s)
 	rlo_lo = a_lo * s_lo;
 	rlo_hi = (a_hi * s_lo + a_lo * s_hi) + (rlo_lo >> 16);
 	rhi_lo = a_hi * s_hi + (rlo_hi >> 16);
-	M.x86.R_EAX = (rlo_hi << 16) | (rlo_lo & 0xFFFF);
-	M.x86.R_EDX = rhi_lo;
+	emu->x86.R_EAX = (rlo_hi << 16) | (rlo_lo & 0xFFFF);
+	emu->x86.R_EDX = rhi_lo;
 #endif
 
-	if (M.x86.R_EDX == 0) {
+	if (emu->x86.R_EDX == 0) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
 	} else {
@@ -2167,19 +2167,19 @@ void idiv_byte(u8 s)
 {
     s32 dvd, div, mod;
 
-	dvd = (s16)M.x86.R_AX;
+	dvd = (s16)emu->x86.R_AX;
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
         return;
 	}
 	div = dvd / (s8)s;
 	mod = dvd % (s8)s;
 	if (abs(div) > 0x7f) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
-	M.x86.R_AL = (s8) div;
-	M.x86.R_AH = (s8) mod;
+	emu->x86.R_AL = (s8) div;
+	emu->x86.R_AH = (s8) mod;
 }
 
 /****************************************************************************
@@ -2190,15 +2190,15 @@ void idiv_word(u16 s)
 {
 	s32 dvd, div, mod;
 
-	dvd = (((s32)M.x86.R_DX) << 16) | M.x86.R_AX;
+	dvd = (((s32)emu->x86.R_DX) << 16) | emu->x86.R_AX;
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	div = dvd / (s16)s;
 	mod = dvd % (s16)s;
 	if (abs(div) > 0x7fff) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	CLEAR_FLAG(F_CF);
@@ -2206,8 +2206,8 @@ void idiv_word(u16 s)
 	CONDITIONAL_SET_FLAG(div == 0, F_ZF);
 	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
 
-	M.x86.R_AX = (u16)div;
-	M.x86.R_DX = (u16)mod;
+	emu->x86.R_AX = (u16)div;
+	emu->x86.R_DX = (u16)mod;
 }
 
 /****************************************************************************
@@ -2219,21 +2219,21 @@ void idiv_long(u32 s)
 #ifdef	__HAS_LONG_LONG__
 	s64 dvd, div, mod;
 
-	dvd = (((s64)M.x86.R_EDX) << 32) | M.x86.R_EAX;
+	dvd = (((s64)emu->x86.R_EDX) << 32) | emu->x86.R_EAX;
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	div = dvd / (s32)s;
 	mod = dvd % (s32)s;
 	if (abs(div) > 0x7fffffff) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 #else
 	s32 div = 0, mod;
-	s32 h_dvd = M.x86.R_EDX;
-	u32 l_dvd = M.x86.R_EAX;
+	s32 h_dvd = emu->x86.R_EDX;
+	u32 l_dvd = emu->x86.R_EAX;
 	u32 abs_s = s & 0x7FFFFFFF;
 	u32 abs_h_dvd = h_dvd & 0x7FFFFFFF;
 	u32 h_s = abs_s >> 1;
@@ -2242,7 +2242,7 @@ void idiv_long(u32 s)
 	int carry;
 
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	do {
@@ -2266,7 +2266,7 @@ void idiv_long(u32 s)
 	} while (counter > -1);
 	/* overflow */
 	if (abs_h_dvd || (l_dvd > abs_s)) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	/* sign */
@@ -2280,8 +2280,8 @@ void idiv_long(u32 s)
 	SET_FLAG(F_ZF);
 	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
 
-	M.x86.R_EAX = (u32)div;
-	M.x86.R_EDX = (u32)mod;
+	emu->x86.R_EAX = (u32)div;
+	emu->x86.R_EDX = (u32)mod;
 }
 
 /****************************************************************************
@@ -2292,19 +2292,19 @@ void div_byte(u8 s)
 {
 	u32 dvd, div, mod;
 
-	dvd = M.x86.R_AX;
+	dvd = emu->x86.R_AX;
     if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
         return;
     }
 	div = dvd / (u8)s;
 	mod = dvd % (u8)s;
 	if (abs(div) > 0xff) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
         return;
 	}
-	M.x86.R_AL = (u8)div;
-	M.x86.R_AH = (u8)mod;
+	emu->x86.R_AL = (u8)div;
+	emu->x86.R_AH = (u8)mod;
 }
 
 /****************************************************************************
@@ -2315,15 +2315,15 @@ void div_word(u16 s)
 {
 	u32 dvd, div, mod;
 
-	dvd = (((u32)M.x86.R_DX) << 16) | M.x86.R_AX;
+	dvd = (((u32)emu->x86.R_DX) << 16) | emu->x86.R_AX;
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
         return;
     }
 	div = dvd / (u16)s;
 	mod = dvd % (u16)s;
 	if (abs(div) > 0xffff) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	CLEAR_FLAG(F_CF);
@@ -2331,8 +2331,8 @@ void div_word(u16 s)
 	CONDITIONAL_SET_FLAG(div == 0, F_ZF);
 	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
 
-	M.x86.R_AX = (u16)div;
-	M.x86.R_DX = (u16)mod;
+	emu->x86.R_AX = (u16)div;
+	emu->x86.R_DX = (u16)mod;
 }
 
 /****************************************************************************
@@ -2344,21 +2344,21 @@ void div_long(u32 s)
 #ifdef	__HAS_LONG_LONG__
 	u64 dvd, div, mod;
 
-	dvd = (((u64)M.x86.R_EDX) << 32) | M.x86.R_EAX;
+	dvd = (((u64)emu->x86.R_EDX) << 32) | emu->x86.R_EAX;
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	div = dvd / (u32)s;
 	mod = dvd % (u32)s;
 	if (abs(div) > 0xffffffff) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 #else
 	s32 div = 0, mod;
-	s32 h_dvd = M.x86.R_EDX;
-	u32 l_dvd = M.x86.R_EAX;
+	s32 h_dvd = emu->x86.R_EDX;
+	u32 l_dvd = emu->x86.R_EAX;
 
 	u32 h_s = s;
 	u32 l_s = 0;
@@ -2366,7 +2366,7 @@ void div_long(u32 s)
 	int carry;
 		
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	do {
@@ -2390,7 +2390,7 @@ void div_long(u32 s)
 	} while (counter > -1);
 	/* overflow */
 	if (h_dvd || (l_dvd > s)) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	mod = l_dvd;
@@ -2401,8 +2401,8 @@ void div_long(u32 s)
 	SET_FLAG(F_ZF);
 	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
 
-	M.x86.R_EAX = (u32)div;
-	M.x86.R_EDX = (u32)mod;
+	emu->x86.R_EAX = (u32)div;
+	emu->x86.R_EDX = (u32)mod;
 }
 
 /****************************************************************************
@@ -2418,26 +2418,26 @@ void ins(int size)
 
   if(MODE_ADDR32) {
     if(MODE_REP) {
-      count = M.x86.R_ECX;
-      M.x86.R_ECX = 0;
+      count = emu->x86.R_ECX;
+      emu->x86.R_ECX = 0;
 
       switch(size) {
         case 1:
           while(count--) {
-            store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_byte(M.x86.R_DX));
-            M.x86.R_EDI += inc;
+            store_data_byte_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_byte(emu->x86.R_DX));
+            emu->x86.R_EDI += inc;
           }
           break;
         case 2:
           while(count--) {
-            store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_word(M.x86.R_DX));
-            M.x86.R_EDI += inc;
+            store_data_word_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_word(emu->x86.R_DX));
+            emu->x86.R_EDI += inc;
           }
           break;
         case 4:
           while(count--) {
-            store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_long(M.x86.R_DX));
-            M.x86.R_EDI += inc;
+            store_data_long_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_long(emu->x86.R_DX));
+            emu->x86.R_EDI += inc;
           }
           break;
       }
@@ -2445,40 +2445,40 @@ void ins(int size)
     else {
       switch(size) {
         case 1:
-          store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_byte(M.x86.R_DX));
+          store_data_byte_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_byte(emu->x86.R_DX));
           break;
         case 2:
-          store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_word(M.x86.R_DX));
+          store_data_word_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_word(emu->x86.R_DX));
           break;
         case 4:
-          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_long(M.x86.R_DX));
+          store_data_long_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_long(emu->x86.R_DX));
           break;
       }
-       M.x86.R_EDI += inc;
+       emu->x86.R_EDI += inc;
     }
   }
   else {
     if(MODE_REP) {
-      count = M.x86.R_CX;
-      M.x86.R_CX = 0;
+      count = emu->x86.R_CX;
+      emu->x86.R_CX = 0;
 
       switch(size) {
         case 1:
           while(count--) {
-            store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_byte(M.x86.R_DX));
-            M.x86.R_DI += inc;
+            store_data_byte_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_byte(emu->x86.R_DX));
+            emu->x86.R_DI += inc;
           }
           break;
         case 2:
           while(count--) {
-            store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_word(M.x86.R_DX));
-            M.x86.R_DI += inc;
+            store_data_word_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_word(emu->x86.R_DX));
+            emu->x86.R_DI += inc;
           }
           break;
         case 4:
           while(count--) {
-            store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_long(M.x86.R_DX));
-            M.x86.R_DI += inc;
+            store_data_long_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_long(emu->x86.R_DX));
+            emu->x86.R_DI += inc;
           }
           break;
       }
@@ -2486,16 +2486,16 @@ void ins(int size)
     else {
       switch(size) {
         case 1:
-          store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_byte(M.x86.R_DX));
+          store_data_byte_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_byte(emu->x86.R_DX));
           break;
         case 2:
-          store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_word(M.x86.R_DX));
+          store_data_word_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_word(emu->x86.R_DX));
           break;
         case 4:
-          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_long(M.x86.R_DX));
+          store_data_long_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_long(emu->x86.R_DX));
           break;
       }
-      M.x86.R_DI += inc;
+      emu->x86.R_DI += inc;
     }
   }
 }
@@ -2513,26 +2513,26 @@ void outs(int size)
 
   if(MODE_ADDR32) {
     if(MODE_REP) {
-      count = M.x86.R_ECX;
-      M.x86.R_ECX = 0;
+      count = emu->x86.R_ECX;
+      emu->x86.R_ECX = 0;
    
       switch(size) {
         case 1:
           while(count--) {
-            store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
-            M.x86.R_ESI += inc;
+            store_io_byte(emu->x86.R_DX, fetch_data_byte_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
+            emu->x86.R_ESI += inc;
           }
           break;
         case 2:
           while(count--) {
-            store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
-            M.x86.R_ESI += inc;
+            store_io_word(emu->x86.R_DX, fetch_data_word_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
+            emu->x86.R_ESI += inc;
           }
           break;
         case 4:
           while(count--) {
-            store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
-            M.x86.R_ESI += inc;
+            store_io_long(emu->x86.R_DX, fetch_data_long_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
+            emu->x86.R_ESI += inc;
           }
           break;
       }
@@ -2540,40 +2540,40 @@ void outs(int size)
     else {
       switch(size) {
         case 1:
-          store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          store_io_byte(emu->x86.R_DX, fetch_data_byte_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
           break;
         case 2:
-          store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          store_io_word(emu->x86.R_DX, fetch_data_word_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
           break;
         case 4:
-          store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          store_io_long(emu->x86.R_DX, fetch_data_long_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
           break;
       }
-      M.x86.R_SI += inc;
+      emu->x86.R_SI += inc;
     }
   }
   else {
     if(MODE_REP) {
-      count = M.x86.R_CX;
-      M.x86.R_CX = 0;
+      count = emu->x86.R_CX;
+      emu->x86.R_CX = 0;
    
       switch(size) {
         case 1:
           while(count--) {
-            store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-            M.x86.R_SI += inc;
+            store_io_byte(emu->x86.R_DX, fetch_data_byte_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
+            emu->x86.R_SI += inc;
           }
           break;
         case 2:
           while(count--) {
-            store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-            M.x86.R_SI += inc;
+            store_io_word(emu->x86.R_DX, fetch_data_word_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
+            emu->x86.R_SI += inc;
           }
           break;
         case 4:
           while(count--) {
-            store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-            M.x86.R_SI += inc;
+            store_io_long(emu->x86.R_DX, fetch_data_long_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
+            emu->x86.R_SI += inc;
           }
           break;
       }
@@ -2581,16 +2581,16 @@ void outs(int size)
     else {
       switch(size) {
         case 1:
-          store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          store_io_byte(emu->x86.R_DX, fetch_data_byte_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
           break;
         case 2:
-          store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          store_io_word(emu->x86.R_DX, fetch_data_word_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
           break;
         case 4:
-          store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          store_io_long(emu->x86.R_DX, fetch_data_long_abs(emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
           break;
       }
-      M.x86.R_SI += inc;
+      emu->x86.R_SI += inc;
     }
   }
 }
@@ -2602,12 +2602,12 @@ Pushes a word onto the stack.
 void push_word(u16 w)
 {
   if(MODE_STACK32) {
-    M.x86.R_ESP -= 2;
-    store_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP, w);
+    emu->x86.R_ESP -= 2;
+    store_data_word_abs(emu->x86.seg + R_SS_INDEX, emu->x86.R_ESP, w);
   }
   else {
-    M.x86.R_SP -= 2;
-    store_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP, w);
+    emu->x86.R_SP -= 2;
+    store_data_word_abs(emu->x86.seg + R_SS_INDEX, emu->x86.R_SP, w);
   }
 }
 
@@ -2618,12 +2618,12 @@ Pushes a long onto the stack.
 void push_long(u32 w)
 {
   if(MODE_STACK32) {
-    M.x86.R_ESP -= 4;
-    store_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP, w);
+    emu->x86.R_ESP -= 4;
+    store_data_long_abs(emu->x86.seg + R_SS_INDEX, emu->x86.R_ESP, w);
   }
   else {
-    M.x86.R_SP -= 4;
-    store_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP, w);
+    emu->x86.R_SP -= 4;
+    store_data_long_abs(emu->x86.seg + R_SS_INDEX, emu->x86.R_SP, w);
   }
 }
 
@@ -2636,12 +2636,12 @@ u16 pop_word(void)
   u16 res;
 
   if(MODE_STACK32) {
-    res = fetch_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP);
-    M.x86.R_ESP += 2;
+    res = fetch_data_word_abs(emu->x86.seg + R_SS_INDEX, emu->x86.R_ESP);
+    emu->x86.R_ESP += 2;
   }
   else {
-    res = fetch_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP);
-    M.x86.R_SP += 2;
+    res = fetch_data_word_abs(emu->x86.seg + R_SS_INDEX, emu->x86.R_SP);
+    emu->x86.R_SP += 2;
   }
 
   return res;
@@ -2656,12 +2656,12 @@ u32 pop_long(void)
   u32 res;
 
   if(MODE_STACK32) {
-    res = fetch_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP);
-    M.x86.R_ESP += 4;
+    res = fetch_data_long_abs(emu->x86.seg + R_SS_INDEX, emu->x86.R_ESP);
+    emu->x86.R_ESP += 4;
   }
   else {
-    res = fetch_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP);
-    M.x86.R_SP += 4;
+    res = fetch_data_long_abs(emu->x86.seg + R_SS_INDEX, emu->x86.R_SP);
+    emu->x86.R_SP += 4;
   }
 
   return res;
@@ -2671,7 +2671,7 @@ u32 pop_long(void)
 int eval_condition(unsigned type)
 {
   int cond = 0;
-  unsigned flags = M.x86.R_EFLG;
+  unsigned flags = emu->x86.R_EFLG;
 
   switch(type >> 1) {
     case 0:	/* O */
