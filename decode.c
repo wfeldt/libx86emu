@@ -58,7 +58,7 @@ REMARKS:
 Main execution loop for the emulator. We return from here when the system
 halts, timeouts, or one of the conditions in flags are met.
 ****************************************************************************/
-unsigned x86emu_run(x86emu_t *emu, unsigned flags)
+unsigned x86emu_run(x86emu_t *emu_, unsigned flags)
 {
   u8 op1, u_m1;
   s32 ofs32;
@@ -70,48 +70,48 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
   u64 tsc_ofs;
 #endif
 
-  if(emu) M = *emu;
+  if(emu_) M = *emu_;
 
-  p = &M.log.ptr;
+  p = &emu->log.ptr;
 
   t0 = time(NULL);
 
 #if WITH_TSC
-  tsc_ofs = tsc() - M.x86.R_REAL_TSC;
+  tsc_ofs = tsc() - emu->x86.R_REAL_TSC;
 #endif
 
 #if WITH_IOPL
-  M.io.iopl_ok = M.io.iopl_needed && getiopl() != 3 ? 0 : 1;
+  emu->io.iopl_ok = emu->io.iopl_needed && getiopl() != 3 ? 0 : 1;
 #else
-  M.io.iopl_ok = 1;
+  emu->io.iopl_ok = 1;
 #endif
 
   for(;;) {
-    *(M.x86.disasm_ptr = M.x86.disasm_buf) = 0;
+    *(emu->x86.disasm_ptr = emu->x86.disasm_buf) = 0;
 
-    M.x86.instr_len = 0;
+    emu->x86.instr_len = 0;
 
-    M.x86.mode = 0;
+    emu->x86.mode = 0;
 
-    if(ACC_D(M.x86.R_CS_ACC)) {
-      M.x86.mode |= _MODE_DATA32 | _MODE_ADDR32 | _MODE_CODE32;
+    if(ACC_D(emu->x86.R_CS_ACC)) {
+      emu->x86.mode |= _MODE_DATA32 | _MODE_ADDR32 | _MODE_CODE32;
     }
-    if(ACC_D(M.x86.R_SS_ACC)) {
-      M.x86.mode |= _MODE_STACK32;
+    if(ACC_D(emu->x86.R_SS_ACC)) {
+      emu->x86.mode |= _MODE_STACK32;
     }
 
-    M.x86.default_seg = NULL;
+    emu->x86.default_seg = NULL;
 
     /* save EIP and CS values */
-    M.x86.saved_cs = M.x86.R_CS;
-    M.x86.saved_eip = M.x86.R_EIP;
+    emu->x86.saved_cs = emu->x86.R_CS;
+    emu->x86.saved_eip = emu->x86.R_EIP;
 
     log_regs();
 
     if(
       (flags & X86EMU_RUN_MAX_INSTR) &&
-      M.max_instr &&
-      M.x86.R_TSC >= M.max_instr
+      emu->max_instr &&
+      emu->x86.R_TSC >= emu->max_instr
     ) {
       rs |= X86EMU_RUN_MAX_INSTR;
       break;
@@ -119,67 +119,67 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 
     if(
       (flags & X86EMU_RUN_TIMEOUT) &&
-      M.timeout &&
-      !(M.x86.R_TSC & 0xffff) &&
-      time(NULL) - t0 > M.timeout
+      emu->timeout &&
+      !(emu->x86.R_TSC & 0xffff) &&
+      time(NULL) - t0 > emu->timeout
     ) {
       rs |= X86EMU_RUN_TIMEOUT;
       break;
     }
 
-    if(M.code_check) {
-      if((*M.code_check)(&M) || MODE_HALTED) {
+    if(emu->code_check) {
+      if((*emu->code_check)(emu) || MODE_HALTED) {
         rs |= X86EMU_RUN_NO_CODE;
         break;
       }
     }
 
-    memcpy(M.x86.decode_seg, "[", 1);
+    memcpy(emu->x86.decode_seg, "[", 1);
 
     /* handle prefixes here */
     has_prefix = 1;
     while(has_prefix) {
       switch(op1 = fetch_byte()) {
         case 0x26:
-          memcpy(M.x86.decode_seg, "es:[", 4);
-          M.x86.default_seg = M.x86.seg + R_ES_INDEX;
+          memcpy(emu->x86.decode_seg, "es:[", 4);
+          emu->x86.default_seg = emu->x86.seg + R_ES_INDEX;
           break;
         case 0x2e:
-          memcpy(M.x86.decode_seg, "cs:[", 4);
-          M.x86.default_seg = M.x86.seg + R_CS_INDEX;
+          memcpy(emu->x86.decode_seg, "cs:[", 4);
+          emu->x86.default_seg = emu->x86.seg + R_CS_INDEX;
           break;
         case 0x36:
-          memcpy(M.x86.decode_seg, "ss:[", 4);
-          M.x86.default_seg = M.x86.seg + R_SS_INDEX;
+          memcpy(emu->x86.decode_seg, "ss:[", 4);
+          emu->x86.default_seg = emu->x86.seg + R_SS_INDEX;
           break;
         case 0x3e:
-          memcpy(M.x86.decode_seg, "ds:[", 4);
-          M.x86.default_seg = M.x86.seg + R_DS_INDEX;
+          memcpy(emu->x86.decode_seg, "ds:[", 4);
+          emu->x86.default_seg = emu->x86.seg + R_DS_INDEX;
           break;
         case 0x64:
-          memcpy(M.x86.decode_seg, "fs:[", 4);
-          M.x86.default_seg = M.x86.seg + R_FS_INDEX;
+          memcpy(emu->x86.decode_seg, "fs:[", 4);
+          emu->x86.default_seg = emu->x86.seg + R_FS_INDEX;
           break;
         case 0x65:
-          memcpy(M.x86.decode_seg, "gs:[", 4);
-          M.x86.default_seg = M.x86.seg + R_GS_INDEX;
+          memcpy(emu->x86.decode_seg, "gs:[", 4);
+          emu->x86.default_seg = emu->x86.seg + R_GS_INDEX;
           break;
         case 0x66:
-          M.x86.mode ^= _MODE_DATA32;
+          emu->x86.mode ^= _MODE_DATA32;
           break;
         case 0x67:
-          M.x86.mode ^= _MODE_ADDR32;
+          emu->x86.mode ^= _MODE_ADDR32;
           break;
         case 0xf0:
           OP_DECODE("lock: ");
           break;
         case 0xf2:
           OP_DECODE("repne ");
-          M.x86.mode |= _MODE_REPNE;
+          emu->x86.mode |= _MODE_REPNE;
           break;
         case 0xf3:
           OP_DECODE("repe ");
-          M.x86.mode |= _MODE_REPE;
+          emu->x86.mode |= _MODE_REPE;
           break;
         default:
           has_prefix = 0;
@@ -189,74 +189,74 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 
     if(MODE_HALTED) {
       rs |= X86EMU_RUN_NO_EXEC;
-      M.x86.R_EIP = M.x86.saved_eip;
+      emu->x86.R_EIP = emu->x86.saved_eip;
       break;
     }
 
     if(flags & X86EMU_RUN_LOOP) {
-      u = M.x86.R_CS_BASE + M.x86.R_EIP;
+      u = emu->x86.R_CS_BASE + emu->x86.R_EIP;
 
       ofs32  = 0;
 
       if(op1 == 0xeb) {
-        ofs32 = (s32) (s8) x86emu_read_byte_noperm(&M, u) + 1;
+        ofs32 = (s32) (s8) x86emu_read_byte_noperm(emu, u) + 1;
       }
       else if(op1 == 0xe9) {
         if(MODE_DATA32) {
-          ofs32 = (x86emu_read_byte_noperm(&M, u) +
-            (x86emu_read_byte_noperm(&M, u + 1) << 8)) +
-            (x86emu_read_byte_noperm(&M, u + 2) << 16) +
-            (x86emu_read_byte_noperm(&M, u + 3) << 24) + 4;
+          ofs32 = (x86emu_read_byte_noperm(emu, u) +
+            (x86emu_read_byte_noperm(emu, u + 1) << 8)) +
+            (x86emu_read_byte_noperm(emu, u + 2) << 16) +
+            (x86emu_read_byte_noperm(emu, u + 3) << 24) + 4;
         }
         else {
           ofs32 = (s32) (s16) (
-            x86emu_read_byte_noperm(&M, u) +
-            (x86emu_read_byte_noperm(&M, u + 1) << 8)) + 2;
+            x86emu_read_byte_noperm(emu, u) +
+            (x86emu_read_byte_noperm(emu, u + 1) << 8)) + 2;
         }
       }
 
       if(ofs32) {
-        if(M.x86.R_EIP + ofs32 == M.x86.saved_eip) {
+        if(emu->x86.R_EIP + ofs32 == emu->x86.saved_eip) {
           rs |= X86EMU_RUN_LOOP;
         }
-        else if(M.x86.R_EIP + 1 + ofs32 == M.x86.saved_eip && M.x86.saved_eip >= 1) {
-          u_m1 = x86emu_read_byte_noperm(&M, M.x86.R_CS_BASE + M.x86.saved_eip - 1);
+        else if(emu->x86.R_EIP + 1 + ofs32 == emu->x86.saved_eip && emu->x86.saved_eip >= 1) {
+          u_m1 = x86emu_read_byte_noperm(emu, emu->x86.R_CS_BASE + emu->x86.saved_eip - 1);
           if(u_m1 >= 0xf8 && u_m1 <= 0xfd) rs |= X86EMU_RUN_LOOP;
         }
 
-        if(rs) x86emu_stop(&M);
+        if(rs) x86emu_stop(emu);
       }
     }
 
     if(flags & X86EMU_RUN_NO_CODE) {
-      u = M.x86.R_CS_BASE + M.x86.R_EIP;
+      u = emu->x86.R_CS_BASE + emu->x86.R_EIP;
 
-      if(M.x86.mode == 0 && op1 == 0x00 && x86emu_read_byte_noperm(&M, u) == 0x00) {
+      if(emu->x86.mode == 0 && op1 == 0x00 && x86emu_read_byte_noperm(emu, u) == 0x00) {
         rs |= X86EMU_RUN_NO_CODE;
       }
 
-      if(rs) x86emu_stop(&M);
+      if(rs) x86emu_stop(emu);
     }
 
     (*x86emu_optab[op1])(op1);
 
-    *M.x86.disasm_ptr = 0;
+    *emu->x86.disasm_ptr = 0;
 
     handle_interrupt();
 
 #if WITH_TSC
-    M.x86.R_LAST_REAL_TSC = M.x86.R_REAL_TSC;
-    M.x86.R_REAL_TSC = tsc() - tsc_ofs;
+    emu->x86.R_LAST_REAL_TSC = emu->x86.R_REAL_TSC;
+    emu->x86.R_REAL_TSC = tsc() - tsc_ofs;
 #endif
 
     log_code();
 
-    if(M.x86.debug_len) {
-      emu_process_debug(M.x86.debug_start, M.x86.debug_len);
-      M.x86.debug_len = M.x86.debug_start = 0;
+    if(emu->x86.debug_len) {
+      emu_process_debug(emu->x86.debug_start, emu->x86.debug_len);
+      emu->x86.debug_len = emu->x86.debug_start = 0;
     }
 
-    M.x86.R_TSC++;	// time stamp counter
+    emu->x86.R_TSC++;	// time stamp counter
 
     if(MODE_HALTED) break;
   }
@@ -281,10 +281,10 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
   }
 
 #if WITH_TSC
-  M.x86.R_REAL_TSC = tsc() - tsc_ofs;
+  emu->x86.R_REAL_TSC = tsc() - tsc_ofs;
 #endif
 
-  if(emu) *emu = M;
+  if(emu_) *emu_ = M;
 
   return rs;
 }
@@ -304,30 +304,30 @@ Handles any pending asychronous interrupts.
 ****************************************************************************/
 void handle_interrupt()
 {
-  char **p = &M.log.ptr;
+  char **p = &emu->log.ptr;
   unsigned lf;
 
-  if(M.x86.intr_type) {
-    if((M.log.trace & X86EMU_TRACE_INTS) && *p) {
-      lf = LOG_FREE(&M);
-      if(lf < 128) lf = x86emu_clear_log(&M, 1);
+  if(emu->x86.intr_type) {
+    if((emu->log.trace & X86EMU_TRACE_INTS) && *p) {
+      lf = LOG_FREE(emu);
+      if(lf < 128) lf = x86emu_clear_log(emu, 1);
       if(lf >= 128) {
-        if((M.x86.intr_type & 0xff) == INTR_TYPE_FAULT) {
+        if((emu->x86.intr_type & 0xff) == INTR_TYPE_FAULT) {
           LOG_STR("* fault ");
         }
         else {
           LOG_STR("* int ");
         }
-        decode_hex2(p, M.x86.intr_nr & 0xff);
+        decode_hex2(p, emu->x86.intr_nr & 0xff);
         LOG_STR("\n");
         **p = 0;
       }
     }
 
-    generate_int(M.x86.intr_nr, M.x86.intr_type, M.x86.intr_errcode);
+    generate_int(emu->x86.intr_nr, emu->x86.intr_type, emu->x86.intr_errcode);
   }
 
-  M.x86.intr_type = 0;
+  emu->x86.intr_type = 0;
 }
 
 
@@ -374,19 +374,19 @@ u8 fetch_byte(void)
   u32 val;
   unsigned err;
 
-  err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_X);
+  err = decode_memio(emu->x86.R_CS_BASE + emu->x86.R_EIP, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_X);
 
-  if(err) x86emu_stop(&M);
+  if(err) x86emu_stop(emu);
 
   if(MODE_CODE32) {
-    M.x86.R_EIP++;
+    emu->x86.R_EIP++;
   }
   else {
-    M.x86.R_IP++;
+    emu->x86.R_IP++;
   }
 
-  if(M.x86.instr_len < sizeof M.x86.instr_buf) {
-    M.x86.instr_buf[M.x86.instr_len++] = val;
+  if(emu->x86.instr_len < sizeof emu->x86.instr_buf) {
+    emu->x86.instr_buf[emu->x86.instr_len++] = val;
   }
 
   return val;
@@ -405,20 +405,20 @@ u16 fetch_word(void)
   u32 val;
   unsigned err;
 
-  err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_X);
+  err = decode_memio(emu->x86.R_CS_BASE + emu->x86.R_EIP, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_X);
 
-  if(err) x86emu_stop(&M);
+  if(err) x86emu_stop(emu);
 
   if(MODE_CODE32) {
-    M.x86.R_EIP += 2;
+    emu->x86.R_EIP += 2;
   }
   else {
-    M.x86.R_IP += 2;
+    emu->x86.R_IP += 2;
   }
 
-  if(M.x86.instr_len + 1 < sizeof M.x86.instr_buf) {
-    M.x86.instr_buf[M.x86.instr_len++] = val;
-    M.x86.instr_buf[M.x86.instr_len++] = val >> 8;
+  if(emu->x86.instr_len + 1 < sizeof emu->x86.instr_buf) {
+    emu->x86.instr_buf[emu->x86.instr_len++] = val;
+    emu->x86.instr_buf[emu->x86.instr_len++] = val >> 8;
   }
 
   return val;
@@ -437,22 +437,22 @@ u32 fetch_long(void)
   u32 val;
   unsigned err;
 
-  err = decode_memio(M.x86.R_CS_BASE + M.x86.R_EIP, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_X);
+  err = decode_memio(emu->x86.R_CS_BASE + emu->x86.R_EIP, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_X);
 
-  if(err) x86emu_stop(&M);
+  if(err) x86emu_stop(emu);
 
   if(MODE_CODE32) {
-    M.x86.R_EIP += 4;
+    emu->x86.R_EIP += 4;
   }
   else {
-    M.x86.R_IP += 4;
+    emu->x86.R_IP += 4;
   }
 
-  if(M.x86.instr_len + 3 < sizeof M.x86.instr_buf) {
-    M.x86.instr_buf[M.x86.instr_len++] = val;
-    M.x86.instr_buf[M.x86.instr_len++] = val >> 8;
-    M.x86.instr_buf[M.x86.instr_len++] = val >> 16;
-    M.x86.instr_buf[M.x86.instr_len++] = val >> 24;
+  if(emu->x86.instr_len + 3 < sizeof emu->x86.instr_buf) {
+    emu->x86.instr_buf[emu->x86.instr_len++] = val;
+    emu->x86.instr_buf[emu->x86.instr_len++] = val >> 8;
+    emu->x86.instr_buf[emu->x86.instr_len++] = val >> 16;
+    emu->x86.instr_buf[emu->x86.instr_len++] = val >> 24;
   }
 
   return val;
@@ -472,7 +472,7 @@ no segment override. Address modes such as -3[BP] or 10[BP+SI] all refer to
 addresses relative to SS (ie: on the stack). So, at the minimum, all
 decodings of addressing modes would have to set/clear a bit describing
 whether the access is relative to DS or SS.  That is the function of the
-cpu-state-varible M.x86.mode. There are several potential states:
+cpu-state-varible emu->x86.mode. There are several potential states:
 
 	repe prefix seen  (handled elsewhere)
 	repne prefix seen  (ditto)
@@ -492,8 +492,8 @@ static sel_t *get_data_segment(void)
 {
   sel_t *seg;
 
-  if(!(seg = M.x86.default_seg)) {
-    seg = M.x86.seg + (M.x86.mode & _MODE_SEG_DS_SS ? R_SS_INDEX : R_DS_INDEX);
+  if(!(seg = emu->x86.default_seg)) {
+    seg = emu->x86.seg + (emu->x86.mode & _MODE_SEG_DS_SS ? R_SS_INDEX : R_DS_INDEX);
   }
 
   return seg;
@@ -755,35 +755,35 @@ u8* decode_rm_byte_register(int reg)
   switch(reg) {
     case 0:
       OP_DECODE("al");
-      return &M.x86.R_AL;
+      return &emu->x86.R_AL;
 
     case 1:
       OP_DECODE("cl");
-      return &M.x86.R_CL;
+      return &emu->x86.R_CL;
 
     case 2:
       OP_DECODE("dl");
-      return &M.x86.R_DL;
+      return &emu->x86.R_DL;
 
     case 3:
       OP_DECODE("bl");
-      return &M.x86.R_BL;
+      return &emu->x86.R_BL;
 
     case 4:
       OP_DECODE("ah");
-      return &M.x86.R_AH;
+      return &emu->x86.R_AH;
 
     case 5:
       OP_DECODE("ch");
-      return &M.x86.R_CH;
+      return &emu->x86.R_CH;
 
     case 6:
       OP_DECODE("dh");
-      return &M.x86.R_DH;
+      return &emu->x86.R_DH;
 
     case 7:
       OP_DECODE("bh");
-      return &M.x86.R_BH;
+      return &emu->x86.R_BH;
   }
 
   return NULL;                /* NOT REACHED OR REACHED ON ERROR */
@@ -805,35 +805,35 @@ u16* decode_rm_word_register(int reg)
   switch(reg) {
     case 0:
       OP_DECODE("ax");
-      return &M.x86.R_AX;
+      return &emu->x86.R_AX;
 
     case 1:
       OP_DECODE("cx");
-      return &M.x86.R_CX;
+      return &emu->x86.R_CX;
 
     case 2:
       OP_DECODE("dx");
-      return &M.x86.R_DX;
+      return &emu->x86.R_DX;
 
     case 3:
       OP_DECODE("bx");
-      return &M.x86.R_BX;
+      return &emu->x86.R_BX;
 
     case 4:
       OP_DECODE("sp");
-      return &M.x86.R_SP;
+      return &emu->x86.R_SP;
 
     case 5:
       OP_DECODE("bp");
-      return &M.x86.R_BP;
+      return &emu->x86.R_BP;
 
     case 6:
       OP_DECODE("si");
-      return &M.x86.R_SI;
+      return &emu->x86.R_SI;
 
     case 7:
       OP_DECODE("di");
-      return &M.x86.R_DI;
+      return &emu->x86.R_DI;
   }
 
   return NULL;                /* NOTREACHED OR REACHED ON ERROR */
@@ -855,35 +855,35 @@ u32* decode_rm_long_register(int reg)
   switch(reg) {
     case 0:
       OP_DECODE("eax");
-      return &M.x86.R_EAX;
+      return &emu->x86.R_EAX;
 
     case 1:
       OP_DECODE("ecx");
-      return &M.x86.R_ECX;
+      return &emu->x86.R_ECX;
 
     case 2:
       OP_DECODE("edx");
-      return &M.x86.R_EDX;
+      return &emu->x86.R_EDX;
 
     case 3:
       OP_DECODE("ebx");
-      return &M.x86.R_EBX;
+      return &emu->x86.R_EBX;
 
     case 4:
       OP_DECODE("esp");
-      return &M.x86.R_ESP;
+      return &emu->x86.R_ESP;
 
     case 5:
       OP_DECODE("ebp");
-      return &M.x86.R_EBP;
+      return &emu->x86.R_EBP;
 
     case 6:
       OP_DECODE("esi");
-      return &M.x86.R_ESI;
+      return &emu->x86.R_ESI;
 
     case 7:
       OP_DECODE("edi");
-      return &M.x86.R_EDI;
+      return &emu->x86.R_EDI;
   }
 
   return NULL;                /* NOTREACHED OR REACHED ON ERROR */
@@ -929,12 +929,12 @@ sel_t *decode_rm_seg_register(int reg)
       break;
 
     default:
-      INTR_RAISE_UD(&M);
+      INTR_RAISE_UD(emu);
       reg = 6;
       break;
   }
 
-  return M.x86.seg + reg;
+  return emu->x86.seg + reg;
 }
 
 
@@ -1112,7 +1112,7 @@ u32 decode_rm_address(int mod, int rl)
       break;
 
     default:
-      INTR_RAISE_UD(&M);
+      INTR_RAISE_UD(emu);
       break;
   }
 
@@ -1131,22 +1131,22 @@ u32 decode_rm00_address(int rm)
       case 0:
         SEGPREF_DECODE;
         OP_DECODE("eax]");
-        return M.x86.R_EAX;
+        return emu->x86.R_EAX;
 
       case 1:
         SEGPREF_DECODE;
         OP_DECODE("ecx]");
-        return M.x86.R_ECX;
+        return emu->x86.R_ECX;
 
       case 2:
         SEGPREF_DECODE;
         OP_DECODE("edx]");
-        return M.x86.R_EDX;
+        return emu->x86.R_EDX;
 
       case 3:
         SEGPREF_DECODE;
         OP_DECODE("ebx]");
-        return M.x86.R_EBX;
+        return emu->x86.R_EBX;
 
       case 4:
         sib = fetch_byte();
@@ -1164,12 +1164,12 @@ u32 decode_rm00_address(int rm)
       case 6:
         SEGPREF_DECODE;
         OP_DECODE("esi]");
-        return M.x86.R_ESI;
+        return emu->x86.R_ESI;
 
       case 7:
         SEGPREF_DECODE;
         OP_DECODE("edi]");
-        return M.x86.R_EDI;
+        return emu->x86.R_EDI;
     }
   }
   else {
@@ -1178,34 +1178,34 @@ u32 decode_rm00_address(int rm)
       case 0:
         SEGPREF_DECODE;
         OP_DECODE("bx+si]");
-        return (M.x86.R_BX + M.x86.R_SI) & 0xffff;
+        return (emu->x86.R_BX + emu->x86.R_SI) & 0xffff;
 
       case 1:
         SEGPREF_DECODE;
         OP_DECODE("bx+di]");
-        return (M.x86.R_BX + M.x86.R_DI) & 0xffff;
+        return (emu->x86.R_BX + emu->x86.R_DI) & 0xffff;
 
       case 2:
         SEGPREF_DECODE;
         OP_DECODE("bp+si]");
-        M.x86.mode |= _MODE_SEG_DS_SS;
-        return (M.x86.R_BP + M.x86.R_SI) & 0xffff;
+        emu->x86.mode |= _MODE_SEG_DS_SS;
+        return (emu->x86.R_BP + emu->x86.R_SI) & 0xffff;
 
       case 3:
         SEGPREF_DECODE;
         OP_DECODE("bp+di]");
-        M.x86.mode |= _MODE_SEG_DS_SS;
-        return (M.x86.R_BP + M.x86.R_DI) & 0xffff;
+        emu->x86.mode |= _MODE_SEG_DS_SS;
+        return (emu->x86.R_BP + emu->x86.R_DI) & 0xffff;
 
       case 4:
         SEGPREF_DECODE;
         OP_DECODE("si]");
-        return M.x86.R_SI;
+        return emu->x86.R_SI;
 
       case 5:
         SEGPREF_DECODE;
         OP_DECODE("di]");
-        return M.x86.R_DI;
+        return emu->x86.R_DI;
 
       case 6:
         offset = fetch_word();
@@ -1217,7 +1217,7 @@ u32 decode_rm00_address(int rm)
       case 7:
         SEGPREF_DECODE;
         OP_DECODE("bx]");
-        return M.x86.R_BX;
+        return emu->x86.R_BX;
       }
   }
 
@@ -1244,28 +1244,28 @@ u32 decode_rm01_address(int rm)
         OP_DECODE("eax");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return M.x86.R_EAX + displacement;
+        return emu->x86.R_EAX + displacement;
 
       case 1:
         SEGPREF_DECODE;
         OP_DECODE("ecx");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return M.x86.R_ECX + displacement;
+        return emu->x86.R_ECX + displacement;
 
       case 2:
         SEGPREF_DECODE;
         OP_DECODE("edx");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return M.x86.R_EDX + displacement;
+        return emu->x86.R_EDX + displacement;
 
       case 3:
         SEGPREF_DECODE;
         OP_DECODE("ebx");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return M.x86.R_EBX + displacement;
+        return emu->x86.R_EBX + displacement;
 
       case 4:
         sib = fetch_byte();
@@ -1280,21 +1280,21 @@ u32 decode_rm01_address(int rm)
         OP_DECODE("ebp");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return M.x86.R_EBP + displacement;
+        return emu->x86.R_EBP + displacement;
 
       case 6:
         SEGPREF_DECODE;
         OP_DECODE("esi");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return M.x86.R_ESI + displacement;
+        return emu->x86.R_ESI + displacement;
 
       case 7:
         SEGPREF_DECODE;
         OP_DECODE("edi");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return M.x86.R_EDI + displacement;
+        return emu->x86.R_EDI + displacement;
     }
   }
   else {
@@ -1305,59 +1305,59 @@ u32 decode_rm01_address(int rm)
         OP_DECODE("bx+si");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return (M.x86.R_BX + M.x86.R_SI + displacement) & 0xffff;
+        return (emu->x86.R_BX + emu->x86.R_SI + displacement) & 0xffff;
 
       case 1:
         SEGPREF_DECODE;
         OP_DECODE("bx+di");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return (M.x86.R_BX + M.x86.R_DI + displacement) & 0xffff;
+        return (emu->x86.R_BX + emu->x86.R_DI + displacement) & 0xffff;
 
       case 2:
         SEGPREF_DECODE;
         OP_DECODE("bp+si");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        M.x86.mode |= _MODE_SEG_DS_SS;
-        return (M.x86.R_BP + M.x86.R_SI + displacement) & 0xffff;
+        emu->x86.mode |= _MODE_SEG_DS_SS;
+        return (emu->x86.R_BP + emu->x86.R_SI + displacement) & 0xffff;
 
       case 3:
         SEGPREF_DECODE;
         OP_DECODE("bp+di");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        M.x86.mode |= _MODE_SEG_DS_SS;
-        return (M.x86.R_BP + M.x86.R_DI + displacement) & 0xffff;
+        emu->x86.mode |= _MODE_SEG_DS_SS;
+        return (emu->x86.R_BP + emu->x86.R_DI + displacement) & 0xffff;
 
       case 4:
         SEGPREF_DECODE;
         OP_DECODE("si");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return (M.x86.R_SI + displacement) & 0xffff;
+        return (emu->x86.R_SI + displacement) & 0xffff;
 
       case 5:
         SEGPREF_DECODE;
         OP_DECODE("di");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return (M.x86.R_DI + displacement) & 0xffff;
+        return (emu->x86.R_DI + displacement) & 0xffff;
 
       case 6:
         SEGPREF_DECODE;
         OP_DECODE("bp");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        M.x86.mode |= _MODE_SEG_DS_SS;
-        return (M.x86.R_BP + displacement) & 0xffff;
+        emu->x86.mode |= _MODE_SEG_DS_SS;
+        return (emu->x86.R_BP + displacement) & 0xffff;
 
       case 7:
         SEGPREF_DECODE;
         OP_DECODE("bx");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
-        return (M.x86.R_BX + displacement) & 0xffff;
+        return (emu->x86.R_BX + displacement) & 0xffff;
       }
   }
 
@@ -1388,28 +1388,28 @@ u32 decode_rm10_address(int rm)
         OP_DECODE("eax");
         DECODE_HEX8S(displacement);
         OP_DECODE("]");
-        return M.x86.R_EAX + displacement;
+        return emu->x86.R_EAX + displacement;
 
       case 1:
         SEGPREF_DECODE;
         OP_DECODE("ecx");
         DECODE_HEX8S(displacement);
         OP_DECODE("]");
-        return M.x86.R_ECX + displacement;
+        return emu->x86.R_ECX + displacement;
 
       case 2:
         SEGPREF_DECODE;
         OP_DECODE("edx");
         DECODE_HEX8S(displacement);
         OP_DECODE("]");
-        return M.x86.R_EDX + displacement;
+        return emu->x86.R_EDX + displacement;
 
       case 3:
         SEGPREF_DECODE;
         OP_DECODE("ebx");
         DECODE_HEX8S(displacement);
         OP_DECODE("]");
-        return M.x86.R_EBX + displacement;
+        return emu->x86.R_EBX + displacement;
 
       case 4:
         sib = fetch_byte();
@@ -1425,22 +1425,22 @@ u32 decode_rm10_address(int rm)
         OP_DECODE("ebp");
         DECODE_HEX8S(displacement);
         OP_DECODE("]");
-        M.x86.mode |= _MODE_SEG_DS_SS;
-        return M.x86.R_EBP + displacement;
+        emu->x86.mode |= _MODE_SEG_DS_SS;
+        return emu->x86.R_EBP + displacement;
 
       case 6:
         SEGPREF_DECODE;
         OP_DECODE("esi");
         DECODE_HEX8S(displacement);
         OP_DECODE("]");
-        return M.x86.R_ESI + displacement;
+        return emu->x86.R_ESI + displacement;
 
       case 7:
         SEGPREF_DECODE;
         OP_DECODE("edi");
         DECODE_HEX8S(displacement);
         OP_DECODE("]");
-        return M.x86.R_EDI + displacement;
+        return emu->x86.R_EDI + displacement;
     }
   }
   else {
@@ -1451,59 +1451,59 @@ u32 decode_rm10_address(int rm)
         OP_DECODE("bx+si");
         DECODE_HEX4S(displacement);
         OP_DECODE("]");
-        return (M.x86.R_BX + M.x86.R_SI + displacement) & 0xffff;
+        return (emu->x86.R_BX + emu->x86.R_SI + displacement) & 0xffff;
 
       case 1:
         SEGPREF_DECODE;
         OP_DECODE("bx+di");
         DECODE_HEX4S(displacement);
         OP_DECODE("]");
-        return (M.x86.R_BX + M.x86.R_DI + displacement) & 0xffff;
+        return (emu->x86.R_BX + emu->x86.R_DI + displacement) & 0xffff;
 
       case 2:
         SEGPREF_DECODE;
         OP_DECODE("bp+si");
         DECODE_HEX4S(displacement);
         OP_DECODE("]");
-        M.x86.mode |= _MODE_SEG_DS_SS;
-        return (M.x86.R_BP + M.x86.R_SI + displacement) & 0xffff;
+        emu->x86.mode |= _MODE_SEG_DS_SS;
+        return (emu->x86.R_BP + emu->x86.R_SI + displacement) & 0xffff;
 
       case 3:
         SEGPREF_DECODE;
         OP_DECODE("bp+di");
         DECODE_HEX4S(displacement);
         OP_DECODE("]");
-        M.x86.mode |= _MODE_SEG_DS_SS;
-        return (M.x86.R_BP + M.x86.R_DI + displacement) & 0xffff;
+        emu->x86.mode |= _MODE_SEG_DS_SS;
+        return (emu->x86.R_BP + emu->x86.R_DI + displacement) & 0xffff;
 
       case 4:
         SEGPREF_DECODE;
         OP_DECODE("si");
         DECODE_HEX4S(displacement);
         OP_DECODE("]");
-        return (M.x86.R_SI + displacement) & 0xffff;
+        return (emu->x86.R_SI + displacement) & 0xffff;
 
       case 5:
         SEGPREF_DECODE;
         OP_DECODE("di");
         DECODE_HEX4S(displacement);
         OP_DECODE("]");
-        return (M.x86.R_DI + displacement) & 0xffff;
+        return (emu->x86.R_DI + displacement) & 0xffff;
 
       case 6:
         SEGPREF_DECODE;
         OP_DECODE("bp");
         DECODE_HEX4S(displacement);
         OP_DECODE("]");
-        M.x86.mode |= _MODE_SEG_DS_SS;
-        return (M.x86.R_BP + displacement) & 0xffff;
+        emu->x86.mode |= _MODE_SEG_DS_SS;
+        return (emu->x86.R_BP + displacement) & 0xffff;
 
       case 7:
         SEGPREF_DECODE;
         OP_DECODE("bx");
         DECODE_HEX4S(displacement);
         OP_DECODE("]");
-        return (M.x86.R_BX + displacement) & 0xffff;
+        return (emu->x86.R_BX + displacement) & 0xffff;
     }
   }
 
@@ -1524,32 +1524,32 @@ u32 decode_sib_address(int sib, int mod)
     case 0:
       SEGPREF_DECODE;
       OP_DECODE("eax");
-      base = M.x86.R_EAX;
+      base = emu->x86.R_EAX;
       break;
 
     case 1:
       SEGPREF_DECODE;
       OP_DECODE("ecx");
-      base = M.x86.R_ECX;
+      base = emu->x86.R_ECX;
       break;
 
     case 2:
       SEGPREF_DECODE;
       OP_DECODE("edx");
-      base = M.x86.R_EDX;
+      base = emu->x86.R_EDX;
       break;
 
     case 3:
       SEGPREF_DECODE;
       OP_DECODE("ebx");
-      base = M.x86.R_EBX;
+      base = emu->x86.R_EBX;
       break;
 
     case 4:
       SEGPREF_DECODE;
       OP_DECODE("esp");
-      base = M.x86.R_ESP;
-      M.x86.mode |= _MODE_SEG_DS_SS;
+      base = emu->x86.R_ESP;
+      emu->x86.mode |= _MODE_SEG_DS_SS;
       break;
 
     case 5:
@@ -1560,21 +1560,21 @@ u32 decode_sib_address(int sib, int mod)
       }
       else {
         OP_DECODE("ebp");
-        base = M.x86.R_EBP;
-        M.x86.mode |= _MODE_SEG_DS_SS;
+        base = emu->x86.R_EBP;
+        emu->x86.mode |= _MODE_SEG_DS_SS;
       }
       break;
 
     case 6:
       SEGPREF_DECODE;
       OP_DECODE("esi");
-      base = M.x86.R_ESI;
+      base = emu->x86.R_ESI;
       break;
 
     case 7:
       SEGPREF_DECODE;
       OP_DECODE("edi");
-      base = M.x86.R_EDI;
+      base = emu->x86.R_EDI;
       break;
   }
 
@@ -1582,22 +1582,22 @@ u32 decode_sib_address(int sib, int mod)
   switch((sib >> 3) & 0x07) {
     case 0:
       OP_DECODE("+eax");
-      i = M.x86.R_EAX;
+      i = emu->x86.R_EAX;
       break;
 
     case 1:
       OP_DECODE("+ecx");
-      i = M.x86.R_ECX;
+      i = emu->x86.R_ECX;
       break;
 
     case 2:
       OP_DECODE("+edx");
-      i = M.x86.R_EDX;
+      i = emu->x86.R_EDX;
       break;
 
     case 3:
       OP_DECODE("+ebx");
-      i = M.x86.R_EBX;
+      i = emu->x86.R_EBX;
       break;
 
     case 4:
@@ -1606,17 +1606,17 @@ u32 decode_sib_address(int sib, int mod)
 
     case 5:
       OP_DECODE("+ebp");
-      i = M.x86.R_EBP;
+      i = emu->x86.R_EBP;
       break;
 
     case 6:
       OP_DECODE("+esi");
-      i = M.x86.R_ESI;
+      i = emu->x86.R_ESI;
       break;
 
     case 7:
       OP_DECODE("+edi");
-      i = M.x86.R_EDI;
+      i = emu->x86.R_EDI;
       break;
   }
 
@@ -1625,7 +1625,7 @@ u32 decode_sib_address(int sib, int mod)
   if(((sib >> 3) & 0x07) != 4) {
     if(scale) {
       OP_DECODE("*");
-      *M.x86.disasm_ptr++ = '0' + (1 << scale);
+      *emu->x86.disasm_ptr++ = '0' + (1 << scale);
     }
   }
 
@@ -1636,29 +1636,29 @@ u32 decode_sib_address(int sib, int mod)
 void log_code()
 {
   unsigned u, lf;
-  char **p = &M.log.ptr;
+  char **p = &emu->log.ptr;
 
-  if(!(M.log.trace & X86EMU_TRACE_CODE) || !*p) return;
-  lf = LOG_FREE(&M);
-  if(lf < 512) lf = x86emu_clear_log(&M, 1);
+  if(!(emu->log.trace & X86EMU_TRACE_CODE) || !*p) return;
+  lf = LOG_FREE(emu);
+  if(lf < 512) lf = x86emu_clear_log(emu, 1);
   if(lf < 512) return;
 
-  decode_hex(p, M.x86.R_TSC);
+  decode_hex(p, emu->x86.R_TSC);
 
 #if WITH_TSC
-  if(M.log.trace & X86EMU_TRACE_TIME) {
+  if(emu->log.trace & X86EMU_TRACE_TIME) {
     LOG_STR(" +");
-    decode_hex(p, M.x86.R_REAL_TSC - M.x86.R_LAST_REAL_TSC);
+    decode_hex(p, emu->x86.R_REAL_TSC - emu->x86.R_LAST_REAL_TSC);
   }
 #endif
   LOG_STR(" ");
-  decode_hex4(p, M.x86.saved_cs);
+  decode_hex4(p, emu->x86.saved_cs);
   LOG_STR(":");
-  MODE_CODE32 ? decode_hex8(p, M.x86.saved_eip) : decode_hex4(p, M.x86.saved_eip);
+  MODE_CODE32 ? decode_hex8(p, emu->x86.saved_eip) : decode_hex4(p, emu->x86.saved_eip);
   LOG_STR(" ");
 
-  for(u = 0; u < M.x86.instr_len; u++) {
-    decode_hex2(p, M.x86.instr_buf[u]);
+  for(u = 0; u < emu->x86.instr_len; u++) {
+    decode_hex2(p, emu->x86.instr_buf[u]);
   }
 
   while(u++ < 12) {
@@ -1667,8 +1667,8 @@ void log_code()
 
   LOG_STR(" ");
 
-  u = M.x86.disasm_ptr - M.x86.disasm_buf;
-  memcpy(*p, M.x86.disasm_buf, u);
+  u = emu->x86.disasm_ptr - emu->x86.disasm_buf;
+  memcpy(*p, emu->x86.disasm_buf, u);
   *p += u;
 
   LOG_STR("\n");
@@ -1679,49 +1679,49 @@ void log_code()
 
 void log_regs()
 {
-  char **p = &M.log.ptr;
+  char **p = &emu->log.ptr;
   unsigned lf;
 
-  if(!(M.log.trace & X86EMU_TRACE_REGS) || !*p) return;
-  lf = LOG_FREE(&M);
-  if(lf < 512) lf = x86emu_clear_log(&M, 1);
+  if(!(emu->log.trace & X86EMU_TRACE_REGS) || !*p) return;
+  lf = LOG_FREE(emu);
+  if(lf < 512) lf = x86emu_clear_log(emu, 1);
   if(lf < 512) return;
 
   LOG_STR("\neax ");
-  decode_hex8(p, M.x86.R_EAX);
+  decode_hex8(p, emu->x86.R_EAX);
   LOG_STR(", ebx ");
-  decode_hex8(p, M.x86.R_EBX);
+  decode_hex8(p, emu->x86.R_EBX);
   LOG_STR(", ecx ");
-  decode_hex8(p, M.x86.R_ECX);
+  decode_hex8(p, emu->x86.R_ECX);
   LOG_STR(", edx ");
-  decode_hex8(p, M.x86.R_EDX);
+  decode_hex8(p, emu->x86.R_EDX);
 
   LOG_STR("\nesi ");
-  decode_hex8(p, M.x86.R_ESI);
+  decode_hex8(p, emu->x86.R_ESI);
   LOG_STR(", edi ");
-  decode_hex8(p, M.x86.R_EDI);
+  decode_hex8(p, emu->x86.R_EDI);
   LOG_STR(", ebp ");
-  decode_hex8(p, M.x86.R_EBP);
+  decode_hex8(p, emu->x86.R_EBP);
   LOG_STR(", esp ");
-  decode_hex8(p, M.x86.R_ESP);
+  decode_hex8(p, emu->x86.R_ESP);
 
   LOG_STR("\ncs ");
-  decode_hex4(p, M.x86.R_CS);
+  decode_hex4(p, emu->x86.R_CS);
   LOG_STR(", ss ");
-  decode_hex4(p, M.x86.R_SS);
+  decode_hex4(p, emu->x86.R_SS);
   LOG_STR(", ds ");
-  decode_hex4(p, M.x86.R_DS);
+  decode_hex4(p, emu->x86.R_DS);
   LOG_STR(", es ");
-  decode_hex4(p, M.x86.R_ES);
+  decode_hex4(p, emu->x86.R_ES);
   LOG_STR(", fs ");
-  decode_hex4(p, M.x86.R_FS);
+  decode_hex4(p, emu->x86.R_FS);
   LOG_STR(", gs ");
-  decode_hex4(p, M.x86.R_GS);
+  decode_hex4(p, emu->x86.R_GS);
 
   LOG_STR("\neip ");
-  decode_hex8(p, M.x86.R_EIP);
+  decode_hex8(p, emu->x86.R_EIP);
   LOG_STR(", eflags ");
-  decode_hex8(p, M.x86.R_EFLG);
+  decode_hex8(p, emu->x86.R_EFLG);
 
   if(ACCESS_FLAG(F_OF)) LOG_STR(" of");
   if(ACCESS_FLAG(F_DF)) LOG_STR(" df");
@@ -1740,13 +1740,13 @@ void log_regs()
 
 void check_data_access(sel_t *seg, u32 ofs, u32 size)
 {
-  char **p = &M.log.ptr;
+  char **p = &emu->log.ptr;
   static char seg_name[7] = "ecsdfg?";
-  unsigned idx = seg - M.x86.seg, lf;
+  unsigned idx = seg - emu->x86.seg, lf;
 
-  if((M.log.trace & X86EMU_TRACE_ACC) && *p) {
-    lf = LOG_FREE(&M);
-    if(lf < 512) lf = x86emu_clear_log(&M, 1);
+  if((emu->log.trace & X86EMU_TRACE_ACC) && *p) {
+    lf = LOG_FREE(emu);
+    if(lf < 512) lf = x86emu_clear_log(emu, 1);
     if(lf >= 512) {
       LOG_STR("a [");
       switch(size) {
@@ -1771,7 +1771,7 @@ void check_data_access(sel_t *seg, u32 ofs, u32 size)
   }
 
   if(ofs + size - 1 > seg->limit) {
-    INTR_RAISE_GP(&M, seg->sel);
+    INTR_RAISE_GP(emu, seg->sel);
   }
 
   return;
@@ -1780,7 +1780,7 @@ void check_data_access(sel_t *seg, u32 ofs, u32 size)
 
 void decode_descriptor(descr_t *d, u32 dl, u32 dh)
 {
-  char **p = &M.log.ptr;
+  char **p = &emu->log.ptr;
   unsigned lf, acc;
 
   memset(d, 0, sizeof *d);
@@ -1851,9 +1851,9 @@ void decode_descriptor(descr_t *d, u32 dl, u32 dh)
     }
   }
 
-  if((M.log.trace & X86EMU_TRACE_ACC) && *p) {
-    lf = LOG_FREE(&M);
-    if(lf < 512) lf = x86emu_clear_log(&M, 1);
+  if((emu->log.trace & X86EMU_TRACE_ACC) && *p) {
+    lf = LOG_FREE(emu);
+    if(lf < 512) lf = x86emu_clear_log(emu, 1);
     if(lf >= 512) {
       LOG_STR("d [");
       decode_hex8(p, dh);
@@ -1964,18 +1964,18 @@ void idt_lookup(u8 nr, u32 *new_cs, u32 *new_eip)
   u32 dl, dh;
   descr_t d1;
 
-  if(MODE_REAL(&M)) {
+  if(MODE_REAL(emu)) {
     ofs = nr << 2;
     err =
-      decode_memio(M.x86.R_IDT_BASE + ofs, new_eip, X86EMU_MEMIO_16 + X86EMU_MEMIO_R) |
-      decode_memio(M.x86.R_IDT_BASE + ofs + 2, new_cs, X86EMU_MEMIO_16 + X86EMU_MEMIO_R);
+      decode_memio(emu->x86.R_IDT_BASE + ofs, new_eip, X86EMU_MEMIO_16 + X86EMU_MEMIO_R) |
+      decode_memio(emu->x86.R_IDT_BASE + ofs + 2, new_cs, X86EMU_MEMIO_16 + X86EMU_MEMIO_R);
   }
   else {
     ofs = nr << 3;
-    if(ofs + 7 <= M.x86.R_IDT_LIMIT) {
+    if(ofs + 7 <= emu->x86.R_IDT_LIMIT) {
       err =
-        decode_memio(M.x86.R_IDT_BASE + ofs, &dl, X86EMU_MEMIO_32 + X86EMU_MEMIO_R) |
-        decode_memio(M.x86.R_IDT_BASE + ofs + 4, &dh, X86EMU_MEMIO_32 + X86EMU_MEMIO_R);
+        decode_memio(emu->x86.R_IDT_BASE + ofs, &dl, X86EMU_MEMIO_32 + X86EMU_MEMIO_R) |
+        decode_memio(emu->x86.R_IDT_BASE + ofs + 4, &dh, X86EMU_MEMIO_32 + X86EMU_MEMIO_R);
     }
     else {
       err = 1;
@@ -1996,18 +1996,18 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
   u32 cs, eip, new_cs, new_eip;
   int i;
 
-  M.x86.intr_stats[nr]++;
+  emu->x86.intr_stats[nr]++;
 
-  i = M.intr ? (*M.intr)(&M, nr, type) : 0;
+  i = emu->intr ? (*emu->intr)(emu, nr, type) : 0;
 
   if(!i) {
     if(type & INTR_MODE_RESTART) {
-      eip = M.x86.saved_eip;
-      cs = M.x86.saved_cs;
+      eip = emu->x86.saved_eip;
+      cs = emu->x86.saved_cs;
     }
     else {
-      eip = M.x86.R_EIP;
-      cs = M.x86.R_CS;
+      eip = emu->x86.R_EIP;
+      cs = emu->x86.R_CS;
     }
 
     new_cs = cs;
@@ -2015,13 +2015,13 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
 
     idt_lookup(nr, &new_cs, &new_eip);
 
-    if(MODE_PROTECTED(&M) && MODE_CODE32) {
-      push_long(M.x86.R_EFLG);
+    if(MODE_PROTECTED(emu) && MODE_CODE32) {
+      push_long(emu->x86.R_EFLG);
       push_long(cs);
       push_long(eip);
     }
     else {
-      push_word(M.x86.R_FLG);
+      push_word(emu->x86.R_FLG);
       push_word(cs);
       push_word(eip);
     }
@@ -2031,8 +2031,8 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
     CLEAR_FLAG(F_IF);
     CLEAR_FLAG(F_TF);
 
-    x86emu_set_seg_register(&M, M.x86.R_CS_SEL, new_cs);
-    M.x86.R_EIP = new_eip;
+    x86emu_set_seg_register(emu, emu->x86.R_CS_SEL, new_cs);
+    emu->x86.R_EIP = new_eip;
   }
 }
 
@@ -2040,21 +2040,21 @@ void generate_int(u8 nr, unsigned type, unsigned errcode)
 unsigned decode_memio(u32 addr, u32 *val, unsigned type)
 {
   unsigned err, bits = type & 0xff, lf;
-  char **p = &M.log.ptr;
+  char **p = &emu->log.ptr;
 
-  err = M.memio(&M, addr, val, type);
+  err = emu->memio(emu, addr, val, type);
 
   type &= ~0xff;
 
-  if(!*p || !((M.log.trace & X86EMU_TRACE_DATA) || (M.log.trace & X86EMU_TRACE_IO))) return err;
+  if(!*p || !((emu->log.trace & X86EMU_TRACE_DATA) || (emu->log.trace & X86EMU_TRACE_IO))) return err;
 
   if(
-    !((M.log.trace & X86EMU_TRACE_IO) && (type == X86EMU_MEMIO_I || type == X86EMU_MEMIO_O)) &&
-    !((M.log.trace & X86EMU_TRACE_DATA) && (type == X86EMU_MEMIO_R || type == X86EMU_MEMIO_W || type == X86EMU_MEMIO_X))
+    !((emu->log.trace & X86EMU_TRACE_IO) && (type == X86EMU_MEMIO_I || type == X86EMU_MEMIO_O)) &&
+    !((emu->log.trace & X86EMU_TRACE_DATA) && (type == X86EMU_MEMIO_R || type == X86EMU_MEMIO_W || type == X86EMU_MEMIO_X))
   ) return err;
 
-  lf = LOG_FREE(&M);
-  if(lf < 1024) lf = x86emu_clear_log(&M, 1);
+  lf = LOG_FREE(emu);
+  if(lf < 1024) lf = x86emu_clear_log(emu, 1);
   if(lf < 1024) return err;
 
   switch(type) {
@@ -2192,52 +2192,52 @@ unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type)
 void emu_process_debug(unsigned start, unsigned len)
 {
   unsigned lf, type, u;
-  char **p = &M.log.ptr;
+  char **p = &emu->log.ptr;
 
   if(!*p) return;
 
-  lf = LOG_FREE(&M);
-  if(lf < 1024) lf = x86emu_clear_log(&M, 1);
+  lf = LOG_FREE(emu);
+  if(lf < 1024) lf = x86emu_clear_log(emu, 1);
   if(lf < 1024) return;
 
-  type = x86emu_read_byte_noperm(&M, start++);
+  type = x86emu_read_byte_noperm(emu, start++);
   len--;
 
   switch(type) {
     case 1:
       LOG_STR("\n");
       while(len--) {
-        *(*p)++ = x86emu_read_byte_noperm(&M, start++);
+        *(*p)++ = x86emu_read_byte_noperm(emu, start++);
       }
       LOG_STR("\n");
       break;
 
     case 2:
-      u = x86emu_read_byte_noperm(&M, start++);
-      u += x86emu_read_byte_noperm(&M, start++) << 8;
-      u += x86emu_read_byte_noperm(&M, start++) << 16;
-      u += x86emu_read_byte_noperm(&M, start++) << 24;
-      M.log.trace |= u;
+      u = x86emu_read_byte_noperm(emu, start++);
+      u += x86emu_read_byte_noperm(emu, start++) << 8;
+      u += x86emu_read_byte_noperm(emu, start++) << 16;
+      u += x86emu_read_byte_noperm(emu, start++) << 24;
+      emu->log.trace |= u;
       break;
 
     case 3:
-      u = x86emu_read_byte_noperm(&M, start++);
-      u += x86emu_read_byte_noperm(&M, start++) << 8;
-      u += x86emu_read_byte_noperm(&M, start++) << 16;
-      u += x86emu_read_byte_noperm(&M, start++) << 24;
-      M.log.trace &= ~u;
+      u = x86emu_read_byte_noperm(emu, start++);
+      u += x86emu_read_byte_noperm(emu, start++) << 8;
+      u += x86emu_read_byte_noperm(emu, start++) << 16;
+      u += x86emu_read_byte_noperm(emu, start++) << 24;
+      emu->log.trace &= ~u;
       break;
 
     case 4:
-      u = x86emu_read_byte_noperm(&M, start++);
-      u += x86emu_read_byte_noperm(&M, start++) << 8;
-      u += x86emu_read_byte_noperm(&M, start++) << 16;
-      u += x86emu_read_byte_noperm(&M, start++) << 24;
-      x86emu_dump(&M, u);
+      u = x86emu_read_byte_noperm(emu, start++);
+      u += x86emu_read_byte_noperm(emu, start++) << 8;
+      u += x86emu_read_byte_noperm(emu, start++) << 16;
+      u += x86emu_read_byte_noperm(emu, start++) << 24;
+      x86emu_dump(emu, u);
       break;
 
     case 5:
-      x86emu_reset_access_stats(&M);
+      x86emu_reset_access_stats(emu);
       break;
   }
 
