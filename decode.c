@@ -43,10 +43,10 @@
 
 x86emu_t M L_SYM;
 
-static void handle_interrupt(void);
+static void handle_interrupt(x86emu_t *emu);
 static void generate_int(u8 nr, unsigned type, unsigned errcode);
-static void log_regs(void);
-static void log_code(void);
+static void log_regs(x86emu_t *emu);
+static void log_code(x86emu_t *emu);
 static void check_data_access(sel_t *seg, u32 ofs, u32 size);
 static unsigned decode_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type);
 static unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type);
@@ -106,7 +106,7 @@ unsigned x86emu_run(x86emu_t *emu_, unsigned flags)
     emu->x86.saved_cs = emu->x86.R_CS;
     emu->x86.saved_eip = emu->x86.R_EIP;
 
-    log_regs();
+    log_regs(emu);
 
     if(
       (flags & X86EMU_RUN_MAX_INSTR) &&
@@ -242,14 +242,14 @@ unsigned x86emu_run(x86emu_t *emu_, unsigned flags)
 
     *emu->x86.disasm_ptr = 0;
 
-    handle_interrupt();
+    handle_interrupt(emu);
 
 #if WITH_TSC
     emu->x86.R_LAST_REAL_TSC = emu->x86.R_REAL_TSC;
     emu->x86.R_REAL_TSC = tsc() - tsc_ofs;
 #endif
 
-    log_code();
+    log_code(emu);
 
     if(emu->x86.debug_len) {
       emu_process_debug(emu->x86.debug_start, emu->x86.debug_len);
@@ -302,7 +302,7 @@ void x86emu_stop(x86emu_t *emu)
 REMARKS:
 Handles any pending asychronous interrupts.
 ****************************************************************************/
-void handle_interrupt()
+void handle_interrupt(emu)
 {
   char **p = &emu->log.ptr;
   unsigned lf;
@@ -488,7 +488,7 @@ cpu-state-varible emu->x86.mode. There are several potential states:
 
 Each of the above 7 items are handled with a bit in the mode field.
 ****************************************************************************/
-static sel_t *get_data_segment(void)
+static sel_t *get_data_segment(x86emu_t *emu)
 {
   sel_t *seg;
 
@@ -508,7 +508,7 @@ Byte value read from the absolute memory location.
 ****************************************************************************/
 u8 fetch_data_byte(x86emu_t *emu, u32 ofs)
 {
-  return fetch_data_byte_abs(emu, get_data_segment(), ofs);
+  return fetch_data_byte_abs(emu, get_data_segment(emu), ofs);
 }
 
 /****************************************************************************
@@ -520,7 +520,7 @@ Word value read from the absolute memory location.
 ****************************************************************************/
 u16 fetch_data_word(x86emu_t *emu, u32 ofs)
 {
-  return fetch_data_word_abs(emu, get_data_segment(), ofs);
+  return fetch_data_word_abs(emu, get_data_segment(emu), ofs);
 }
 
 /****************************************************************************
@@ -532,7 +532,7 @@ Long value read from the absolute memory location.
 ****************************************************************************/
 u32 fetch_data_long(x86emu_t *emu, u32 ofs)
 {
-  return fetch_data_long_abs(emu, get_data_segment(), ofs);
+  return fetch_data_long_abs(emu, get_data_segment(emu), ofs);
 }
 
 /****************************************************************************
@@ -603,7 +603,7 @@ the current 'default' segment, which may have been overridden.
 ****************************************************************************/
 void store_data_byte(x86emu_t *emu, u32 ofs, u8 val)
 {
-  store_data_byte_abs(emu, get_data_segment(), ofs, val);
+  store_data_byte_abs(emu, get_data_segment(emu), ofs, val);
 }
 
 /****************************************************************************
@@ -617,7 +617,7 @@ the current 'default' segment, which may have been overridden.
 ****************************************************************************/
 void store_data_word(x86emu_t *emu, u32 ofs, u16 val)
 {
-  store_data_word_abs(emu, get_data_segment(), ofs, val);
+  store_data_word_abs(emu, get_data_segment(emu), ofs, val);
 }
 
 /****************************************************************************
@@ -631,7 +631,7 @@ the current 'default' segment, which may have been overridden.
 ****************************************************************************/
 void store_data_long(x86emu_t *emu, u32 ofs, u32 val)
 {
-  store_data_long_abs(emu, get_data_segment(), ofs, val);
+  store_data_long_abs(emu, get_data_segment(emu), ofs, val);
 }
 
 /****************************************************************************
@@ -1633,7 +1633,7 @@ u32 decode_sib_address(x86emu_t *emu, int sib, int mod)
 }
 
 
-void log_code()
+void log_code(emu)
 {
   unsigned u, lf;
   char **p = &emu->log.ptr;
@@ -1677,7 +1677,7 @@ void log_code()
 }
 
 
-void log_regs()
+void log_regs(emu)
 {
   char **p = &emu->log.ptr;
   unsigned lf;
