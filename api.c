@@ -311,7 +311,7 @@ void x86emu_log(x86emu_t *emu, const char *format, ...)
  *
  *   bit 8: show ascii, too
  */
-static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, char *str_attr, int flags)
+static void dump_data(x86emu_t *emu, unsigned char *data, unsigned char *attr, char *str_data, char *str_attr, int flags)
 {
   unsigned u, u1, flag_ascii;
   char c;
@@ -417,7 +417,7 @@ void x86emu_dump(x86emu_t *emu, int flags)
             else {
               memset(def_attr, page.def_attr, LINE_LEN);
             }
-            dump_data(def_data, def_attr, str_data, str_attr, dump_flags);
+            dump_data(emu, def_data, def_attr, str_data, str_attr, dump_flags);
             if(*str_data) {
               addr = (((pdir_idx << X86EMU_PTABLE_BITS) + u1) << X86EMU_PAGE_BITS) + u2;
               x86emu_log(emu, "%08x: %s\n", addr, str_data);
