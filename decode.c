@@ -44,7 +44,7 @@
 x86emu_t M L_SYM;
 
 static void handle_interrupt(x86emu_t *emu);
-static void generate_int(u8 nr, unsigned type, unsigned errcode);
+static void generate_int(x86emu_t *emu, u8 nr, unsigned type, unsigned errcode);
 static void log_regs(x86emu_t *emu);
 static void log_code(x86emu_t *emu);
 static void check_data_access(x86emu_t *emu, sel_t *seg, u32 ofs, u32 size);
@@ -324,7 +324,7 @@ void handle_interrupt(emu)
       }
     }
 
-    generate_int(emu->x86.intr_nr, emu->x86.intr_type, emu->x86.intr_errcode);
+    generate_int(emu, emu->x86.intr_nr, emu->x86.intr_type, emu->x86.intr_errcode);
   }
 
   emu->x86.intr_type = 0;
@@ -1991,7 +1991,7 @@ void idt_lookup(x86emu_t *emu, u8 nr, u32 *new_cs, u32 *new_eip)
 }
 
 
-void generate_int(u8 nr, unsigned type, unsigned errcode)
+void generate_int(x86emu_t *emu, u8 nr, unsigned type, unsigned errcode)
 {
   u32 cs, eip, new_cs, new_eip;
   int i;
