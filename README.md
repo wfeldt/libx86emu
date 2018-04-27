@@ -6,18 +6,27 @@ At the moment 'regular' 32-bit instructions are covered together with basic prot
 
 Not done are fpu, mmx, or any of the other instruction set extensions.
 
+The library lets you
 
-
-
-It is used by [hwinfo](https://github.com/openSUSE/hwinfo) to emulate the Video BIOS (VBE) calls.
+  - intercept any memory access or directly map real memory ranges
+  - intercept any i/o access, map real i/o ports, or block any real i/o
+  - intercept any interrupt
+  - provides hook to run after each instruction
+  - recognizes a special x86 instruction that can trigger logging
+  - has integrated logging to
+    - trace code execution, including register content and decoded instruction
+    - trace memory and i/o accesses
+    - provide statistics about accessed memory locations, i/o ports, and interrupts
 
 ## Downloads
 
 Get the latest version from the [openSUSE Build Service](https://software.opensuse.org/package/libx86emu).
 
-## Example
+## Examples
 
 Have a look at this minimalistic [demo](demo/x86emu-demo.c) program.
+
+The library is used by [hwinfo](https://github.com/openSUSE/hwinfo) to emulate Video BIOS (VBE) calls.
 
 ## API functions
 
