@@ -121,7 +121,7 @@ static u32 x86emu_parity_tab[8] =
 REMARKS:
 Implements the AAA instruction and side effects.
 ****************************************************************************/
-u16 aaa_word(u16 d)
+u16 aaa_word(x86emu_t *emu, u16 d)
 {
 	u16	res;
 	if ((d & 0xf) > 0x9 || ACCESS_FLAG(F_AF)) {
@@ -144,7 +144,7 @@ u16 aaa_word(u16 d)
 REMARKS:
 Implements the AAA instruction and side effects.
 ****************************************************************************/
-u16 aas_word(u16 d)
+u16 aas_word(x86emu_t *emu, u16 d)
 {
 	u16	res;
 	if ((d & 0xf) > 0x9 || ACCESS_FLAG(F_AF)) {
@@ -167,7 +167,7 @@ u16 aas_word(u16 d)
 REMARKS:
 Implements the AAD instruction and side effects.
 ****************************************************************************/
-u16 aad_word(u16 d, u8 base)
+u16 aad_word(x86emu_t *emu, u16 d, u8 base)
 {
 	u16 l;
 	u8 hb, lb;
@@ -189,7 +189,7 @@ u16 aad_word(u16 d, u8 base)
 REMARKS:
 Implements the AAM instruction and side effects.
 ****************************************************************************/
-u16 aam_word(u8 d, u8 base)
+u16 aam_word(x86emu_t *emu, u8 d, u8 base)
 {
     u16 h, l;
 
@@ -210,7 +210,7 @@ u16 aam_word(u8 d, u8 base)
 REMARKS:
 Implements the ADC instruction and side effects.
 ****************************************************************************/
-u8 adc_byte(u8 d, u8 s)
+u8 adc_byte(x86emu_t *emu, u8 d, u8 s)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 cc;
@@ -236,7 +236,7 @@ u8 adc_byte(u8 d, u8 s)
 REMARKS:
 Implements the ADC instruction and side effects.
 ****************************************************************************/
-u16 adc_word(u16 d, u16 s)
+u16 adc_word(x86emu_t *emu, u16 d, u16 s)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 cc;
@@ -262,7 +262,7 @@ u16 adc_word(u16 d, u16 s)
 REMARKS:
 Implements the ADC instruction and side effects.
 ****************************************************************************/
-u32 adc_long(u32 d, u32 s)
+u32 adc_long(x86emu_t *emu, u32 d, u32 s)
 {
 	register u32 lo;	/* all operands in native machine order */
 	register u32 hi;
@@ -295,7 +295,7 @@ u32 adc_long(u32 d, u32 s)
 REMARKS:
 Implements the ADD instruction and side effects.
 ****************************************************************************/
-u8 add_byte(u8 d, u8 s)
+u8 add_byte(x86emu_t *emu, u8 d, u8 s)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 cc;
@@ -317,7 +317,7 @@ u8 add_byte(u8 d, u8 s)
 REMARKS:
 Implements the ADD instruction and side effects.
 ****************************************************************************/
-u16 add_word(u16 d, u16 s)
+u16 add_word(x86emu_t *emu, u16 d, u16 s)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 cc;
@@ -339,7 +339,7 @@ u16 add_word(u16 d, u16 s)
 REMARKS:
 Implements the ADD instruction and side effects.
 ****************************************************************************/
-u32 add_long(u32 d, u32 s)
+u32 add_long(x86emu_t *emu, u32 d, u32 s)
 {
 	register u32 lo;	/* all operands in native machine order */
 	register u32 hi;
@@ -367,7 +367,7 @@ u32 add_long(u32 d, u32 s)
 REMARKS:
 Implements the AND instruction and side effects.
 ****************************************************************************/
-u8 and_byte(u8 d, u8 s)
+u8 and_byte(x86emu_t *emu, u8 d, u8 s)
 {
 	register u8 res;    /* all operands in native machine order */
 
@@ -387,7 +387,7 @@ u8 and_byte(u8 d, u8 s)
 REMARKS:
 Implements the AND instruction and side effects.
 ****************************************************************************/
-u16 and_word(u16 d, u16 s)
+u16 and_word(x86emu_t *emu, u16 d, u16 s)
 {
     register u16 res;   /* all operands in native machine order */
 
@@ -407,7 +407,7 @@ u16 and_word(u16 d, u16 s)
 REMARKS:
 Implements the AND instruction and side effects.
 ****************************************************************************/
-u32 and_long(u32 d, u32 s)
+u32 and_long(x86emu_t *emu, u32 d, u32 s)
 {
 	register u32 res;   /* all operands in native machine order */
 
@@ -427,7 +427,7 @@ u32 and_long(u32 d, u32 s)
 REMARKS:
 Implements the CMP instruction and side effects.
 ****************************************************************************/
-u8 cmp_byte(u8 d, u8 s)
+u8 cmp_byte(x86emu_t *emu, u8 d, u8 s)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 bc;
@@ -450,7 +450,7 @@ u8 cmp_byte(u8 d, u8 s)
 REMARKS:
 Implements the CMP instruction and side effects.
 ****************************************************************************/
-u16 cmp_word(u16 d, u16 s)
+u16 cmp_word(x86emu_t *emu, u16 d, u16 s)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 bc;
@@ -472,7 +472,7 @@ u16 cmp_word(u16 d, u16 s)
 REMARKS:
 Implements the CMP instruction and side effects.
 ****************************************************************************/
-u32 cmp_long(u32 d, u32 s)
+u32 cmp_long(x86emu_t *emu, u32 d, u32 s)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 bc;
@@ -494,7 +494,7 @@ u32 cmp_long(u32 d, u32 s)
 REMARKS:
 Implements the DAA instruction and side effects.
 ****************************************************************************/
-u8 daa_byte(u8 d)
+u8 daa_byte(x86emu_t *emu, u8 d)
 {
 	u32 res = d;
 	if ((d & 0xf) > 9 || ACCESS_FLAG(F_AF)) {
@@ -515,7 +515,7 @@ u8 daa_byte(u8 d)
 REMARKS:
 Implements the DAS instruction and side effects.
 ****************************************************************************/
-u8 das_byte(u8 d)
+u8 das_byte(x86emu_t *emu, u8 d)
 {
 	if ((d & 0xf) > 9 || ACCESS_FLAG(F_AF)) {
 		d -= 6;
@@ -535,7 +535,7 @@ u8 das_byte(u8 d)
 REMARKS:
 Implements the DEC instruction and side effects.
 ****************************************************************************/
-u8 dec_byte(u8 d)
+u8 dec_byte(x86emu_t *emu, u8 d)
 {
     register u32 res;   /* all operands in native machine order */
     register u32 bc;
@@ -558,7 +558,7 @@ u8 dec_byte(u8 d)
 REMARKS:
 Implements the DEC instruction and side effects.
 ****************************************************************************/
-u16 dec_word(u16 d)
+u16 dec_word(x86emu_t *emu, u16 d)
 {
     register u32 res;   /* all operands in native machine order */
     register u32 bc;
@@ -581,7 +581,7 @@ u16 dec_word(u16 d)
 REMARKS:
 Implements the DEC instruction and side effects.
 ****************************************************************************/
-u32 dec_long(u32 d)
+u32 dec_long(x86emu_t *emu, u32 d)
 {
     register u32 res;   /* all operands in native machine order */
     register u32 bc;
@@ -604,7 +604,7 @@ u32 dec_long(u32 d)
 REMARKS:
 Implements the INC instruction and side effects.
 ****************************************************************************/
-u8 inc_byte(u8 d)
+u8 inc_byte(x86emu_t *emu, u8 d)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 cc;
@@ -625,7 +625,7 @@ u8 inc_byte(u8 d)
 REMARKS:
 Implements the INC instruction and side effects.
 ****************************************************************************/
-u16 inc_word(u16 d)
+u16 inc_word(x86emu_t *emu, u16 d)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 cc;
@@ -646,7 +646,7 @@ u16 inc_word(u16 d)
 REMARKS:
 Implements the INC instruction and side effects.
 ****************************************************************************/
-u32 inc_long(u32 d)
+u32 inc_long(x86emu_t *emu, u32 d)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 cc;
@@ -667,7 +667,7 @@ u32 inc_long(u32 d)
 REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
-u8 or_byte(u8 d, u8 s)
+u8 or_byte(x86emu_t *emu, u8 d, u8 s)
 {
 	register u8 res;    /* all operands in native machine order */
 
@@ -685,7 +685,7 @@ u8 or_byte(u8 d, u8 s)
 REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
-u16 or_word(u16 d, u16 s)
+u16 or_word(x86emu_t *emu, u16 d, u16 s)
 {
 	register u16 res;   /* all operands in native machine order */
 
@@ -704,7 +704,7 @@ u16 or_word(u16 d, u16 s)
 REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
-u32 or_long(u32 d, u32 s)
+u32 or_long(x86emu_t *emu, u32 d, u32 s)
 {
 	register u32 res;   /* all operands in native machine order */
 
@@ -724,7 +724,7 @@ u32 or_long(u32 d, u32 s)
 REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
-u8 neg_byte(u8 s)
+u8 neg_byte(x86emu_t *emu, u8 s)
 {
     register u8 res;
     register u8 bc;
@@ -749,7 +749,7 @@ u8 neg_byte(u8 s)
 REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
-u16 neg_word(u16 s)
+u16 neg_word(x86emu_t *emu, u16 s)
 {
 	register u16 res;
 	register u16 bc;
@@ -775,7 +775,7 @@ u16 neg_word(u16 s)
 REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
-u32 neg_long(u32 s)
+u32 neg_long(x86emu_t *emu, u32 s)
 {
 	register u32 res;
 	register u32 bc;
@@ -801,7 +801,7 @@ u32 neg_long(u32 s)
 REMARKS:
 Implements the NOT instruction and side effects.
 ****************************************************************************/
-u8 not_byte(u8 s)
+u8 not_byte(x86emu_t *emu, u8 s)
 {
 	return ~s;
 }
@@ -810,7 +810,7 @@ u8 not_byte(u8 s)
 REMARKS:
 Implements the NOT instruction and side effects.
 ****************************************************************************/
-u16 not_word(u16 s)
+u16 not_word(x86emu_t *emu, u16 s)
 {
 	return ~s;
 }
@@ -819,7 +819,7 @@ u16 not_word(u16 s)
 REMARKS:
 Implements the NOT instruction and side effects.
 ****************************************************************************/
-u32 not_long(u32 s)
+u32 not_long(x86emu_t *emu, u32 s)
 {
 	return ~s;
 }
@@ -828,7 +828,7 @@ u32 not_long(u32 s)
 REMARKS:
 Implements the RCL instruction and side effects.
 ****************************************************************************/
-u8 rcl_byte(u8 d, u8 s)
+u8 rcl_byte(x86emu_t *emu, u8 d, u8 s)
 {
     register unsigned int res, cnt, mask, cf;
 
@@ -901,7 +901,7 @@ u8 rcl_byte(u8 d, u8 s)
 REMARKS:
 Implements the RCL instruction and side effects.
 ****************************************************************************/
-u16 rcl_word(u16 d, u8 s)
+u16 rcl_word(x86emu_t *emu, u16 d, u8 s)
 {
 	register unsigned int res, cnt, mask, cf;
 
@@ -925,7 +925,7 @@ u16 rcl_word(u16 d, u8 s)
 REMARKS:
 Implements the RCL instruction and side effects.
 ****************************************************************************/
-u32 rcl_long(u32 d, u8 s)
+u32 rcl_long(x86emu_t *emu, u32 d, u8 s)
 {
 	register u32 res, cnt, mask, cf;
 
@@ -949,7 +949,7 @@ u32 rcl_long(u32 d, u8 s)
 REMARKS:
 Implements the RCR instruction and side effects.
 ****************************************************************************/
-u8 rcr_byte(u8 d, u8 s)
+u8 rcr_byte(x86emu_t *emu, u8 d, u8 s)
 {
 	u32	res, cnt;
 	u32	mask, cf, ocf = 0;
@@ -1033,7 +1033,7 @@ u8 rcr_byte(u8 d, u8 s)
 REMARKS:
 Implements the RCR instruction and side effects.
 ****************************************************************************/
-u16 rcr_word(u16 d, u8 s)
+u16 rcr_word(x86emu_t *emu, u16 d, u8 s)
 {
 	u32 res, cnt;
 	u32	mask, cf, ocf = 0;
@@ -1065,7 +1065,7 @@ u16 rcr_word(u16 d, u8 s)
 REMARKS:
 Implements the RCR instruction and side effects.
 ****************************************************************************/
-u32 rcr_long(u32 d, u8 s)
+u32 rcr_long(x86emu_t *emu, u32 d, u8 s)
 {
 	u32 res, cnt;
 	u32 mask, cf, ocf = 0;
@@ -1098,7 +1098,7 @@ u32 rcr_long(u32 d, u8 s)
 REMARKS:
 Implements the ROL instruction and side effects.
 ****************************************************************************/
-u8 rol_byte(u8 d, u8 s)
+u8 rol_byte(x86emu_t *emu, u8 d, u8 s)
 {
   unsigned cnt;
 
@@ -1123,7 +1123,7 @@ u8 rol_byte(u8 d, u8 s)
 REMARKS:
 Implements the ROL instruction and side effects.
 ****************************************************************************/
-u16 rol_word(u16 d, u8 s)
+u16 rol_word(x86emu_t *emu, u16 d, u8 s)
 {
   unsigned cnt;
 
@@ -1148,7 +1148,7 @@ u16 rol_word(u16 d, u8 s)
 REMARKS:
 Implements the ROL instruction and side effects.
 ****************************************************************************/
-u32 rol_long(u32 d, u8 s)
+u32 rol_long(x86emu_t *emu, u32 d, u8 s)
 {
   unsigned cnt;
 
@@ -1173,7 +1173,7 @@ u32 rol_long(u32 d, u8 s)
 REMARKS:
 Implements the ROR instruction and side effects.
 ****************************************************************************/
-u8 ror_byte(u8 d, u8 s)
+u8 ror_byte(x86emu_t *emu, u8 d, u8 s)
 {
   unsigned cnt;
 
@@ -1198,7 +1198,7 @@ u8 ror_byte(u8 d, u8 s)
 REMARKS:
 Implements the ROR instruction and side effects.
 ****************************************************************************/
-u16 ror_word(u16 d, u8 s)
+u16 ror_word(x86emu_t *emu, u16 d, u8 s)
 {
   unsigned cnt;
 
@@ -1223,7 +1223,7 @@ u16 ror_word(u16 d, u8 s)
 REMARKS:
 Implements the ROR instruction and side effects.
 ****************************************************************************/
-u32 ror_long(u32 d, u8 s)
+u32 ror_long(x86emu_t *emu, u32 d, u8 s)
 {
   unsigned cnt;
 
@@ -1248,7 +1248,7 @@ u32 ror_long(u32 d, u8 s)
 REMARKS:
 Implements the SHL instruction and side effects.
 ****************************************************************************/
-u8 shl_byte(u8 d, u8 s)
+u8 shl_byte(x86emu_t *emu, u8 d, u8 s)
 {
 	unsigned int cnt, res, cf;
 
@@ -1272,7 +1272,7 @@ u8 shl_byte(u8 d, u8 s)
 			CONDITIONAL_SET_FLAG(
 									(((res & 0x80) == 0x80) ^
 									 (ACCESS_FLAG(F_CF) != 0)),
-			/* was (M.x86.R_FLG&F_CF)==F_CF)), */
+			/* was (emu->x86.R_FLG&F_CF)==F_CF)), */
 									F_OF);
 		} else {
 			CLEAR_FLAG(F_OF);
@@ -1292,7 +1292,7 @@ u8 shl_byte(u8 d, u8 s)
 REMARKS:
 Implements the SHL instruction and side effects.
 ****************************************************************************/
-u16 shl_word(u16 d, u8 s)
+u16 shl_word(x86emu_t *emu, u16 d, u8 s)
 {
     unsigned int cnt, res, cf;
 
@@ -1332,7 +1332,7 @@ u16 shl_word(u16 d, u8 s)
 REMARKS:
 Implements the SHL instruction and side effects.
 ****************************************************************************/
-u32 shl_long(u32 d, u8 s)
+u32 shl_long(x86emu_t *emu, u32 d, u8 s)
 {
 	unsigned int cnt, res, cf;
 
@@ -1369,7 +1369,7 @@ u32 shl_long(u32 d, u8 s)
 REMARKS:
 Implements the SHR instruction and side effects.
 ****************************************************************************/
-u8 shr_byte(u8 d, u8 s)
+u8 shr_byte(x86emu_t *emu, u8 d, u8 s)
 {
 	unsigned int cnt, res, cf;
 
@@ -1406,7 +1406,7 @@ u8 shr_byte(u8 d, u8 s)
 REMARKS:
 Implements the SHR instruction and side effects.
 ****************************************************************************/
-u16 shr_word(u16 d, u8 s)
+u16 shr_word(x86emu_t *emu, u16 d, u8 s)
 {
 	unsigned int cnt, res, cf;
 
@@ -1443,7 +1443,7 @@ u16 shr_word(u16 d, u8 s)
 REMARKS:
 Implements the SHR instruction and side effects.
 ****************************************************************************/
-u32 shr_long(u32 d, u8 s)
+u32 shr_long(x86emu_t *emu, u32 d, u8 s)
 {
 	unsigned int cnt, res, cf;
 
@@ -1479,7 +1479,7 @@ u32 shr_long(u32 d, u8 s)
 REMARKS:
 Implements the SAR instruction and side effects.
 ****************************************************************************/
-u8 sar_byte(u8 d, u8 s)
+u8 sar_byte(x86emu_t *emu, u8 d, u8 s)
 {
 	unsigned int cnt, res, cf, mask, sf;
 
@@ -1519,7 +1519,7 @@ u8 sar_byte(u8 d, u8 s)
 REMARKS:
 Implements the SAR instruction and side effects.
 ****************************************************************************/
-u16 sar_word(u16 d, u8 s)
+u16 sar_word(x86emu_t *emu, u16 d, u8 s)
 {
     unsigned int cnt, res, cf, mask, sf;
 
@@ -1559,7 +1559,7 @@ u16 sar_word(u16 d, u8 s)
 REMARKS:
 Implements the SAR instruction and side effects.
 ****************************************************************************/
-u32 sar_long(u32 d, u8 s)
+u32 sar_long(x86emu_t *emu, u32 d, u8 s)
 {
     u32 cnt, res, cf, mask, sf;
 
@@ -1599,7 +1599,7 @@ u32 sar_long(u32 d, u8 s)
 REMARKS:
 Implements the SHLD instruction and side effects.
 ****************************************************************************/
-u16 shld_word (u16 d, u16 fill, u8 s)
+u16 shld_word (x86emu_t *emu, u16 d, u16 fill, u8 s)
 {
 	unsigned int cnt, res, cf;
 
@@ -1636,7 +1636,7 @@ u16 shld_word (u16 d, u16 fill, u8 s)
 REMARKS:
 Implements the SHLD instruction and side effects.
 ****************************************************************************/
-u32 shld_long (u32 d, u32 fill, u8 s)
+u32 shld_long (x86emu_t *emu, u32 d, u32 fill, u8 s)
 {
 	unsigned int cnt, res, cf;
 
@@ -1673,7 +1673,7 @@ u32 shld_long (u32 d, u32 fill, u8 s)
 REMARKS:
 Implements the SHRD instruction and side effects.
 ****************************************************************************/
-u16 shrd_word (u16 d, u16 fill, u8 s)
+u16 shrd_word (x86emu_t *emu, u16 d, u16 fill, u8 s)
 {
 	unsigned int cnt, res, cf;
 
@@ -1710,7 +1710,7 @@ u16 shrd_word (u16 d, u16 fill, u8 s)
 REMARKS:
 Implements the SHRD instruction and side effects.
 ****************************************************************************/
-u32 shrd_long (u32 d, u32 fill, u8 s)
+u32 shrd_long (x86emu_t *emu, u32 d, u32 fill, u8 s)
 {
 	unsigned int cnt, res, cf;
 
@@ -1746,7 +1746,7 @@ u32 shrd_long (u32 d, u32 fill, u8 s)
 REMARKS:
 Implements the SBB instruction and side effects.
 ****************************************************************************/
-u8 sbb_byte(u8 d, u8 s)
+u8 sbb_byte(x86emu_t *emu, u8 d, u8 s)
 {
     register u32 res;   /* all operands in native machine order */
     register u32 bc;
@@ -1771,7 +1771,7 @@ u8 sbb_byte(u8 d, u8 s)
 REMARKS:
 Implements the SBB instruction and side effects.
 ****************************************************************************/
-u16 sbb_word(u16 d, u16 s)
+u16 sbb_word(x86emu_t *emu, u16 d, u16 s)
 {
     register u32 res;   /* all operands in native machine order */
     register u32 bc;
@@ -1796,7 +1796,7 @@ u16 sbb_word(u16 d, u16 s)
 REMARKS:
 Implements the SBB instruction and side effects.
 ****************************************************************************/
-u32 sbb_long(u32 d, u32 s)
+u32 sbb_long(x86emu_t *emu, u32 d, u32 s)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 bc;
@@ -1821,7 +1821,7 @@ u32 sbb_long(u32 d, u32 s)
 REMARKS:
 Implements the SUB instruction and side effects.
 ****************************************************************************/
-u8 sub_byte(u8 d, u8 s)
+u8 sub_byte(x86emu_t *emu, u8 d, u8 s)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 bc;
@@ -1843,7 +1843,7 @@ u8 sub_byte(u8 d, u8 s)
 REMARKS:
 Implements the SUB instruction and side effects.
 ****************************************************************************/
-u16 sub_word(u16 d, u16 s)
+u16 sub_word(x86emu_t *emu, u16 d, u16 s)
 {
     register u32 res;   /* all operands in native machine order */
     register u32 bc;
@@ -1865,7 +1865,7 @@ u16 sub_word(u16 d, u16 s)
 REMARKS:
 Implements the SUB instruction and side effects.
 ****************************************************************************/
-u32 sub_long(u32 d, u32 s)
+u32 sub_long(x86emu_t *emu, u32 d, u32 s)
 {
 	register u32 res;   /* all operands in native machine order */
 	register u32 bc;
@@ -1887,7 +1887,7 @@ u32 sub_long(u32 d, u32 s)
 REMARKS:
 Implements the TEST instruction and side effects.
 ****************************************************************************/
-void test_byte(u8 d, u8 s)
+void test_byte(x86emu_t *emu, u8 d, u8 s)
 {
     register u32 res;   /* all operands in native machine order */
 
@@ -1905,7 +1905,7 @@ void test_byte(u8 d, u8 s)
 REMARKS:
 Implements the TEST instruction and side effects.
 ****************************************************************************/
-void test_word(u16 d, u16 s)
+void test_word(x86emu_t *emu, u16 d, u16 s)
 {
 	register u32 res;   /* all operands in native machine order */
 
@@ -1923,7 +1923,7 @@ void test_word(u16 d, u16 s)
 REMARKS:
 Implements the TEST instruction and side effects.
 ****************************************************************************/
-void test_long(u32 d, u32 s)
+void test_long(x86emu_t *emu, u32 d, u32 s)
 {
 	register u32 res;   /* all operands in native machine order */
 
@@ -1941,7 +1941,7 @@ void test_long(u32 d, u32 s)
 REMARKS:
 Implements the XOR instruction and side effects.
 ****************************************************************************/
-u8 xor_byte(u8 d, u8 s)
+u8 xor_byte(x86emu_t *emu, u8 d, u8 s)
 {
 	register u8 res;    /* all operands in native machine order */
 
@@ -1959,7 +1959,7 @@ u8 xor_byte(u8 d, u8 s)
 REMARKS:
 Implements the XOR instruction and side effects.
 ****************************************************************************/
-u16 xor_word(u16 d, u16 s)
+u16 xor_word(x86emu_t *emu, u16 d, u16 s)
 {
 	register u16 res;   /* all operands in native machine order */
 
@@ -1977,7 +1977,7 @@ u16 xor_word(u16 d, u16 s)
 REMARKS:
 Implements the XOR instruction and side effects.
 ****************************************************************************/
-u32 xor_long(u32 d, u32 s)
+u32 xor_long(x86emu_t *emu, u32 d, u32 s)
 {
 	register u32 res;   /* all operands in native machine order */
 
@@ -1995,13 +1995,13 @@ u32 xor_long(u32 d, u32 s)
 REMARKS:
 Implements the IMUL instruction and side effects.
 ****************************************************************************/
-void imul_byte(u8 s)
+void imul_byte(x86emu_t *emu, u8 s)
 {
-	s16 res = (s16)((s8)M.x86.R_AL * (s8)s);
+	s16 res = (s16)((s8)emu->x86.R_AL * (s8)s);
 
-	M.x86.R_AX = res;
-	if (((M.x86.R_AL & 0x80) == 0 && M.x86.R_AH == 0x00) ||
-		((M.x86.R_AL & 0x80) != 0 && M.x86.R_AH == 0xFF)) {
+	emu->x86.R_AX = res;
+	if (((emu->x86.R_AL & 0x80) == 0 && emu->x86.R_AH == 0x00) ||
+		((emu->x86.R_AL & 0x80) != 0 && emu->x86.R_AH == 0xFF)) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
 	} else {
@@ -2014,14 +2014,14 @@ void imul_byte(u8 s)
 REMARKS:
 Implements the IMUL instruction and side effects.
 ****************************************************************************/
-void imul_word(u16 s)
+void imul_word(x86emu_t *emu, u16 s)
 {
-	s32 res = (s16)M.x86.R_AX * (s16)s;
+	s32 res = (s16)emu->x86.R_AX * (s16)s;
 
-	M.x86.R_AX = (u16)res;
-	M.x86.R_DX = (u16)(res >> 16);
-	if (((M.x86.R_AX & 0x8000) == 0 && M.x86.R_DX == 0x00) ||
-		((M.x86.R_AX & 0x8000) != 0 && M.x86.R_DX == 0xFF)) {
+	emu->x86.R_AX = (u16)res;
+	emu->x86.R_DX = (u16)(res >> 16);
+	if (((emu->x86.R_AX & 0x8000) == 0 && emu->x86.R_DX == 0x00) ||
+		((emu->x86.R_AX & 0x8000) != 0 && emu->x86.R_DX == 0xFF)) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
 	} else {
@@ -2072,11 +2072,11 @@ void imul_long_direct(u32 *res_lo, u32* res_hi,u32 d, u32 s)
 REMARKS:
 Implements the IMUL instruction and side effects.
 ****************************************************************************/
-void imul_long(u32 s)
+void imul_long(x86emu_t *emu, u32 s)
 {
-	imul_long_direct(&M.x86.R_EAX,&M.x86.R_EDX,M.x86.R_EAX,s);
-	if (((M.x86.R_EAX & 0x80000000) == 0 && M.x86.R_EDX == 0x00) ||
-		((M.x86.R_EAX & 0x80000000) != 0 && M.x86.R_EDX == 0xFF)) {
+	imul_long_direct(&emu->x86.R_EAX,&emu->x86.R_EDX,emu->x86.R_EAX,s);
+	if (((emu->x86.R_EAX & 0x80000000) == 0 && emu->x86.R_EDX == 0x00) ||
+		((emu->x86.R_EAX & 0x80000000) != 0 && emu->x86.R_EDX == 0xFF)) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
 	} else {
@@ -2089,12 +2089,12 @@ void imul_long(u32 s)
 REMARKS:
 Implements the MUL instruction and side effects.
 ****************************************************************************/
-void mul_byte(u8 s)
+void mul_byte(x86emu_t *emu, u8 s)
 {
-	u16 res = (u16)(M.x86.R_AL * s);
+	u16 res = (u16)(emu->x86.R_AL * s);
 
-	M.x86.R_AX = res;
-	if (M.x86.R_AH == 0) {
+	emu->x86.R_AX = res;
+	if (emu->x86.R_AH == 0) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
 	} else {
@@ -2107,13 +2107,13 @@ void mul_byte(u8 s)
 REMARKS:
 Implements the MUL instruction and side effects.
 ****************************************************************************/
-void mul_word(u16 s)
+void mul_word(x86emu_t *emu, u16 s)
 {
-	u32 res = M.x86.R_AX * s;
+	u32 res = emu->x86.R_AX * s;
 
-	M.x86.R_AX = (u16)res;
-	M.x86.R_DX = (u16)(res >> 16);
-	if (M.x86.R_DX == 0) {
+	emu->x86.R_AX = (u16)res;
+	emu->x86.R_DX = (u16)(res >> 16);
+	if (emu->x86.R_DX == 0) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
     } else {
@@ -2126,19 +2126,19 @@ void mul_word(u16 s)
 REMARKS:
 Implements the MUL instruction and side effects.
 ****************************************************************************/
-void mul_long(u32 s)
+void mul_long(x86emu_t *emu, u32 s)
 {
 #ifdef	__HAS_LONG_LONG__
-	u64 res = (u32)M.x86.R_EAX * (u32)s;
+	u64 res = (u32)emu->x86.R_EAX * (u32)s;
 
-	M.x86.R_EAX = (u32)res;
-	M.x86.R_EDX = (u32)(res >> 32);
+	emu->x86.R_EAX = (u32)res;
+	emu->x86.R_EDX = (u32)(res >> 32);
 #else
 	u32	a,a_lo,a_hi;
 	u32	s_lo,s_hi;
 	u32	rlo_lo,rlo_hi,rhi_lo;
 
-	a = M.x86.R_EAX;
+	a = emu->x86.R_EAX;
 	a_lo = a & 0xFFFF;
 	a_hi = a >> 16;
 	s_lo = s & 0xFFFF;
@@ -2146,11 +2146,11 @@ void mul_long(u32 s)
 	rlo_lo = a_lo * s_lo;
 	rlo_hi = (a_hi * s_lo + a_lo * s_hi) + (rlo_lo >> 16);
 	rhi_lo = a_hi * s_hi + (rlo_hi >> 16);
-	M.x86.R_EAX = (rlo_hi << 16) | (rlo_lo & 0xFFFF);
-	M.x86.R_EDX = rhi_lo;
+	emu->x86.R_EAX = (rlo_hi << 16) | (rlo_lo & 0xFFFF);
+	emu->x86.R_EDX = rhi_lo;
 #endif
 
-	if (M.x86.R_EDX == 0) {
+	if (emu->x86.R_EDX == 0) {
 		CLEAR_FLAG(F_CF);
 		CLEAR_FLAG(F_OF);
 	} else {
@@ -2163,42 +2163,42 @@ void mul_long(u32 s)
 REMARKS:
 Implements the IDIV instruction and side effects.
 ****************************************************************************/
-void idiv_byte(u8 s)
+void idiv_byte(x86emu_t *emu, u8 s)
 {
     s32 dvd, div, mod;
 
-	dvd = (s16)M.x86.R_AX;
+	dvd = (s16)emu->x86.R_AX;
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
         return;
 	}
 	div = dvd / (s8)s;
 	mod = dvd % (s8)s;
 	if (abs(div) > 0x7f) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
-	M.x86.R_AL = (s8) div;
-	M.x86.R_AH = (s8) mod;
+	emu->x86.R_AL = (s8) div;
+	emu->x86.R_AH = (s8) mod;
 }
 
 /****************************************************************************
 REMARKS:
 Implements the IDIV instruction and side effects.
 ****************************************************************************/
-void idiv_word(u16 s)
+void idiv_word(x86emu_t *emu, u16 s)
 {
 	s32 dvd, div, mod;
 
-	dvd = (((s32)M.x86.R_DX) << 16) | M.x86.R_AX;
+	dvd = (((s32)emu->x86.R_DX) << 16) | emu->x86.R_AX;
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	div = dvd / (s16)s;
 	mod = dvd % (s16)s;
 	if (abs(div) > 0x7fff) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	CLEAR_FLAG(F_CF);
@@ -2206,34 +2206,34 @@ void idiv_word(u16 s)
 	CONDITIONAL_SET_FLAG(div == 0, F_ZF);
 	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
 
-	M.x86.R_AX = (u16)div;
-	M.x86.R_DX = (u16)mod;
+	emu->x86.R_AX = (u16)div;
+	emu->x86.R_DX = (u16)mod;
 }
 
 /****************************************************************************
 REMARKS:
 Implements the IDIV instruction and side effects.
 ****************************************************************************/
-void idiv_long(u32 s)
+void idiv_long(x86emu_t *emu, u32 s)
 {
 #ifdef	__HAS_LONG_LONG__
 	s64 dvd, div, mod;
 
-	dvd = (((s64)M.x86.R_EDX) << 32) | M.x86.R_EAX;
+	dvd = (((s64)emu->x86.R_EDX) << 32) | emu->x86.R_EAX;
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	div = dvd / (s32)s;
 	mod = dvd % (s32)s;
 	if (abs(div) > 0x7fffffff) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 #else
 	s32 div = 0, mod;
-	s32 h_dvd = M.x86.R_EDX;
-	u32 l_dvd = M.x86.R_EAX;
+	s32 h_dvd = emu->x86.R_EDX;
+	u32 l_dvd = emu->x86.R_EAX;
 	u32 abs_s = s & 0x7FFFFFFF;
 	u32 abs_h_dvd = h_dvd & 0x7FFFFFFF;
 	u32 h_s = abs_s >> 1;
@@ -2242,7 +2242,7 @@ void idiv_long(u32 s)
 	int carry;
 
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	do {
@@ -2266,7 +2266,7 @@ void idiv_long(u32 s)
 	} while (counter > -1);
 	/* overflow */
 	if (abs_h_dvd || (l_dvd > abs_s)) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	/* sign */
@@ -2280,50 +2280,50 @@ void idiv_long(u32 s)
 	SET_FLAG(F_ZF);
 	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
 
-	M.x86.R_EAX = (u32)div;
-	M.x86.R_EDX = (u32)mod;
+	emu->x86.R_EAX = (u32)div;
+	emu->x86.R_EDX = (u32)mod;
 }
 
 /****************************************************************************
 REMARKS:
 Implements the DIV instruction and side effects.
 ****************************************************************************/
-void div_byte(u8 s)
+void div_byte(x86emu_t *emu, u8 s)
 {
 	u32 dvd, div, mod;
 
-	dvd = M.x86.R_AX;
+	dvd = emu->x86.R_AX;
     if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
         return;
     }
 	div = dvd / (u8)s;
 	mod = dvd % (u8)s;
 	if (abs(div) > 0xff) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
         return;
 	}
-	M.x86.R_AL = (u8)div;
-	M.x86.R_AH = (u8)mod;
+	emu->x86.R_AL = (u8)div;
+	emu->x86.R_AH = (u8)mod;
 }
 
 /****************************************************************************
 REMARKS:
 Implements the DIV instruction and side effects.
 ****************************************************************************/
-void div_word(u16 s)
+void div_word(x86emu_t *emu, u16 s)
 {
 	u32 dvd, div, mod;
 
-	dvd = (((u32)M.x86.R_DX) << 16) | M.x86.R_AX;
+	dvd = (((u32)emu->x86.R_DX) << 16) | emu->x86.R_AX;
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
         return;
     }
 	div = dvd / (u16)s;
 	mod = dvd % (u16)s;
 	if (abs(div) > 0xffff) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	CLEAR_FLAG(F_CF);
@@ -2331,34 +2331,34 @@ void div_word(u16 s)
 	CONDITIONAL_SET_FLAG(div == 0, F_ZF);
 	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
 
-	M.x86.R_AX = (u16)div;
-	M.x86.R_DX = (u16)mod;
+	emu->x86.R_AX = (u16)div;
+	emu->x86.R_DX = (u16)mod;
 }
 
 /****************************************************************************
 REMARKS:
 Implements the DIV instruction and side effects.
 ****************************************************************************/
-void div_long(u32 s)
+void div_long(x86emu_t *emu, u32 s)
 {
 #ifdef	__HAS_LONG_LONG__
 	u64 dvd, div, mod;
 
-	dvd = (((u64)M.x86.R_EDX) << 32) | M.x86.R_EAX;
+	dvd = (((u64)emu->x86.R_EDX) << 32) | emu->x86.R_EAX;
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	div = dvd / (u32)s;
 	mod = dvd % (u32)s;
 	if (abs(div) > 0xffffffff) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 #else
 	s32 div = 0, mod;
-	s32 h_dvd = M.x86.R_EDX;
-	u32 l_dvd = M.x86.R_EAX;
+	s32 h_dvd = emu->x86.R_EDX;
+	u32 l_dvd = emu->x86.R_EAX;
 
 	u32 h_s = s;
 	u32 l_s = 0;
@@ -2366,7 +2366,7 @@ void div_long(u32 s)
 	int carry;
 		
 	if (s == 0) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	do {
@@ -2390,7 +2390,7 @@ void div_long(u32 s)
 	} while (counter > -1);
 	/* overflow */
 	if (h_dvd || (l_dvd > s)) {
-		INTR_RAISE_DIV0(&M);
+		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	mod = l_dvd;
@@ -2401,15 +2401,15 @@ void div_long(u32 s)
 	SET_FLAG(F_ZF);
 	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
 
-	M.x86.R_EAX = (u32)div;
-	M.x86.R_EDX = (u32)mod;
+	emu->x86.R_EAX = (u32)div;
+	emu->x86.R_EDX = (u32)mod;
 }
 
 /****************************************************************************
 REMARKS:
 Implements the IN string instruction and side effects.
 ****************************************************************************/
-void ins(int size)
+void ins(x86emu_t *emu, int size)
 {
   s32 inc;
   u32 count;
@@ -2418,26 +2418,26 @@ void ins(int size)
 
   if(MODE_ADDR32) {
     if(MODE_REP) {
-      count = M.x86.R_ECX;
-      M.x86.R_ECX = 0;
+      count = emu->x86.R_ECX;
+      emu->x86.R_ECX = 0;
 
       switch(size) {
         case 1:
           while(count--) {
-            store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_byte(M.x86.R_DX));
-            M.x86.R_EDI += inc;
+            store_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_byte(emu, emu->x86.R_DX));
+            emu->x86.R_EDI += inc;
           }
           break;
         case 2:
           while(count--) {
-            store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_word(M.x86.R_DX));
-            M.x86.R_EDI += inc;
+            store_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_word(emu, emu->x86.R_DX));
+            emu->x86.R_EDI += inc;
           }
           break;
         case 4:
           while(count--) {
-            store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_long(M.x86.R_DX));
-            M.x86.R_EDI += inc;
+            store_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_long(emu, emu->x86.R_DX));
+            emu->x86.R_EDI += inc;
           }
           break;
       }
@@ -2445,40 +2445,40 @@ void ins(int size)
     else {
       switch(size) {
         case 1:
-          store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_byte(M.x86.R_DX));
+          store_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_byte(emu, emu->x86.R_DX));
           break;
         case 2:
-          store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_word(M.x86.R_DX));
+          store_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_word(emu, emu->x86.R_DX));
           break;
         case 4:
-          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_EDI, fetch_io_long(M.x86.R_DX));
+          store_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_long(emu, emu->x86.R_DX));
           break;
       }
-       M.x86.R_EDI += inc;
+       emu->x86.R_EDI += inc;
     }
   }
   else {
     if(MODE_REP) {
-      count = M.x86.R_CX;
-      M.x86.R_CX = 0;
+      count = emu->x86.R_CX;
+      emu->x86.R_CX = 0;
 
       switch(size) {
         case 1:
           while(count--) {
-            store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_byte(M.x86.R_DX));
-            M.x86.R_DI += inc;
+            store_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_byte(emu, emu->x86.R_DX));
+            emu->x86.R_DI += inc;
           }
           break;
         case 2:
           while(count--) {
-            store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_word(M.x86.R_DX));
-            M.x86.R_DI += inc;
+            store_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_word(emu, emu->x86.R_DX));
+            emu->x86.R_DI += inc;
           }
           break;
         case 4:
           while(count--) {
-            store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_long(M.x86.R_DX));
-            M.x86.R_DI += inc;
+            store_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_long(emu, emu->x86.R_DX));
+            emu->x86.R_DI += inc;
           }
           break;
       }
@@ -2486,16 +2486,16 @@ void ins(int size)
     else {
       switch(size) {
         case 1:
-          store_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_byte(M.x86.R_DX));
+          store_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_byte(emu, emu->x86.R_DX));
           break;
         case 2:
-          store_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_word(M.x86.R_DX));
+          store_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_word(emu, emu->x86.R_DX));
           break;
         case 4:
-          store_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_DI, fetch_io_long(M.x86.R_DX));
+          store_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_long(emu, emu->x86.R_DX));
           break;
       }
-      M.x86.R_DI += inc;
+      emu->x86.R_DI += inc;
     }
   }
 }
@@ -2504,7 +2504,7 @@ void ins(int size)
 REMARKS:
 Implements the OUT string instruction and side effects.
 ****************************************************************************/
-void outs(int size)
+void outs(x86emu_t *emu, int size)
 {
   s32 inc;
   u32 count;
@@ -2513,26 +2513,26 @@ void outs(int size)
 
   if(MODE_ADDR32) {
     if(MODE_REP) {
-      count = M.x86.R_ECX;
-      M.x86.R_ECX = 0;
+      count = emu->x86.R_ECX;
+      emu->x86.R_ECX = 0;
    
       switch(size) {
         case 1:
           while(count--) {
-            store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
-            M.x86.R_ESI += inc;
+            store_io_byte(emu, emu->x86.R_DX, fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
+            emu->x86.R_ESI += inc;
           }
           break;
         case 2:
           while(count--) {
-            store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
-            M.x86.R_ESI += inc;
+            store_io_word(emu, emu->x86.R_DX, fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
+            emu->x86.R_ESI += inc;
           }
           break;
         case 4:
           while(count--) {
-            store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
-            M.x86.R_ESI += inc;
+            store_io_long(emu, emu->x86.R_DX, fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
+            emu->x86.R_ESI += inc;
           }
           break;
       }
@@ -2540,40 +2540,40 @@ void outs(int size)
     else {
       switch(size) {
         case 1:
-          store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          store_io_byte(emu, emu->x86.R_DX, fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
           break;
         case 2:
-          store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          store_io_word(emu, emu->x86.R_DX, fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
           break;
         case 4:
-          store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_ESI));
+          store_io_long(emu, emu->x86.R_DX, fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
           break;
       }
-      M.x86.R_SI += inc;
+      emu->x86.R_SI += inc;
     }
   }
   else {
     if(MODE_REP) {
-      count = M.x86.R_CX;
-      M.x86.R_CX = 0;
+      count = emu->x86.R_CX;
+      emu->x86.R_CX = 0;
    
       switch(size) {
         case 1:
           while(count--) {
-            store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-            M.x86.R_SI += inc;
+            store_io_byte(emu, emu->x86.R_DX, fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
+            emu->x86.R_SI += inc;
           }
           break;
         case 2:
           while(count--) {
-            store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-            M.x86.R_SI += inc;
+            store_io_word(emu, emu->x86.R_DX, fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
+            emu->x86.R_SI += inc;
           }
           break;
         case 4:
           while(count--) {
-            store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
-            M.x86.R_SI += inc;
+            store_io_long(emu, emu->x86.R_DX, fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
+            emu->x86.R_SI += inc;
           }
           break;
       }
@@ -2581,16 +2581,16 @@ void outs(int size)
     else {
       switch(size) {
         case 1:
-          store_io_byte(M.x86.R_DX, fetch_data_byte_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          store_io_byte(emu, emu->x86.R_DX, fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
           break;
         case 2:
-          store_io_word(M.x86.R_DX, fetch_data_word_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          store_io_word(emu, emu->x86.R_DX, fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
           break;
         case 4:
-          store_io_long(M.x86.R_DX, fetch_data_long_abs(M.x86.seg + R_ES_INDEX, M.x86.R_SI));
+          store_io_long(emu, emu->x86.R_DX, fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
           break;
       }
-      M.x86.R_SI += inc;
+      emu->x86.R_SI += inc;
     }
   }
 }
@@ -2599,15 +2599,15 @@ void outs(int size)
 REMARKS:
 Pushes a word onto the stack.
 ****************************************************************************/
-void push_word(u16 w)
+void push_word(x86emu_t *emu, u16 w)
 {
   if(MODE_STACK32) {
-    M.x86.R_ESP -= 2;
-    store_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP, w);
+    emu->x86.R_ESP -= 2;
+    store_data_word_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_ESP, w);
   }
   else {
-    M.x86.R_SP -= 2;
-    store_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP, w);
+    emu->x86.R_SP -= 2;
+    store_data_word_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_SP, w);
   }
 }
 
@@ -2615,15 +2615,15 @@ void push_word(u16 w)
 REMARKS:
 Pushes a long onto the stack.
 ****************************************************************************/
-void push_long(u32 w)
+void push_long(x86emu_t *emu, u32 w)
 {
   if(MODE_STACK32) {
-    M.x86.R_ESP -= 4;
-    store_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP, w);
+    emu->x86.R_ESP -= 4;
+    store_data_long_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_ESP, w);
   }
   else {
-    M.x86.R_SP -= 4;
-    store_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP, w);
+    emu->x86.R_SP -= 4;
+    store_data_long_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_SP, w);
   }
 }
 
@@ -2631,17 +2631,17 @@ void push_long(u32 w)
 REMARKS:
 Pops a word from the stack.
 ****************************************************************************/
-u16 pop_word(void)
+u16 pop_word(x86emu_t *emu)
 {
   u16 res;
 
   if(MODE_STACK32) {
-    res = fetch_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP);
-    M.x86.R_ESP += 2;
+    res = fetch_data_word_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_ESP);
+    emu->x86.R_ESP += 2;
   }
   else {
-    res = fetch_data_word_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP);
-    M.x86.R_SP += 2;
+    res = fetch_data_word_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_SP);
+    emu->x86.R_SP += 2;
   }
 
   return res;
@@ -2651,27 +2651,27 @@ u16 pop_word(void)
 REMARKS:
 Pops a long from the stack.
 ****************************************************************************/
-u32 pop_long(void)
+u32 pop_long(x86emu_t *emu)
 {
   u32 res;
 
   if(MODE_STACK32) {
-    res = fetch_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_ESP);
-    M.x86.R_ESP += 4;
+    res = fetch_data_long_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_ESP);
+    emu->x86.R_ESP += 4;
   }
   else {
-    res = fetch_data_long_abs(M.x86.seg + R_SS_INDEX, M.x86.R_SP);
-    M.x86.R_SP += 4;
+    res = fetch_data_long_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_SP);
+    emu->x86.R_SP += 4;
   }
 
   return res;
 }
 
 
-int eval_condition(unsigned type)
+int eval_condition(x86emu_t *emu, unsigned type)
 {
   int cond = 0;
-  unsigned flags = M.x86.R_EFLG;
+  unsigned flags = emu->x86.R_EFLG;
 
   switch(type >> 1) {
     case 0:	/* O */

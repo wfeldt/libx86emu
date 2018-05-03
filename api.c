@@ -266,8 +266,6 @@ void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flu
 
 unsigned x86emu_clear_log(x86emu_t *emu, int flush)
 {
-  if(!emu) emu = &M;
-
   if(flush && emu->log.flush) {
     if(emu->log.ptr && emu->log.ptr != emu->log.buf) {
       emu->log.flush(emu, emu->log.buf, emu->log.ptr - emu->log.buf);
@@ -311,7 +309,7 @@ void x86emu_log(x86emu_t *emu, const char *format, ...)
  *
  *   bit 8: show ascii, too
  */
-static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, char *str_attr, int flags)
+static void dump_data(x86emu_t *emu, unsigned char *data, unsigned char *attr, char *str_data, char *str_attr, int flags)
 {
   unsigned u, u1, flag_ascii;
   char c;
@@ -330,7 +328,7 @@ static void dump_data(unsigned char *data, unsigned char *attr, char *str_data, 
       (flags == 2 && (attr[u] & X86EMU_ACC_INVALID))
     ) {
       ok = 1;
-      decode_hex2(&str_data, u1 = data[u]);
+      decode_hex2(emu, &str_data, u1 = data[u]);
 
       c = (attr[u] & X86EMU_PERM_R) ? (attr[u] & X86EMU_ACC_R) ? 'R' : 'r' : ' ';
       *str_attr++ = c;
@@ -417,7 +415,7 @@ void x86emu_dump(x86emu_t *emu, int flags)
             else {
               memset(def_attr, page.def_attr, LINE_LEN);
             }
-            dump_data(def_data, def_attr, str_data, str_attr, dump_flags);
+            dump_data(emu, def_data, def_attr, str_data, str_attr, dump_flags);
             if(*str_data) {
               addr = (((pdir_idx << X86EMU_PTABLE_BITS) + u1) << X86EMU_PAGE_BITS) + u2;
               x86emu_log(emu, "%08x: %s\n", addr, str_data);

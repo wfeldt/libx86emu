@@ -84,8 +84,6 @@ Flags:
 
 Return value indicates why `x86emu_run()` stopped (see flags).
 
-Note: copies emu to global variable x86emu while running!
-
 ### x86emu_stop
 
 Stop emulation
