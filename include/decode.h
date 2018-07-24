@@ -107,7 +107,7 @@ void decode_hex2s(x86emu_t *emu, char **p, s32 ofs) L_SYM;
 void decode_hex4s(x86emu_t *emu, char **p, s32 ofs) L_SYM;
 void decode_hex8s(x86emu_t *emu, char **p, s32 ofs) L_SYM;
 
-void decode_descriptor(x86emu_t *emu, descr_t *d, u32 dl, u32 dh);
+void decode_descriptor(x86emu_t *emu, descr_t *d, u32 dl, u32 dh) L_SYM;
 
 void emu_process_debug(x86emu_t *emu, unsigned start, unsigned len) L_SYM;
 
