@@ -296,7 +296,7 @@ void x86emu_stop(x86emu_t *emu)
 REMARKS:
 Handles any pending asychronous interrupts.
 ****************************************************************************/
-void handle_interrupt(emu)
+void handle_interrupt(x86emu_t *emu)
 {
   char **p = &emu->log.ptr;
   unsigned lf;
@@ -1627,7 +1627,7 @@ u32 decode_sib_address(x86emu_t *emu, int sib, int mod)
 }
 
 
-void log_code(emu)
+void log_code(x86emu_t *emu)
 {
   unsigned u, lf;
   char **p = &emu->log.ptr;
@@ -1671,7 +1671,7 @@ void log_code(emu)
 }
 
 
-void log_regs(emu)
+void log_regs(x86emu_t *emu)
 {
   char **p = &emu->log.ptr;
   unsigned lf;
