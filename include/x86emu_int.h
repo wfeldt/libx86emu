@@ -43,8 +43,6 @@
 // exported symbol - all others are not exported by the library
 #define API_SYM			__attribute__((visibility("default")))
 
-#define M x86emu
-
 #include "x86emu.h"
 #include "decode.h"
 #include "ops.h"
