@@ -18,6 +18,14 @@ The library lets you
     - trace memory and i/o accesses
     - provide statistics about accessed memory locations, i/o ports, and interrupts
 
+## Major version 1 vs. version 2
+
+`libx86emu.so.2` uses the same API as `libx86emu.so.1`. The major difference is that version 2 is re-entrant.
+
+Version 1 relies internally on a global variable `x86emu` holding the emulator state. It has been eliminated in version 2.
+
+Programs should work fine with both variants without any changes.
+
 ## Downloads
 
 Get the latest version from the [openSUSE Build Service](https://software.opensuse.org/package/libx86emu).
@@ -83,8 +91,6 @@ Flags:
 * `X86EMU_RUN_MAX_INSTR`: set `emu->max_instr` to max. instructions to emulate.
 
 Return value indicates why `x86emu_run()` stopped (see flags).
-
-Note: copies emu to global variable x86emu while running!
 
 ### x86emu_stop
 
