@@ -40,7 +40,8 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define L_SYM			__attribute__((visibility("internal")))
+// exported symbol - all others are not exported by the library
+#define API_SYM			__attribute__((visibility("default")))
 
 #define M x86emu
 

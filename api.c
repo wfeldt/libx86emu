@@ -37,7 +37,7 @@
 #define LINE_LEN 16
 
 
-x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm)
+API_SYM x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm)
 {
   x86emu_t *emu = calloc(1, sizeof *emu);
 
@@ -57,7 +57,7 @@ x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm)
 }
 
 
-x86emu_t *x86emu_done(x86emu_t *emu)
+API_SYM x86emu_t *x86emu_done(x86emu_t *emu)
 {
   if(emu) {
     emu_mem_free(emu->mem);
@@ -78,7 +78,7 @@ x86emu_t *x86emu_done(x86emu_t *emu)
 }
 
 
-x86emu_t *x86emu_clone(x86emu_t *emu)
+API_SYM x86emu_t *x86emu_clone(x86emu_t *emu)
 {
   x86emu_t *new_emu = NULL;
 
@@ -107,7 +107,7 @@ x86emu_t *x86emu_clone(x86emu_t *emu)
 }
 
 
-void x86emu_reset(x86emu_t *emu)
+API_SYM void x86emu_reset(x86emu_t *emu)
 {
   x86emu_regs_t *x86 = &emu->x86;
 
@@ -141,7 +141,7 @@ void x86emu_reset(x86emu_t *emu)
 }
 
 
-x86emu_memio_handler_t x86emu_set_memio_handler(x86emu_t *emu, x86emu_memio_handler_t handler)
+API_SYM x86emu_memio_handler_t x86emu_set_memio_handler(x86emu_t *emu, x86emu_memio_handler_t handler)
 {
   x86emu_memio_handler_t old = NULL;
 
@@ -154,7 +154,7 @@ x86emu_memio_handler_t x86emu_set_memio_handler(x86emu_t *emu, x86emu_memio_hand
 }
 
 
-x86emu_intr_handler_t x86emu_set_intr_handler(x86emu_t *emu, x86emu_intr_handler_t handler)
+API_SYM x86emu_intr_handler_t x86emu_set_intr_handler(x86emu_t *emu, x86emu_intr_handler_t handler)
 {
   x86emu_intr_handler_t old = NULL;
 
@@ -167,7 +167,7 @@ x86emu_intr_handler_t x86emu_set_intr_handler(x86emu_t *emu, x86emu_intr_handler
 }
 
 
-x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code_handler_t handler)
+API_SYM x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code_handler_t handler)
 {
   x86emu_code_handler_t old = NULL;
 
@@ -180,7 +180,7 @@ x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code_handler
 }
 
 
-unsigned x86emu_read_byte(x86emu_t *emu, unsigned addr)
+API_SYM unsigned x86emu_read_byte(x86emu_t *emu, unsigned addr)
 {
   u32 val = 0xff;
 
@@ -190,7 +190,7 @@ unsigned x86emu_read_byte(x86emu_t *emu, unsigned addr)
 }
 
 
-unsigned x86emu_read_byte_noperm(x86emu_t *emu, unsigned addr)
+API_SYM unsigned x86emu_read_byte_noperm(x86emu_t *emu, unsigned addr)
 {
   u32 val = 0xff;
 
@@ -200,7 +200,7 @@ unsigned x86emu_read_byte_noperm(x86emu_t *emu, unsigned addr)
 }
 
 
-unsigned x86emu_read_word(x86emu_t *emu, unsigned addr)
+API_SYM unsigned x86emu_read_word(x86emu_t *emu, unsigned addr)
 {
   u32 val = 0xffff;
 
@@ -210,7 +210,7 @@ unsigned x86emu_read_word(x86emu_t *emu, unsigned addr)
 }
 
 
-unsigned x86emu_read_dword(x86emu_t *emu, unsigned addr)
+API_SYM unsigned x86emu_read_dword(x86emu_t *emu, unsigned addr)
 {
   u32 val = 0xffffffff;
 
@@ -220,7 +220,7 @@ unsigned x86emu_read_dword(x86emu_t *emu, unsigned addr)
 }
 
 
-void x86emu_write_byte(x86emu_t *emu, unsigned addr, unsigned val)
+API_SYM void x86emu_write_byte(x86emu_t *emu, unsigned addr, unsigned val)
 {
   u32 val32 = val;
 
@@ -228,7 +228,7 @@ void x86emu_write_byte(x86emu_t *emu, unsigned addr, unsigned val)
 }
 
 
-void x86emu_write_byte_noperm(x86emu_t *emu, unsigned addr, unsigned val)
+API_SYM void x86emu_write_byte_noperm(x86emu_t *emu, unsigned addr, unsigned val)
 {
   u32 val32 = val;
 
@@ -236,7 +236,7 @@ void x86emu_write_byte_noperm(x86emu_t *emu, unsigned addr, unsigned val)
 }
 
 
-void x86emu_write_word(x86emu_t *emu, unsigned addr, unsigned val)
+API_SYM void x86emu_write_word(x86emu_t *emu, unsigned addr, unsigned val)
 {
   u32 val32 = val;
 
@@ -244,7 +244,7 @@ void x86emu_write_word(x86emu_t *emu, unsigned addr, unsigned val)
 }
 
 
-void x86emu_write_dword(x86emu_t *emu, unsigned addr, unsigned val)
+API_SYM void x86emu_write_dword(x86emu_t *emu, unsigned addr, unsigned val)
 {
   u32 val32 = val;
 
@@ -252,7 +252,7 @@ void x86emu_write_dword(x86emu_t *emu, unsigned addr, unsigned val)
 }
 
 
-void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush)
+API_SYM void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush)
 {
   if(emu) {
     if(emu->log.buf) free(emu->log.buf);
@@ -264,7 +264,7 @@ void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flu
 }
 
 
-unsigned x86emu_clear_log(x86emu_t *emu, int flush)
+API_SYM unsigned x86emu_clear_log(x86emu_t *emu, int flush)
 {
   if(flush && emu->log.flush) {
     if(emu->log.ptr && emu->log.ptr != emu->log.buf) {
@@ -277,7 +277,7 @@ unsigned x86emu_clear_log(x86emu_t *emu, int flush)
 }
 
 
-void x86emu_log(x86emu_t *emu, const char *format, ...)
+API_SYM void x86emu_log(x86emu_t *emu, const char *format, ...)
 {
   va_list args;
   int size;
@@ -373,7 +373,7 @@ static void dump_data(x86emu_t *emu, unsigned char *data, unsigned char *attr, c
 }
 
 
-void x86emu_dump(x86emu_t *emu, int flags)
+API_SYM void x86emu_dump(x86emu_t *emu, int flags)
 {
   x86emu_mem_t *mem = emu->mem;
   mem2_pdir_t *pdir;

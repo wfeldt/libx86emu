@@ -5,6 +5,8 @@ INIT_FILES = $(addsuffix .init,$(basename $(wildcard *.tst)))
 RES_FILES  = $(addsuffix .result,$(basename $(wildcard *.tst)))
 TEST_OPTS  = --verbose --show code,regs,data,acc,io,ints,attr,time
 
+export LD_LIBRARY_PATH=..
+
 .PHONY: all test clean
 .SECONDARY: $(INIT_FILES)
 

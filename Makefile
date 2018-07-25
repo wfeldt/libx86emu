@@ -12,12 +12,9 @@ PREFIX  := libx86emu-$(VERSION)
 MAJOR_VERSION := $(shell $(GIT2LOG) --version VERSION ; cut -d . -f 1 VERSION)
 
 CC	= gcc
-CFLAGS	= -g -O2 -fPIC -fomit-frame-pointer -Wall
-ifneq ($(filter x86_64, $(ARCH)),)
-LIBDIR	= /usr/lib64
-else
-LIBDIR	= /usr/lib
-endif
+CFLAGS	= -g -O2 -fPIC -fvisibility=hidden -fomit-frame-pointer -Wall
+
+LIBDIR = /usr/lib$(shell ldd /bin/sh | grep -q /lib64/ && echo 64)
 LIBX86	= libx86emu
 
 CFILES	= $(wildcard *.c)
@@ -46,6 +43,8 @@ install: shared
 
 $(LIB_NAME): .depend $(OBJS)
 	$(CC) -shared -Wl,-soname,$(LIB_SONAME) $(OBJS) -o $(LIB_NAME)
+	@ln -snf $(LIB_NAME) $(LIB_SONAME)
+	@ln -snf $(LIB_SONAME) $(LIBX86).so
 
 test:
 	make -C test
@@ -63,7 +62,7 @@ archive: changelog
 clean:
 	make -C test clean
 	make -C demo clean
-	rm -f *.o *~ include/*~ *.so.* .depend
+	rm -f *.o *~ include/*~ *.so.* *.so .depend
 	rm -rf package
 
 ifneq "$(MAKECMDGOALS)" "clean"

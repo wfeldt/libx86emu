@@ -148,7 +148,7 @@ x86emu_mem_t *emu_mem_clone(x86emu_mem_t *mem)
 }
 
 
-void x86emu_reset_access_stats(x86emu_t *emu)
+API_SYM void x86emu_reset_access_stats(x86emu_t *emu)
 {
   mem2_pdir_t *pdir;
   mem2_ptable_t *ptable;
@@ -172,7 +172,7 @@ void x86emu_reset_access_stats(x86emu_t *emu)
 }
 
 
-void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
+API_SYM void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
 {
   if(!emu) return;
 
@@ -236,7 +236,7 @@ mem2_page_t *vm_get_page(x86emu_mem_t *mem, unsigned addr, int create)
 }
 
 
-void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
+API_SYM void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
 {
   x86emu_mem_t *mem;
   mem2_page_t *page;
@@ -284,7 +284,7 @@ void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm)
 }
 
 
-void x86emu_set_page(x86emu_t *emu, unsigned page, void *address)
+API_SYM void x86emu_set_page(x86emu_t *emu, unsigned page, void *address)
 {
   x86emu_mem_t *mem;
   mem2_page_t *p;

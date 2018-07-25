@@ -56,7 +56,7 @@ REMARKS:
 Main execution loop for the emulator. We return from here when the system
 halts, timeouts, or one of the conditions in flags are met.
 ****************************************************************************/
-unsigned x86emu_run(x86emu_t *emu, unsigned flags)
+API_SYM unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 {
   u8 op1, u_m1;
   s32 ofs32;
@@ -287,7 +287,7 @@ unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 REMARKS:
 Halts the system by setting the halted system flag.
 ****************************************************************************/
-void x86emu_stop(x86emu_t *emu)
+API_SYM void x86emu_stop(x86emu_t *emu)
 {
   emu->x86.mode |= _MODE_HALTED;
 }
@@ -325,7 +325,7 @@ void handle_interrupt(x86emu_t *emu)
 }
 
 
-void x86emu_intr_raise(x86emu_t *emu, u8 intr_nr, unsigned type, unsigned err)
+API_SYM void x86emu_intr_raise(x86emu_t *emu, u8 intr_nr, unsigned type, unsigned err)
 {
   if(emu && !emu->x86.intr_type) {
     emu->x86.intr_nr = intr_nr;
@@ -1895,7 +1895,7 @@ void decode_descriptor(x86emu_t *emu, descr_t *d, u32 dl, u32 dh)
 }
 
 
-void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val)
+API_SYM void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val)
 {
   int err = 1;
   unsigned ofs;
