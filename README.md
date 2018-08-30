@@ -38,7 +38,7 @@ The library is used by [hwinfo](https://github.com/openSUSE/hwinfo) to emulate V
 
 ## API functions
 
-### x86_new
+### x86emu_new
 
 Create new emulation object
 
@@ -119,7 +119,7 @@ Write to log
     void x86emu_log(x86emu_t *emu, const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 
 
-### x86emu_t
+### x86emu_clear_log
 
 Clear log
 
@@ -198,7 +198,7 @@ Reset memory access statistics
 
 Resets the `X86EMU_ACC_*` bits for the whole memory (see `x86emu_set_perm()`).
 
-### x86emu_code_handler
+### x86emu_set_code_handler
 
 Execution hook
 
@@ -209,7 +209,7 @@ If defined, the function is called before a new instruction is decoded and
 emulated. If logging is enabled the current cpu state has already been
 logged. If the function returns a value != 0, the emulation is stopped.
 
-### x86emu_intr_handler_t
+### x86emu_set_intr_handler
 
 Set interrupt handler
 
@@ -231,7 +231,7 @@ handling procedure. The handler should return 1 to indicate the interrupt
 handling is complete and the emulator can skip its own interrupt processing
 or 0 to indicate the emulator should continue with normal interrupt processing.
 
-### x86emu_memio_handler_t
+### x86emu_set_memio_handler
 
 Set alternative callback function that handles memory and io accesses
 
