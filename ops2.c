@@ -482,6 +482,121 @@ static void x86emuOp2_sysexit(x86emu_t *emu, u8 op2)
 
 /****************************************************************************
 REMARKS:
+Handles opcode 0x0f,0x40-0x4f
+****************************************************************************/
+static void x86emuOp2_conditional_move(x86emu_t *emu, u8 op2)
+{
+  int mod, rl, rh, noop = 0;
+  u16 *src16, *dst16;
+  u32 *src32, *dst32, addr;
+
+  OP_DECODE("cmov");
+
+  fetch_decode_modrm(emu, &mod, &rh, &rl);
+
+  switch(op2 & 0xf) {
+    case 0:
+      OP_DECODE("o ");
+      noop = !ACCESS_FLAG(F_OF);
+      break;
+    case 1:
+      OP_DECODE("no ");
+      noop = ACCESS_FLAG(F_OF);
+      break;
+    case 2:
+      OP_DECODE("c ");
+      noop = !ACCESS_FLAG(F_CF);
+      break;
+    case 3:
+      OP_DECODE("nc ");
+      noop = ACCESS_FLAG(F_CF);
+      break;
+    case 4:
+      OP_DECODE("z ");
+      noop = !ACCESS_FLAG(F_ZF);
+      break;
+    case 5:
+      OP_DECODE("nz ");
+      noop = ACCESS_FLAG(F_ZF);
+      break;
+    case 6:
+      OP_DECODE("be ");
+      noop = !ACCESS_FLAG(F_CF) && !ACCESS_FLAG(F_ZF);
+      break;
+    case 7:
+      OP_DECODE("nbe ");
+      noop = ACCESS_FLAG(F_CF) || ACCESS_FLAG(F_ZF);
+      break;
+    case 8:
+      OP_DECODE("s ");
+      noop = !ACCESS_FLAG(F_SF);
+      break;
+    case 9:
+      OP_DECODE("ns ");
+      noop = ACCESS_FLAG(F_SF);
+      break;
+    case 0xa:
+      OP_DECODE("p ");
+      noop = !ACCESS_FLAG(F_PF);
+      break;
+    case 0xb:
+      OP_DECODE("np ");
+      noop = ACCESS_FLAG(F_PF);
+      break;
+    case 0xc:
+      OP_DECODE("l ");
+      noop = ACCESS_FLAG(F_SF) == ACCESS_FLAG(F_OF);
+      break;
+    case 0xd:
+      OP_DECODE("nl ");
+      noop = ACCESS_FLAG(F_SF) != ACCESS_FLAG(F_OF);
+      break;
+    case 0xe:
+      OP_DECODE("le ");
+      noop = !ACCESS_FLAG(F_ZF) && (ACCESS_FLAG(F_SF) == ACCESS_FLAG(F_OF));
+      break;
+    case 0xf:
+      OP_DECODE("nle ");
+      noop = ACCESS_FLAG(F_ZF) || (ACCESS_FLAG(F_SF) != ACCESS_FLAG(F_OF));
+      break;
+  }
+
+  if(mod == 3) {
+    if(MODE_DATA32) {
+      dst32 = decode_rm_long_register(emu, rh);
+      OP_DECODE(",");
+      src32 = decode_rm_long_register(emu, rl);
+      if(!noop)
+        *dst32 = *src32;
+    }
+    else {
+      dst16 = decode_rm_word_register(emu, rh);
+      OP_DECODE(",");
+      src16 = decode_rm_word_register(emu, rl);
+      if(!noop)
+        *dst16 = *src16;
+    }
+  }
+  else {
+    if(MODE_DATA32) {
+      dst32 = decode_rm_long_register(emu, rh);
+      OP_DECODE(",");
+      addr = decode_rm_address(emu, mod, rl);
+      if(!noop)
+        *dst32 = fetch_data_long(emu, addr);
+    }
+    else {
+      dst16 = decode_rm_word_register(emu, rh);
+      OP_DECODE(",");
+      addr = decode_rm_address(emu, mod, rl);
+      if(!noop)
+        *dst16 = fetch_data_word(emu, addr);
+    }
+  }
+}
+
+/****************************************************************************
+REMARKS:
 Handles opcode 0x0f,0x80-0x8F
 ****************************************************************************/
 static void x86emuOp2_long_jump(x86emu_t *emu, u8 op2)
@@ -1692,22 +1807,22 @@ void (*x86emu_optab2[256])(x86emu_t *emu, u8) =
   /*  0x3e */ x86emuOp2_illegal_op,
   /*  0x3f */ x86emuOp2_illegal_op,
 
-  /*  0x40 */ x86emuOp2_illegal_op,
-  /*  0x41 */ x86emuOp2_illegal_op,
-  /*  0x42 */ x86emuOp2_illegal_op,
-  /*  0x43 */ x86emuOp2_illegal_op,
-  /*  0x44 */ x86emuOp2_illegal_op,
-  /*  0x45 */ x86emuOp2_illegal_op,
-  /*  0x46 */ x86emuOp2_illegal_op,
-  /*  0x47 */ x86emuOp2_illegal_op,
-  /*  0x48 */ x86emuOp2_illegal_op,
-  /*  0x49 */ x86emuOp2_illegal_op,
-  /*  0x4a */ x86emuOp2_illegal_op,
-  /*  0x4b */ x86emuOp2_illegal_op,
-  /*  0x4c */ x86emuOp2_illegal_op,
-  /*  0x4d */ x86emuOp2_illegal_op,
-  /*  0x4e */ x86emuOp2_illegal_op,
-  /*  0x4f */ x86emuOp2_illegal_op,
+  /*  0x40 */ x86emuOp2_conditional_move,
+  /*  0x41 */ x86emuOp2_conditional_move,
+  /*  0x42 */ x86emuOp2_conditional_move,
+  /*  0x43 */ x86emuOp2_conditional_move,
+  /*  0x44 */ x86emuOp2_conditional_move,
+  /*  0x45 */ x86emuOp2_conditional_move,
+  /*  0x46 */ x86emuOp2_conditional_move,
+  /*  0x47 */ x86emuOp2_conditional_move,
+  /*  0x48 */ x86emuOp2_conditional_move,
+  /*  0x49 */ x86emuOp2_conditional_move,
+  /*  0x4a */ x86emuOp2_conditional_move,
+  /*  0x4b */ x86emuOp2_conditional_move,
+  /*  0x4c */ x86emuOp2_conditional_move,
+  /*  0x4d */ x86emuOp2_conditional_move,
+  /*  0x4e */ x86emuOp2_conditional_move,
+  /*  0x4f */ x86emuOp2_conditional_move,
 
   /*  0x50 */ x86emuOp2_illegal_op,
   /*  0x51 */ x86emuOp2_illegal_op,
