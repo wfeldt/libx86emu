@@ -1734,6 +1734,31 @@ static void x86emuOp2_movsx_word_R_RM(x86emu_t *emu, u8 op2)
 }
 
 
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0xc8-0xcf
+****************************************************************************/
+static void x86emuOp2_bswap(x86emu_t *emu, u8 op2)
+{
+  u32 *reg32, tmp;
+
+  OP_DECODE("bswap ");
+
+  if(MODE_DATA32) {
+    reg32 = decode_rm_long_register(emu, op2 & 0x7);
+    tmp = 0;
+    tmp |= (*reg32 >> 24) & 0x000000ff;
+    tmp |= (*reg32 >>  8) & 0x0000ff00;
+    tmp |= (*reg32 <<  8) & 0x00ff0000;
+    tmp |= (*reg32 << 24) & 0xff000000;
+
+    *reg32 = tmp;
+  }
+  else {
+    /* undefined. Do nothing */
+  }
+}
+
 /***************************************************************************
  * Double byte operation code table:
  **************************************************************************/
@@ -1951,14 +1976,14 @@ void (*x86emu_optab2[256])(x86emu_t *emu, u8) =
   /*  0xc5 */ x86emuOp2_illegal_op,
   /*  0xc6 */ x86emuOp2_illegal_op,
   /*  0xc7 */ x86emuOp2_illegal_op,
-  /*  0xc8 */ x86emuOp2_illegal_op,  /* TODO: bswap */
-  /*  0xc9 */ x86emuOp2_illegal_op,  /* TODO: bswap */
-  /*  0xca */ x86emuOp2_illegal_op,  /* TODO: bswap */
-  /*  0xcb */ x86emuOp2_illegal_op,  /* TODO: bswap */
-  /*  0xcc */ x86emuOp2_illegal_op,  /* TODO: bswap */
-  /*  0xcd */ x86emuOp2_illegal_op,  /* TODO: bswap */
-  /*  0xce */ x86emuOp2_illegal_op,  /* TODO: bswap */
-  /*  0xcf */ x86emuOp2_illegal_op,  /* TODO: bswap */
+  /*  0xc8 */ x86emuOp2_bswap,
+  /*  0xc9 */ x86emuOp2_bswap,
+  /*  0xca */ x86emuOp2_bswap,
+  /*  0xcb */ x86emuOp2_bswap,
+  /*  0xcc */ x86emuOp2_bswap,
+  /*  0xcd */ x86emuOp2_bswap,
+  /*  0xce */ x86emuOp2_bswap,
+  /*  0xcf */ x86emuOp2_bswap,
 
   /*  0xd0 */ x86emuOp2_illegal_op,
   /*  0xd1 */ x86emuOp2_illegal_op,
