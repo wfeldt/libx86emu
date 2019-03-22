@@ -89,7 +89,7 @@
 
 #if WITH_TSC
 #if defined(__i386__)
-static inline u64 tsc()
+static inline u64 tsc(void)
 {
   register u64 tsc asm ("%eax");
 
@@ -103,7 +103,7 @@ static inline u64 tsc()
 #endif
 
 #if defined (__x86_64__)
-static inline u64 tsc()
+static inline u64 tsc(void)
 {
   register u64 tsc asm ("%rax");
 
@@ -126,7 +126,7 @@ static inline u64 tsc()
 
 #if WITH_IOPL
 #if defined(__i386__)
-static inline unsigned getiopl() 
+static inline unsigned getiopl(void)
 {
   register u32 i asm ("%eax");
   
@@ -143,7 +143,7 @@ static inline unsigned getiopl()
 #endif
 
 #if defined (__x86_64__)
-static inline unsigned getiopl()
+static inline unsigned getiopl(void)
 {
   register unsigned i asm ("%rax");
 
