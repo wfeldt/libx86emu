@@ -38,8 +38,8 @@
 #ifndef __X86EMU_OPS_H
 #define __X86EMU_OPS_H
 
-void (*x86emu_optab[0x100])(x86emu_t *emu, u8 op1);
-void (*x86emu_optab2[0x100])(x86emu_t *emu, u8 op2);
+extern void (*x86emu_optab[0x100])(x86emu_t *emu, u8 op1);
+extern void (*x86emu_optab2[0x100])(x86emu_t *emu, u8 op2);
 
 void decode_cond(x86emu_t *emu, int type);
 
