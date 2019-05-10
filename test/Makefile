@@ -1,9 +1,9 @@
 CC         = gcc
 CFLAGS     = -g -Wall -fomit-frame-pointer -O2
 LDFLAGS    =
-TST_FILES  = $(wildcard *.tst)
+TST_FILES  = $(sort $(wildcard *.tst))
 INIT_FILES = $(addsuffix .init,$(basename $(wildcard *.tst)))
-RES_FILES  = $(addsuffix .result,$(basename $(wildcard *.tst)))
+RES_FILES  = $(sort $(addsuffix .result,$(basename $(wildcard *.tst))))
 TEST_OPTS  = --verbose --show code,regs,data,acc,io,ints,attr,time
 
 export LD_LIBRARY_PATH=..
