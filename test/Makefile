@@ -18,7 +18,7 @@ all: x86test
 	@./x86test $(TEST_OPTS) *.init
 
 x86test: x86test.c
-	$(CC) $(CFLAGS) $< -lx86emu -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $< -I ../include -L .. -lx86emu -o $@ $(LDFLAGS)
 
 %.result: %.init
 	@./x86test $(TEST_OPTS) $<
