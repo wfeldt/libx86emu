@@ -1,5 +1,6 @@
 CC         = gcc
 CFLAGS     = -g -Wall -fomit-frame-pointer -O2
+LDFLAGS    =
 TST_FILES  = $(wildcard *.tst)
 INIT_FILES = $(addsuffix .init,$(basename $(wildcard *.tst)))
 RES_FILES  = $(addsuffix .result,$(basename $(wildcard *.tst)))
@@ -17,7 +18,7 @@ all: x86test
 	@./x86test $(TEST_OPTS) *.init
 
 x86test: x86test.c
-	$(CC) $(CFLAGS) $< -lx86emu -o $@
+	$(CC) $(CFLAGS) $< -lx86emu -o $@ $(LDFLAGS)
 
 %.result: %.init
 	@./x86test $(TEST_OPTS) $<

@@ -13,6 +13,7 @@ MAJOR_VERSION := $(shell $(GIT2LOG) --version VERSION ; cut -d . -f 1 VERSION)
 
 CC	= gcc
 CFLAGS	= -g -O2 -fPIC -fvisibility=hidden -fomit-frame-pointer -Wall
+LDFLAGS =
 
 LIBDIR = /usr/lib$(shell ldd /bin/sh | grep -q /lib64/ && echo 64)
 LIBX86	= libx86emu
@@ -42,7 +43,7 @@ install: shared
 	install -m 644 -D include/x86emu.h $(DESTDIR)/usr/include/x86emu.h
 
 $(LIB_NAME): .depend $(OBJS)
-	$(CC) -shared -Wl,-soname,$(LIB_SONAME) $(OBJS) -o $(LIB_NAME)
+	$(CC) -shared -Wl,-soname,$(LIB_SONAME) $(OBJS) -o $(LIB_NAME) $(LDFLAGS)
 	@ln -snf $(LIB_NAME) $(LIB_SONAME)
 	@ln -snf $(LIB_SONAME) $(LIBX86).so
 
