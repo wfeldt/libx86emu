@@ -304,15 +304,16 @@ typedef struct {
 #define R_REAL_TSC	msr[0x12]
 
 /* flag conditions   */
-#define FB_CF 0x0001            /* CARRY flag  */
-#define FB_PF 0x0004            /* PARITY flag */
-#define FB_AF 0x0010            /* AUX  flag   */
-#define FB_ZF 0x0040            /* ZERO flag   */
-#define FB_SF 0x0080            /* SIGN flag   */
-#define FB_TF 0x0100            /* TRAP flag   */
-#define FB_IF 0x0200            /* INTERRUPT ENABLE flag */
-#define FB_DF 0x0400            /* DIR flag    */
-#define FB_OF 0x0800            /* OVERFLOW flag */
+#define FB_CF 0x000001            /* CARRY flag  */
+#define FB_PF 0x000004            /* PARITY flag */
+#define FB_AF 0x000010            /* AUX  flag   */
+#define FB_ZF 0x000040            /* ZERO flag   */
+#define FB_SF 0x000080            /* SIGN flag   */
+#define FB_TF 0x000100            /* TRAP flag   */
+#define FB_IF 0x000200            /* INTERRUPT ENABLE flag */
+#define FB_DF 0x000400            /* DIR flag    */
+#define FB_OF 0x000800            /* OVERFLOW flag */
+#define FB_ID 0x200000            /* ID flag */
 
 /* 80286 and above always have bit#1 set */
 #define F_ALWAYS_ON  (0x0002)   /* flag bits always on */

@@ -2386,9 +2386,15 @@ Handles opcode 0x9c
 static void x86emuOp_pushf_word(x86emu_t *emu, u8 op1)
 {
   u32 flags;
+  u32 mask = F_MSK;
+
+#if WITH_CPUID
+  /* Advertise CPUID support */
+  mask |= FB_ID;
+#endif
 
   /* clear out *all* bits not representing flags, and turn on real bits */
-  flags = (emu->x86.R_EFLG & F_MSK) | F_ALWAYS_ON;
+  flags = (emu->x86.R_EFLG & mask) | F_ALWAYS_ON;
 
   if(MODE_DATA32) {
     OP_DECODE("pushfd");

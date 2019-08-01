@@ -81,11 +81,26 @@
 #if defined(__i386__) || defined (__x86_64__)
 #define WITH_TSC	1
 #define WITH_IOPL	1
+#define WITH_CPUID	1
 #else
 #define WITH_TSC	0
 #define WITH_IOPL	0
+#define WITH_CPUID	0
 #endif
 
+#if WITH_CPUID
+static inline void cpuid(u32 eax_in, u32 ecx_in, u32 *eax_out, u32 *ebx, u32 *ecx_out, u32 *edx)
+{
+  asm volatile(
+          "cpuid\n\t"
+          : "=a" (*eax_out),
+            "=b" (*ebx),
+            "=c" (*ecx_out),
+            "=d" (*edx)
+          : "a" (eax_in), "c" (ecx_in)
+          : );
+}
+#endif
 
 #if WITH_TSC
 #if defined(__i386__)

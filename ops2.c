@@ -679,6 +679,30 @@ static void x86emuOp2_pop_FS(x86emu_t *emu, u8 op2)
   x86emu_set_seg_register(emu, emu->x86.R_FS_SEL, MODE_DATA32 ? pop_long(emu) : pop_word(emu));
 }
 
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0xa2
+****************************************************************************/
+static void x86emuOp2_cpuid(x86emu_t *emu, u8 op2)
+{
+  u32 eax;
+  OP_DECODE("cpuid ");
+
+  eax = emu->x86.R_EAX;
+
+#if WITH_CPUID
+  cpuid(emu->x86.R_EAX, emu->x86.R_ECX, &emu->x86.R_EAX, &emu->x86.R_EBX,
+      &emu->x86.R_ECX, &emu->x86.R_EDX);
+  if (eax == 1) {
+    /* Don't advertise SSE, SSE2, MMX, FXSAVE */
+    emu->x86.R_EDX &= ~(0xf << 23);
+    /* Don't advertise SSE3, SSE4, AVX, XSAVE, RDRAND, float16 */
+    emu->x86.R_ECX &= ~((0x3 << 19) | (0x1 << 0) | (0x3f << 25));
+  }
+#else
+  INTR_RAISE_UD(emu);
+#endif
+}
 
 /****************************************************************************
 REMARKS:
@@ -1936,7 +1960,7 @@ void (*x86emu_optab2[256])(x86emu_t *emu, u8) =
 
   /*  0xa0 */ x86emuOp2_push_FS,
   /*  0xa1 */ x86emuOp2_pop_FS,
-  /*  0xa2 */ x86emuOp2_illegal_op,
+  /*  0xa2 */ x86emuOp2_cpuid,
   /*  0xa3 */ x86emuOp2_bt_R,
   /*  0xa4 */ x86emuOp2_shld_IMM,
   /*  0xa5 */ x86emuOp2_shld_CL,
