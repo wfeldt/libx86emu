@@ -1187,6 +1187,25 @@ static void x86emuOp2_shrd_CL(x86emu_t *emu, u8 op2)
   }
 }
 
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0xae
+****************************************************************************/
+static void x86emuOp2_state_op(x86emu_t *emu, u8 op2)
+{
+  int mod, rl, rh;
+
+  fetch_decode_modrm(emu, &mod, &rh, &rl);
+
+  switch (rh) {
+    case 4: /* lfence */
+      break;
+    case 6: /* mfence */
+      break;
+    case 7: /*sfence */
+      break;
+  }
+}
 
 /****************************************************************************
 REMARKS:
@@ -2100,7 +2119,7 @@ void (*x86emu_optab2[256])(x86emu_t *emu, u8) =
   /*  0xab */ x86emuOp2_bts_R,
   /*  0xac */ x86emuOp2_shrd_IMM,
   /*  0xad */ x86emuOp2_shrd_CL,
-  /*  0xae */ x86emuOp2_illegal_op,
+  /*  0xae */ x86emuOp2_state_op,
   /*  0xaf */ x86emuOp2_imul_R_RM,
 
   /*  0xb0 */ x86emuOp2_illegal_op,  /* TODO: cmpxchg */
