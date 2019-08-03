@@ -280,6 +280,72 @@ static void x86emuOp2_wbinvd(x86emu_t *emu, u8 op2)
   OP_DECODE("wbinvd");
 }
 
+static void x86emuOp2_sse_enabled_check(x86emu_t *emu)
+{
+  if (emu->x86.R_CR0 & CR0_EM || !(emu->x86.R_CR0 & CR0_MP))
+    INTR_RAISE_UD(emu);
+  if (!(emu->x86.R_CR4 & CR4_OSFXSR))
+    INTR_RAISE_UD(emu);
+}
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x10-0x11 0xf,0x28-0x29 0xf,0x2b-0x2c
+****************************************************************************/
+static void x86emuOp2_SSEmovops(x86emu_t *emu, u8 op2)
+{
+  int mod, rl, rh;
+  I128_reg_t *src, *dst, tmp;
+  u32 addr = 0;
+
+  switch (op2 & 0xfe) {
+    case 0x10:
+      OP_DECODE("movups ");
+      break;
+    case 0x28:
+      OP_DECODE("movaps ");
+      break;
+    case 0x2b:
+      OP_DECODE("movntps ");
+      break;
+  }
+
+  x86emuOp2_sse_enabled_check(emu);
+
+  fetch_decode_modrm(emu, &mod, &rh, &rl);
+
+  if(mod == 3) {
+    dst = decode_rm_sse_register(emu, rh);
+    OP_DECODE(",");
+    src = decode_rm_sse_register(emu, rl);
+    memcpy(dst, src, sizeof(*dst));
+  }
+  else {
+    if (!(op2 & 1)) {
+      dst = decode_rm_sse_register(emu, rh);
+      OP_DECODE(",");
+      addr = decode_rm_address(emu, mod, rl);
+      tmp = fetch_data_qlong(emu, addr);
+      /* check memory alignment if not movups */
+      if (((op2 & 0xfe) != 0x10) && (addr & 0xf)) {
+        INTR_RAISE_GP(emu, 0);
+        return;
+      }
+      memcpy(dst, &tmp, sizeof(*dst));
+    } else {
+      addr = decode_rm_address(emu, mod, rh);
+      OP_DECODE(",");
+      src = decode_rm_sse_register(emu, rl);
+      /* check memory alignment if not movups */
+      if (((op2 & 0xfe) != 0x10) && (addr & 0xf)) {
+        INTR_RAISE_GP(emu, 0);
+        return;
+      }
+      memcpy(&tmp, src, sizeof(tmp));
+      store_data_qlong(emu, addr, tmp);
+    }
+  }
+}
 
 /****************************************************************************
 REMARKS:
@@ -591,6 +657,68 @@ static void x86emuOp2_conditional_move(x86emu_t *emu, u8 op2)
       addr = decode_rm_address(emu, mod, rl);
       if(!noop)
         *dst16 = fetch_data_word(emu, addr);
+    }
+  }
+}
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x54-57
+****************************************************************************/
+static void x86emuOp2_SSElogicalops(x86emu_t *emu, u8 op2)
+{
+  int mod, rl, rh;
+  I128_reg_t *src, *dst, tmp;
+  u32 addr;
+
+  switch (op2) {
+    case 0x54:
+      OP_DECODE("andps ");
+      break;
+    case 0x55:
+      OP_DECODE("andnps ");
+      break;
+    case 0x56:
+      OP_DECODE("orps ");
+      break;
+    case 0x57:
+      OP_DECODE("xorps ");
+      break;
+    default:
+      INTR_RAISE_UD(emu);
+      break;
+  }
+
+  x86emuOp2_sse_enabled_check(emu);
+
+  fetch_decode_modrm(emu, &mod, &rh, &rl);
+
+  if(mod == 3) {
+    dst = decode_rm_sse_register(emu, rh);
+    OP_DECODE(",");
+    src = decode_rm_sse_register(emu, rl);
+  }
+  else {
+    dst = decode_rm_sse_register(emu, rh);
+    OP_DECODE(",");
+    addr = decode_rm_address(emu, mod, rl);
+    tmp = fetch_data_qlong(emu, addr);
+    src = &tmp;
+  }
+  for (int i = 0; i < sizeof(dst->reg); i++) {
+    switch (op2) {
+      case 0x54:
+        dst->reg[i] &= src->reg[i];
+        break;
+      case 0x55:
+        dst->reg[i] &= ~src->reg[i];
+        break;
+      case 0x56:
+        dst->reg[i] |= src->reg[i];
+        break;
+      case 0x57:
+        dst->reg[i] ^= src->reg[i];
+        break;
     }
   }
 }
@@ -1805,8 +1933,8 @@ void (*x86emu_optab2[256])(x86emu_t *emu, u8) =
   /*  0x0e */ x86emuOp2_illegal_op,
   /*  0x0f */ x86emuOp2_illegal_op,
 
-  /*  0x10 */ x86emuOp2_illegal_op,
-  /*  0x11 */ x86emuOp2_illegal_op,
+  /*  0x10 */ x86emuOp2_SSEmovops,
+  /*  0x11 */ x86emuOp2_SSEmovops,
   /*  0x12 */ x86emuOp2_illegal_op,
   /*  0x13 */ x86emuOp2_illegal_op,
   /*  0x14 */ x86emuOp2_illegal_op,
@@ -1830,11 +1958,11 @@ void (*x86emu_optab2[256])(x86emu_t *emu, u8) =
   /*  0x25 */ x86emuOp2_illegal_op,
   /*  0x26 */ x86emuOp2_illegal_op,  /* mov treg,reg32 (ring 0 PM) */
   /*  0x27 */ x86emuOp2_illegal_op,
-  /*  0x28 */ x86emuOp2_illegal_op,
-  /*  0x29 */ x86emuOp2_illegal_op,
+  /*  0x28 */ x86emuOp2_SSEmovops,
+  /*  0x29 */ x86emuOp2_SSEmovops,
   /*  0x2a */ x86emuOp2_illegal_op,
-  /*  0x2b */ x86emuOp2_illegal_op,
-  /*  0x2c */ x86emuOp2_illegal_op,
+  /*  0x2b */ x86emuOp2_SSEmovops,
+  /*  0x2c */ x86emuOp2_SSEmovops,
   /*  0x2d */ x86emuOp2_illegal_op,
   /*  0x2e */ x86emuOp2_illegal_op,
   /*  0x2f */ x86emuOp2_illegal_op,
@@ -1877,10 +2005,10 @@ void (*x86emu_optab2[256])(x86emu_t *emu, u8) =
   /*  0x51 */ x86emuOp2_illegal_op,
   /*  0x52 */ x86emuOp2_illegal_op,
   /*  0x53 */ x86emuOp2_illegal_op,
-  /*  0x54 */ x86emuOp2_illegal_op,
-  /*  0x55 */ x86emuOp2_illegal_op,
-  /*  0x56 */ x86emuOp2_illegal_op,
-  /*  0x57 */ x86emuOp2_illegal_op,
+  /*  0x54 */ x86emuOp2_SSElogicalops,
+  /*  0x55 */ x86emuOp2_SSElogicalops,
+  /*  0x56 */ x86emuOp2_SSElogicalops,
+  /*  0x57 */ x86emuOp2_SSElogicalops,
   /*  0x58 */ x86emuOp2_illegal_op,
   /*  0x59 */ x86emuOp2_illegal_op,
   /*  0x5a */ x86emuOp2_illegal_op,
