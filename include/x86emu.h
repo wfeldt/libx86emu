@@ -58,6 +58,8 @@ extern "C" {            			/* Use "C" linkage when in C++ mode */
 #define s32 int32_t
 #define s64 int64_t
 
+#define FP_SP_SIZE 4
+#define FP_DP_SIZE 8
 
 /*
  * General EAX, EBX, ECX, EDX type registers.  Note that for

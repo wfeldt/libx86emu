@@ -349,6 +349,157 @@ static void x86emuOp2_SSEmovops(x86emu_t *emu, u8 op2)
 
 /****************************************************************************
 REMARKS:
+Handles opcode 0x0f,0x12-0x13 0x0f,0x16-0x17
+****************************************************************************/
+static void x86emuOp2_SSEmovpackedops(x86emu_t *emu, u8 op2)
+{
+  int mod, rl, rh;
+  I128_reg_t *src, *dst;
+  u32 addr;
+
+  fetch_decode_modrm(emu, &mod, &rh, &rl);
+
+  switch (op2) {
+    case 0x12:
+      if (mod == 3)
+        OP_DECODE("movhlps ");
+      else
+        OP_DECODE("movlps ");
+      break;
+    case 0x13:
+      OP_DECODE("movlps ");
+      break;
+    case 0x16:
+      if (mod == 3)
+        OP_DECODE("movhlps ");
+      else
+        OP_DECODE("movhps ");
+      break;
+    case 0x17:
+      OP_DECODE("movhps ");
+      break;
+    default:
+      INTR_RAISE_UD(emu);
+      break;
+  }
+
+  x86emuOp2_sse_enabled_check(emu);
+
+  if(mod == 3) {
+    dst = decode_rm_sse_register(emu, rh);
+    OP_DECODE(",");
+    src = decode_rm_sse_register(emu, rl);
+    for (int i = 0; i < FP_SP_SIZE * 2; i++) {
+      if (op2 == 0x12) {
+        dst->reg[i] = src->reg[i + FP_SP_SIZE * 2];
+      } else if (op2 == 0x16) {
+        dst->reg[i+ FP_SP_SIZE * 2] = src->reg[i];
+      }
+    }
+  }else{
+    if (op2 & 1) {
+      addr = decode_rm_address(emu, mod, rl);
+      OP_DECODE(",");
+      src = decode_rm_sse_register(emu, rh);
+
+      for (int i = 0; i < FP_SP_SIZE * 2; i++) {
+        if (op2 == 0x13) {
+          store_data_byte(emu, addr + i, src->reg[i]);
+        } else if (op2 == 0x17) {
+          store_data_byte(emu, addr + i, src->reg[i+FP_SP_SIZE*2]);
+        }
+      }
+    } else {
+      dst = decode_rm_sse_register(emu, rh);
+      OP_DECODE(",");
+      addr = decode_rm_address(emu, mod, rl);
+
+      for (int i = 0; i < FP_SP_SIZE * 2; i++) {
+        if (op2 == 0x12) {
+          dst->reg[i] = fetch_data_byte(emu, addr + i);
+        } else if (op2 == 0x16) {
+          dst->reg[i+FP_SP_SIZE*2] = fetch_data_byte(emu, addr + i);
+        }
+      }
+    }
+  }
+}
+
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x14-0x15
+****************************************************************************/
+static void x86emuOp2_SSEpackops(x86emu_t *emu, u8 op2)
+{
+  int mod, rl, rh;
+  I128_reg_t *src, *dst, tmp, arith;
+  u32 addr;
+
+  switch (op2) {
+    case 0x14:
+      OP_DECODE("unpcklps ");
+      break;
+    case 0x15:
+      OP_DECODE("unpckhps ");
+      break;
+    default:
+      INTR_RAISE_UD(emu);
+      break;
+  }
+
+  x86emuOp2_sse_enabled_check(emu);
+
+  fetch_decode_modrm(emu, &mod, &rh, &rl);
+
+  if(mod == 3) {
+    dst = decode_rm_sse_register(emu, rh);
+    OP_DECODE(",");
+    src = decode_rm_sse_register(emu, rl);
+  }
+  else {
+    dst = decode_rm_sse_register(emu, rh);
+    OP_DECODE(",");
+    addr = decode_rm_address(emu, mod, rl);
+    tmp = fetch_data_qlong(emu, addr);
+    src = &tmp;
+  }
+
+  for (int i = 0; i < FP_SP_SIZE; i++) {
+    switch (op2) {
+      case 0x12:
+      case 0x13:
+        arith.reg[i+FP_SP_SIZE*0] = dst->reg[i];
+        arith.reg[i+FP_SP_SIZE*1] = dst->reg[i+FP_SP_SIZE];
+        arith.reg[i+FP_SP_SIZE*2] = src->reg[i];
+        arith.reg[i+FP_SP_SIZE*3] = src->reg[i+FP_SP_SIZE];
+        break;
+      case 0x14:
+        arith.reg[i+FP_SP_SIZE*0] = src->reg[i+FP_SP_SIZE*0];
+        arith.reg[i+FP_SP_SIZE*1] = dst->reg[i+FP_SP_SIZE*0];
+        arith.reg[i+FP_SP_SIZE*2] = src->reg[i+FP_SP_SIZE*1];
+        arith.reg[i+FP_SP_SIZE*3] = dst->reg[i+FP_SP_SIZE*1];
+        break;
+      case 0x15:
+        arith.reg[i+FP_SP_SIZE*0] = src->reg[i+FP_SP_SIZE*2];
+        arith.reg[i+FP_SP_SIZE*1] = dst->reg[i+FP_SP_SIZE*2];
+        arith.reg[i+FP_SP_SIZE*2] = src->reg[i+FP_SP_SIZE*3];
+        arith.reg[i+FP_SP_SIZE*3] = dst->reg[i+FP_SP_SIZE*3];
+        break;
+      case 0x16:
+      case 0x17:
+        arith.reg[i+FP_SP_SIZE*0] = dst->reg[i];
+        arith.reg[i+FP_SP_SIZE*1] = dst->reg[i+FP_SP_SIZE];
+        arith.reg[i+FP_SP_SIZE*2] = src->reg[i];
+        arith.reg[i+FP_SP_SIZE*3] = src->reg[i+FP_SP_SIZE];
+        break;
+
+    }
+  }
+}
+
+/****************************************************************************
+REMARKS:
 Handles opcode 0x0f,0x20
 ****************************************************************************/
 static void x86emuOp2_mov_word_RM_CRx(x86emu_t *emu, u8 op2)
@@ -1216,7 +1367,7 @@ static void x86emuOp2_imul_R_RM(x86emu_t *emu, u8 op2)
   int mod, rl, rh;
   u32 *src32, *dst32, val, addr, res_lo, res_hi;
   u16 *src16, *dst16;
-  
+
   OP_DECODE("imul ");
   fetch_decode_modrm(emu, &mod, &rh, &rl);
 
@@ -1954,12 +2105,12 @@ void (*x86emu_optab2[256])(x86emu_t *emu, u8) =
 
   /*  0x10 */ x86emuOp2_SSEmovops,
   /*  0x11 */ x86emuOp2_SSEmovops,
-  /*  0x12 */ x86emuOp2_illegal_op,
-  /*  0x13 */ x86emuOp2_illegal_op,
-  /*  0x14 */ x86emuOp2_illegal_op,
-  /*  0x15 */ x86emuOp2_illegal_op,
-  /*  0x16 */ x86emuOp2_illegal_op,
-  /*  0x17 */ x86emuOp2_illegal_op,
+  /*  0x12 */ x86emuOp2_SSEmovpackedops,
+  /*  0x13 */ x86emuOp2_SSEmovpackedops,
+  /*  0x14 */ x86emuOp2_SSEpackops,
+  /*  0x15 */ x86emuOp2_SSEpackops,
+  /*  0x16 */ x86emuOp2_SSEmovpackedops,
+  /*  0x17 */ x86emuOp2_SSEmovpackedops,
   /*  0x18 */ x86emuOp2_illegal_op,
   /*  0x19 */ x86emuOp2_illegal_op,
   /*  0x1a */ x86emuOp2_illegal_op,
