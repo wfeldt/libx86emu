@@ -1813,6 +1813,7 @@ void decode_descriptor(x86emu_t *emu, descr_t *d, u32 dl, u32 dh)
 
       case 3:	// tss busy
         d->busy = 1;
+        // fallthrough
 
       case 1:	// tss avail
         d->tss = 1;
@@ -1832,6 +1833,7 @@ void decode_descriptor(x86emu_t *emu, descr_t *d, u32 dl, u32 dh)
 
       case 7:
         d->trap = 1;
+        // fallthrough
 
       case 6:
         d->i_gate = 1;
