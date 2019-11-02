@@ -256,6 +256,22 @@ and one of:
 
 Returns old function.
 
+### x86emu_set_cpuid_handler
+
+Execution hook
+
+    x86emu_cpuid_handler_t x86emu_set_cpuid_handler(x86emu_t *emu, x86emu_cpuid_handler_t handler);
+    typedef void (* x86emu_cpuid_handler_t)(x86emu_t *emu);
+
+Set a callback function that handles the CPUID instruction.
+Allows the user to use the host's CPUID or provide a custom implementation
+to emulate a specific CPU.
+
+Returns old function.
+
+There's no default implementation. Without the handler installed the programm
+will raise an #UD exception.
+
 ### x86emu_intr_raise
 
 Raise an interrupt

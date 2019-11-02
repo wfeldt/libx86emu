@@ -179,6 +179,17 @@ API_SYM x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code
   return old;
 }
 
+API_SYM x86emu_cpuid_handler_t x86emu_set_cpuid_handler(x86emu_t *emu, x86emu_cpuid_handler_t handler)
+{
+  x86emu_cpuid_handler_t old = NULL;
+
+  if(emu) {
+    old = emu->cpuid;
+    emu->cpuid = handler;
+  }
+
+  return old;
+}
 
 API_SYM unsigned x86emu_read_byte(x86emu_t *emu, unsigned addr)
 {

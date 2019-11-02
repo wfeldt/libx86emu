@@ -679,6 +679,21 @@ static void x86emuOp2_pop_FS(x86emu_t *emu, u8 op2)
   x86emu_set_seg_register(emu, emu->x86.R_FS_SEL, MODE_DATA32 ? pop_long(emu) : pop_word(emu));
 }
 
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0xa2
+****************************************************************************/
+static void x86emuOp2_cpuid(x86emu_t *emu, u8 op2)
+{
+  OP_DECODE("cpuid ");
+
+  if(emu->cpuid) {
+    emu->cpuid(emu);
+  }
+  else {
+    INTR_RAISE_UD(emu);
+  }
+}
 
 /****************************************************************************
 REMARKS:
@@ -1936,7 +1951,7 @@ void (*x86emu_optab2[256])(x86emu_t *emu, u8) =
 
   /*  0xa0 */ x86emuOp2_push_FS,
   /*  0xa1 */ x86emuOp2_pop_FS,
-  /*  0xa2 */ x86emuOp2_illegal_op,
+  /*  0xa2 */ x86emuOp2_cpuid,
   /*  0xa3 */ x86emuOp2_bt_R,
   /*  0xa4 */ x86emuOp2_shld_IMM,
   /*  0xa5 */ x86emuOp2_shld_CL,

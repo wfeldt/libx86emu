@@ -304,15 +304,16 @@ typedef struct {
 #define R_REAL_TSC	msr[0x12]
 
 /* flag conditions   */
-#define FB_CF 0x0001            /* CARRY flag  */
-#define FB_PF 0x0004            /* PARITY flag */
-#define FB_AF 0x0010            /* AUX  flag   */
-#define FB_ZF 0x0040            /* ZERO flag   */
-#define FB_SF 0x0080            /* SIGN flag   */
-#define FB_TF 0x0100            /* TRAP flag   */
-#define FB_IF 0x0200            /* INTERRUPT ENABLE flag */
-#define FB_DF 0x0400            /* DIR flag    */
-#define FB_OF 0x0800            /* OVERFLOW flag */
+#define FB_CF 0x000001            /* CARRY flag  */
+#define FB_PF 0x000004            /* PARITY flag */
+#define FB_AF 0x000010            /* AUX  flag   */
+#define FB_ZF 0x000040            /* ZERO flag   */
+#define FB_SF 0x000080            /* SIGN flag   */
+#define FB_TF 0x000100            /* TRAP flag   */
+#define FB_IF 0x000200            /* INTERRUPT ENABLE flag */
+#define FB_DF 0x000400            /* DIR flag    */
+#define FB_OF 0x000800            /* OVERFLOW flag */
+#define FB_ID 0x200000            /* ID flag */
 
 /* 80286 and above always have bit#1 set */
 #define F_ALWAYS_ON  (0x0002)   /* flag bits always on */
@@ -380,6 +381,7 @@ struct x86emu_s;
 typedef unsigned (* x86emu_memio_handler_t)(struct x86emu_s *, u32 addr, u32 *val, unsigned type);
 typedef int (* x86emu_intr_handler_t)(struct x86emu_s *, u8 num, unsigned type);
 typedef int (* x86emu_code_handler_t)(struct x86emu_s *);
+typedef void (* x86emu_cpuid_handler_t)(struct x86emu_s *);
 typedef void (* x86emu_flush_func_t)(struct x86emu_s *, char *buf, unsigned size);
 
 typedef struct {
@@ -486,6 +488,7 @@ x86			- X86 registers
 typedef struct x86emu_s {
   x86emu_regs_t x86;
   x86emu_code_handler_t code_check;
+  x86emu_cpuid_handler_t cpuid;
   x86emu_memio_handler_t memio;
   x86emu_intr_handler_t intr;
   x86emu_mem_t *mem;
@@ -532,6 +535,7 @@ void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned pe
 void x86emu_set_page(x86emu_t *emu, unsigned page, void *address);
 void x86emu_reset_access_stats(x86emu_t *emu);
 
+x86emu_cpuid_handler_t x86emu_set_cpuid_handler(x86emu_t *emu, x86emu_cpuid_handler_t handler);
 x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code_handler_t handler);
 x86emu_intr_handler_t x86emu_set_intr_handler(x86emu_t *emu, x86emu_intr_handler_t handler);
 x86emu_memio_handler_t x86emu_set_memio_handler(x86emu_t *emu, x86emu_memio_handler_t handler);
