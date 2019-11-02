@@ -382,6 +382,8 @@ typedef unsigned (* x86emu_memio_handler_t)(struct x86emu_s *, u32 addr, u32 *va
 typedef int (* x86emu_intr_handler_t)(struct x86emu_s *, u8 num, unsigned type);
 typedef int (* x86emu_code_handler_t)(struct x86emu_s *);
 typedef void (* x86emu_cpuid_handler_t)(struct x86emu_s *);
+typedef void (* x86emu_wrmsr_handler_t)(struct x86emu_s *);
+typedef void (* x86emu_rdmsr_handler_t)(struct x86emu_s *);
 typedef void (* x86emu_flush_func_t)(struct x86emu_s *, char *buf, unsigned size);
 
 typedef struct {
@@ -491,6 +493,8 @@ typedef struct x86emu_s {
   x86emu_cpuid_handler_t cpuid;
   x86emu_memio_handler_t memio;
   x86emu_intr_handler_t intr;
+  x86emu_wrmsr_handler_t wrmsr;
+  x86emu_wrmsr_handler_t rdmsr;
   x86emu_mem_t *mem;
   struct {
     unsigned char *map;
@@ -535,6 +539,8 @@ void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned pe
 void x86emu_set_page(x86emu_t *emu, unsigned page, void *address);
 void x86emu_reset_access_stats(x86emu_t *emu);
 
+x86emu_rdmsr_handler_t x86emu_set_rdmsr_handler(x86emu_t *emu, x86emu_rdmsr_handler_t handler);
+x86emu_wrmsr_handler_t x86emu_set_wrmsr_handler(x86emu_t *emu, x86emu_wrmsr_handler_t handler);
 x86emu_cpuid_handler_t x86emu_set_cpuid_handler(x86emu_t *emu, x86emu_cpuid_handler_t handler);
 x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code_handler_t handler);
 x86emu_intr_handler_t x86emu_set_intr_handler(x86emu_t *emu, x86emu_intr_handler_t handler);

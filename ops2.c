@@ -389,8 +389,9 @@ static void x86emuOp2_wrmsr(x86emu_t *emu, u8 op2)
     INTR_RAISE_UD(emu);
   }
   else {
-    emu->x86.msr[u] = ((u64) emu->x86.R_EDX << 32) + emu->x86.R_EAX;
-    emu->x86.msr_perm[u] |= X86EMU_ACC_W;
+    if(emu->wrmsr) {
+      emu->wrmsr(emu);
+    }
   }
 }
 
@@ -421,14 +422,13 @@ static void x86emuOp2_rdmsr(x86emu_t *emu, u8 op2)
   OP_DECODE("rdmsr");
 
   u = emu->x86.R_ECX;
-
   if(u >= X86EMU_MSRS) {
     INTR_RAISE_UD(emu);
   }
   else {
-    emu->x86.R_EDX = emu->x86.msr[u] >> 32;
-    emu->x86.R_EAX = emu->x86.msr[u];
-    emu->x86.msr_perm[u] |= X86EMU_ACC_R;
+    if(emu->rdmsr) {
+      emu->rdmsr(emu);
+    }
   }
 }
 
