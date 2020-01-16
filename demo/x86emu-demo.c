@@ -22,6 +22,7 @@ struct option options[] = {
   { "load",       1, NULL, 'l'  },
   { "start",      1, NULL, 's'  },
   { "max",        1, NULL, 'm'  },
+  { "32",         0, NULL, 1001 },
   { }
 };
 
@@ -33,6 +34,7 @@ struct {
   } start;
   unsigned load;
   unsigned max_instructions;
+  unsigned bits_32:1;
   char *file;
 } opt;
 
@@ -69,6 +71,10 @@ int main(int argc, char **argv)
         }
         break;
 
+      case 1001:
+        opt.bits_32 = 1;
+        break;
+
       default:
         help();
         return i == 'h' ? 0 : 1;
@@ -100,16 +106,13 @@ void help()
     "Load FILE and run x86 emulation.\n"
    "\n"
     "Options:\n"
-    "  -l, --load ADDRESS\n"
-    "      load FILE at ADDRESS into memory (default: 0x7c00).\n"
-    "  -s, --start ADDRESS\n"
-    "      start emulation at ADDRESS (default 0:0x7c00).\n"
-    "      Note: ADDRESS may contain a colon (':') to separate segment and offset values;\n"
-    "      if not, segment = 0 is assumed.\n"
-    "  -m, --max N\n"
-    "      stop after emulating N instructions.\n"
-    "  -h, --help\n"
-    "      show this text\n"
+    "  -l, --load ADDRESS      Load FILE at ADDRESS into memory (default 0x7c00).\n"
+    "  -s, --start ADDRESS     Start emulation at ADDRESS (default 0:0x7c00).\n"
+    "                          ADDRESS may contain a colon (':') to separate segment and\n"
+    "                          offset values. Without colon, segment 0 is assumed.\n"
+    "  -m, --max N             Stop after emulating N instructions.\n"
+    "      --32                Start in 32-bit mode (default 16-bit mode).\n"
+    "  -h, --help              Show this text\n"
   );
 }
 
@@ -154,6 +157,18 @@ int emu_init(x86emu_t *emu, char *file)
 
   x86emu_set_seg_register(emu, emu->x86.R_CS_SEL, opt.start.segment);
   emu->x86.R_EIP = opt.start.offset;
+  if(opt.bits_32) {
+    /* set default data/address size to 32 bit */
+    emu->x86.R_CS_ACC |= (1 << 10);
+
+    /* maximize descriptor limits */
+    emu->x86.R_CS_LIMIT =
+    emu->x86.R_DS_LIMIT =
+    emu->x86.R_ES_LIMIT =
+    emu->x86.R_FS_LIMIT =
+    emu->x86.R_GS_LIMIT =
+    emu->x86.R_SS_LIMIT = ~0;
+  }
 
   if(!(f = fopen(file, "r"))) return 0;
 
