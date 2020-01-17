@@ -2684,6 +2684,7 @@ int eval_condition(x86emu_t *emu, unsigned type)
 
     case 3:	/* BE */
       cond = (flags & F_CF) != 0;
+      /* fallthrough */
 
     case 2:	/* Z */
       cond |= (flags & F_ZF) != 0;
@@ -2699,6 +2700,7 @@ int eval_condition(x86emu_t *emu, unsigned type)
 
     case 7:	/* LE */
       cond = (flags & F_ZF) != 0;
+      /* fallthrough */
 
     case 6:	/* L */
       cond |= ((flags & F_SF) != 0) ^ ((flags & F_OF) != 0);
