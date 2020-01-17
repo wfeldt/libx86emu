@@ -58,6 +58,8 @@ extern "C" {            			/* Use "C" linkage when in C++ mode */
 #define s32 int32_t
 #define s64 int64_t
 
+#define FP_SP_SIZE 4
+#define FP_DP_SIZE 8
 
 /*
  * General EAX, EBX, ECX, EDX type registers.  Note that for
@@ -77,6 +79,10 @@ extern "C" {            			/* Use "C" linkage when in C++ mode */
 #ifdef	__BIG_ENDIAN__
 
 typedef struct {
+  u8 reg[16];
+} I128_reg_t;
+
+typedef struct {
   u32 e_reg;
 } I32_reg_t;
 
@@ -89,6 +95,10 @@ typedef struct {
 } I8_reg_t;
 
 #else /* !__BIG_ENDIAN__ */
+
+typedef struct {
+  u8 reg[16];
+} I128_reg_t;
 
 typedef struct {
   u32 e_reg;
@@ -119,6 +129,9 @@ struct i386_special_regs {
   u32 FLAGS;
 };
 
+struct i386_see_regs {
+  I128_reg_t XMM[8];
+};
 
 typedef struct {
   union {
@@ -215,6 +228,16 @@ typedef struct {
 #define R_EDI		spc.DI.I32_reg.e_reg
 #define R_EIP		spc.IP.I32_reg.e_reg
 #define R_EFLG		spc.FLAGS
+
+/* SSE registers */
+#define R_XMM0		sse.XMM[0]
+#define R_XMM1		sse.XMM[1]
+#define R_XMM2		sse.XMM[2]
+#define R_XMM3		sse.XMM[3]
+#define R_XMM4		sse.XMM[4]
+#define R_XMM5		sse.XMM[5]
+#define R_XMM6		sse.XMM[6]
+#define R_XMM7		sse.XMM[7]
 
 /* segment registers */
 #define R_ES_INDEX	0
@@ -336,6 +359,11 @@ typedef struct {
 #define F_DF 0x0400             /* DIR flag    */
 #define F_OF 0x0800             /* OVERFLOW flag */
 
+#define CR0_MP		(1 <<  1)
+#define CR0_EM		(1 <<  2)
+#define CR4_OSFXSR	(1 <<  9)
+#define CR4_OSXMMEXCPT	(1 << 10)
+
 #define X86EMU_TOGGLE_FLAG(emu, flag)     (emu->x86.R_FLG ^= (flag))
 #define X86EMU_SET_FLAG(emu, flag)        (emu->x86.R_FLG |= (flag))
 #define X86EMU_CLEAR_FLAG(emu, flag)      (emu->x86.R_FLG &= ~(flag))
@@ -389,6 +417,7 @@ typedef void (* x86emu_flush_func_t)(struct x86emu_s *, char *buf, unsigned size
 typedef struct {
   struct i386_general_regs gen;
   struct i386_special_regs spc;
+  struct i386_see_regs sse;
   sel_t seg[8];
   sel_t ldt;
   sel_t tr;

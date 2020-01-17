@@ -531,6 +531,22 @@ u32 fetch_data_long(x86emu_t *emu, u32 ofs)
 
 /****************************************************************************
 PARAMETERS:
+offset	- Offset to load data from
+
+RETURNS:
+Quad long value read from the absolute memory location.
+****************************************************************************/
+I128_reg_t fetch_data_qlong(x86emu_t *emu, u32 ofs)
+{
+  I128_reg_t ret;
+  for (int i = 0; i < sizeof(I128_reg_t); i++) {
+    ret.reg[i] = fetch_data_byte(emu, ofs + i);
+  }
+  return ret;
+}
+
+/****************************************************************************
+PARAMETERS:
 segment	- Segment to load data from
 offset	- Offset to load data from
 
@@ -626,6 +642,22 @@ the current 'default' segment, which may have been overridden.
 void store_data_long(x86emu_t *emu, u32 ofs, u32 val)
 {
   store_data_long_abs(emu, get_data_segment(emu), ofs, val);
+}
+
+/****************************************************************************
+PARAMETERS:
+offset	- Offset to store data at
+val		- Value to store
+
+REMARKS:
+Writes a qlong value to an segmented memory location. The segment used is
+the current 'default' segment, which may have been overridden.
+****************************************************************************/
+void store_data_qlong(x86emu_t *emu, u32 ofs, I128_reg_t val)
+{
+  for (int i = 0; i < sizeof(I128_reg_t); i++) {
+    store_data_word_abs(emu, get_data_segment(emu), ofs, val.reg[i]);
+  }
 }
 
 /****************************************************************************
@@ -885,6 +917,56 @@ u32* decode_rm_long_register(x86emu_t *emu, int reg)
 
 /****************************************************************************
 PARAMETERS:
+reg	- SSE register to decode
+
+RETURNS:
+Pointer to the appropriate register
+
+REMARKS:
+Return a pointer to the register given by the R/RM field of the
+modrm byte, for dword operands.  Also enables the decoding of instructions.
+****************************************************************************/
+I128_reg_t* decode_rm_sse_register(x86emu_t *emu, int reg)
+{
+  switch(reg) {
+    case 0:
+      OP_DECODE("xmm0");
+      return &emu->x86.R_XMM0;
+
+    case 1:
+      OP_DECODE("xmm1");
+      return &emu->x86.R_XMM1;
+
+    case 2:
+      OP_DECODE("xmm2");
+      return &emu->x86.R_XMM2;
+
+    case 3:
+      OP_DECODE("xmm3");
+      return &emu->x86.R_XMM3;
+
+    case 4:
+      OP_DECODE("xmm4");
+      return &emu->x86.R_XMM4;
+
+    case 5:
+      OP_DECODE("xmm5");
+      return &emu->x86.R_XMM5;
+
+    case 6:
+      OP_DECODE("xmm6");
+      return &emu->x86.R_XMM6;
+
+    case 7:
+      OP_DECODE("xmm7");
+      return &emu->x86.R_XMM7;
+  }
+
+  return NULL;                /* NOTREACHED OR REACHED ON ERROR */
+}
+
+/****************************************************************************
+PARAMETERS:
 reg	- Register to decode
 
 RETURNS:
@@ -997,6 +1079,11 @@ void decode_hex8(x86emu_t *emu, char **p, u32 ofs)
   decode_hex4(emu, p, ofs & 0xffff);
 }
 
+void decode_hex32(x86emu_t *emu, char **p, I128_reg_t ofs)
+{
+  for (int i = sizeof(ofs.reg) - 1; i >= 0; i--)
+    decode_hex2(emu, p, ofs.reg[i]);
+}
 
 void decode_hex_addr(x86emu_t *emu, char **p, u32 ofs)
 {
@@ -1726,6 +1813,25 @@ void log_regs(x86emu_t *emu)
   if(ACCESS_FLAG(F_PF)) LOG_STR(" pf");
   if(ACCESS_FLAG(F_CF)) LOG_STR(" cf");
 
+  if (emu->x86.R_CR4 & CR4_OSFXSR) {
+    LOG_STR("\nxmm0 ");
+    decode_hex32(emu, p, emu->x86.R_XMM0);
+    LOG_STR("\nxmm1 ");
+    decode_hex32(emu, p, emu->x86.R_XMM1);
+    LOG_STR("\nxmm2 ");
+    decode_hex32(emu, p, emu->x86.R_XMM2);
+    LOG_STR("\nxmm3 ");
+    decode_hex32(emu, p, emu->x86.R_XMM3);
+    LOG_STR("\nxmm4 ");
+    decode_hex32(emu, p, emu->x86.R_XMM4);
+    LOG_STR("\nxmm5 ");
+    decode_hex32(emu, p, emu->x86.R_XMM5);
+    LOG_STR("\nxmm6 ");
+    decode_hex32(emu, p, emu->x86.R_XMM6);
+    LOG_STR("\nxmm7 ");
+    decode_hex32(emu, p, emu->x86.R_XMM7);
+    LOG_STR("\n");
+  }
   LOG_STR("\n");
 
   **p = 0;
