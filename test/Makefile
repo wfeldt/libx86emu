@@ -1,8 +1,9 @@
 CC         = gcc
 CFLAGS     = -g -Wall -fomit-frame-pointer -O2
-TST_FILES  = $(wildcard *.tst)
+LDFLAGS    =
+TST_FILES  = $(sort $(wildcard *.tst))
 INIT_FILES = $(addsuffix .init,$(basename $(wildcard *.tst)))
-RES_FILES  = $(addsuffix .result,$(basename $(wildcard *.tst)))
+RES_FILES  = $(sort $(addsuffix .result,$(basename $(wildcard *.tst))))
 TEST_OPTS  = --verbose --show code,regs,data,acc,io,ints,attr,time
 
 export LD_LIBRARY_PATH=..
@@ -17,7 +18,7 @@ all: x86test
 	@./x86test $(TEST_OPTS) *.init
 
 x86test: x86test.c
-	$(CC) $(CFLAGS) $< -lx86emu -o $@
+	$(CC) $(CFLAGS) $< -I ../include -L .. -lx86emu -o $@ $(LDFLAGS)
 
 %.result: %.init
 	@./x86test $(TEST_OPTS) $<
