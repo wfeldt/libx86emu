@@ -2015,7 +2015,7 @@ void imul_byte(x86emu_t *emu, u8 s)
 REMARKS:
 Implements the IMUL instruction and side effects.
 
-return 1 if result verflows
+return 1 if result overflows
 ****************************************************************************/
 int imul_word_direct(u16 *res_lo, u16* res_hi, u16 d, u16 s)
 {
