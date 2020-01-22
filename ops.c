@@ -1231,8 +1231,8 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
 {
   int mod, rl, rh;
   s32 imm;
-  u32 *src32, *dst32, val, addr, res_lo, res_hi;
-  u16 *src16, *dst16;
+  u32 *src32, *dst32, val32, res32_lo, res32_hi, addr;
+  u16 *src16, *dst16, val16, res16_lo, res16_hi;
 
   OP_DECODE("imul ");
   fetch_decode_modrm(emu, &mod, &rh, &rl);
@@ -1244,8 +1244,7 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
       imm = fetch_long(emu);
       OP_DECODE(",");
       DECODE_HEX8S(imm);
-      imul_long_direct(&res_lo, &res_hi, *src32, imm);
-      if(res_hi != 0) {
+      if(imul_long_direct(&res32_lo, &res32_hi, *src32, imm)) {
         SET_FLAG(F_CF);
         SET_FLAG(F_OF);
       }
@@ -1253,7 +1252,7 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_CF);
         CLEAR_FLAG(F_OF);
       }
-      *dst32 = res_lo;
+      *dst32 = res32_lo;
     }
     else {
       dst16 = decode_rm_word_register(emu, rh);
@@ -1262,8 +1261,7 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
       imm = (s16) fetch_word(emu);
       OP_DECODE(",");
       DECODE_HEX4S(imm);
-      res_lo = (s32) ((s16) *src16 * imm);
-      if(res_lo > 0xffff) {
+      if(imul_word_direct(&res16_lo, &res16_hi, *src16, imm)) {
         SET_FLAG(F_CF);
         SET_FLAG(F_OF);
       }
@@ -1271,7 +1269,7 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_CF);
         CLEAR_FLAG(F_OF);
       }
-      *dst16 = res_lo;
+      *dst16 = res16_lo;
     }
   }
   else {
@@ -1279,12 +1277,11 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
       dst32 = decode_rm_long_register(emu, rh);
       OP_DECODE(",");
       addr = decode_rm_address(emu, mod, rl);
-      val = fetch_data_long(emu, addr);
+      val32 = fetch_data_long(emu, addr);
       imm = fetch_long(emu);
       OP_DECODE(",");
       DECODE_HEX8S(imm);
-      imul_long_direct(&res_lo, &res_hi, val, imm);
-      if(res_hi != 0) {
+      if(imul_long_direct(&res32_lo, &res32_hi, val32, imm)) {
         SET_FLAG(F_CF);
         SET_FLAG(F_OF);
       }
@@ -1292,18 +1289,17 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_CF);
         CLEAR_FLAG(F_OF);
       }
-      *dst32 = res_lo;
+      *dst32 = res32_lo;
     }
     else {
       dst16 = decode_rm_word_register(emu, rh);
       OP_DECODE(",");
       addr = decode_rm_address(emu, mod, rl);
-      val = fetch_data_word(emu, addr);
+      val16 = fetch_data_word(emu, addr);
       imm = (s32) fetch_word(emu);
       OP_DECODE(",");
       DECODE_HEX4S(imm);
-      res_lo = (s32) ((s16) val * imm);
-      if(res_lo > 0xffff) {
+      if(imul_word_direct(&res16_lo, &res16_hi, val16, imm)) {
         SET_FLAG(F_CF);
         SET_FLAG(F_OF);
       }
@@ -1311,7 +1307,7 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_CF);
         CLEAR_FLAG(F_OF);
       }
-      *dst16 = res_lo;
+      *dst16 = res16_lo;
     }
   }
 }
@@ -1346,8 +1342,8 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
 {
   int mod, rl, rh;
   s32 imm;
-  u32 *src32, *dst32, val, addr, res_lo, res_hi;
-  u16 *src16, *dst16;
+  u32 *src32, *dst32, val32, res32_lo, res32_hi, addr;
+  u16 *src16, *dst16, val16, res16_lo, res16_hi;
 
   OP_DECODE("imul ");
   fetch_decode_modrm(emu, &mod, &rh, &rl);
@@ -1359,8 +1355,7 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
       imm = (s8) fetch_byte(emu);
       OP_DECODE(",");
       DECODE_HEX2S(imm);
-      imul_long_direct(&res_lo, &res_hi, *src32, imm);
-      if(res_hi != 0) {
+      if(imul_long_direct(&res32_lo, &res32_hi, *src32, imm)) {
         SET_FLAG(F_CF);
         SET_FLAG(F_OF);
       }
@@ -1368,7 +1363,7 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_CF);
         CLEAR_FLAG(F_OF);
       }
-      *dst32 = res_lo;
+      *dst32 = res32_lo;
     }
     else {
       dst16 = decode_rm_word_register(emu, rh);
@@ -1377,8 +1372,7 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
       imm = (s8) fetch_byte(emu);
       OP_DECODE(",");
       DECODE_HEX2S(imm);
-      res_lo = (s32) ((s16) *src16 * imm);
-      if(res_lo > 0xffff) {
+      if(imul_word_direct(&res16_lo, &res16_hi, *src16, imm)) {
         SET_FLAG(F_CF);
         SET_FLAG(F_OF);
       }
@@ -1386,7 +1380,7 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_CF);
         CLEAR_FLAG(F_OF);
       }
-      *dst16 = res_lo;
+      *dst16 = res16_lo;
     }
   }
   else {
@@ -1394,12 +1388,11 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
       dst32 = decode_rm_long_register(emu, rh);
       OP_DECODE(",");
       addr = decode_rm_address(emu, mod, rl);
-      val = fetch_data_long(emu, addr);
+      val32 = fetch_data_long(emu, addr);
       imm = (s8) fetch_byte(emu);
       OP_DECODE(",");
       DECODE_HEX2S(imm);
-      imul_long_direct(&res_lo, &res_hi, val, imm);
-      if(res_hi != 0) {
+      if(imul_long_direct(&res32_lo, &res32_hi, val32, imm)) {
         SET_FLAG(F_CF);
         SET_FLAG(F_OF);
       }
@@ -1407,18 +1400,17 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_CF);
         CLEAR_FLAG(F_OF);
       }
-      *dst32 = res_lo;
+      *dst32 = res32_lo;
     }
     else {
       dst16 = decode_rm_word_register(emu, rh);
       OP_DECODE(",");
       addr = decode_rm_address(emu, mod, rl);
-      val = fetch_data_word(emu, addr);
+      val16 = fetch_data_word(emu, addr);
       imm = (s8) fetch_byte(emu);
       OP_DECODE(",");
       DECODE_HEX2S(imm);
-      res_lo = (s32) ((s16) val * imm);
-      if(res_lo > 0xffff) {
+      if(imul_word_direct(&res16_lo, &res16_hi, val16, imm)) {
         SET_FLAG(F_CF);
         SET_FLAG(F_OF);
       }
@@ -1426,7 +1418,7 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_CF);
         CLEAR_FLAG(F_OF);
       }
-      *dst16 = res_lo;
+      *dst16 = res16_lo;
     }
   }
 }
