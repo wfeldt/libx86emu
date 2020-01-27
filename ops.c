@@ -1253,6 +1253,8 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_OF);
       }
       *dst32 = res32_lo;
+
+      SET_FLAGS_FOR_MUL(res32_hi | res32_lo, res32_lo, 32);
     }
     else {
       dst16 = decode_rm_word_register(emu, rh);
@@ -1270,6 +1272,8 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_OF);
       }
       *dst16 = res16_lo;
+
+      SET_FLAGS_FOR_MUL(res16_hi | res16_lo, res16_lo, 16);
     }
   }
   else {
@@ -1290,6 +1294,8 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_OF);
       }
       *dst32 = res32_lo;
+
+      SET_FLAGS_FOR_MUL(res32_hi | res32_lo, res32_lo, 32);
     }
     else {
       dst16 = decode_rm_word_register(emu, rh);
@@ -1308,6 +1314,8 @@ static void x86emuOp_imul_word_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_OF);
       }
       *dst16 = res16_lo;
+
+      SET_FLAGS_FOR_MUL(res16_hi | res16_lo, res16_lo, 16);
     }
   }
 }
@@ -1364,6 +1372,8 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_OF);
       }
       *dst32 = res32_lo;
+
+      SET_FLAGS_FOR_MUL(res32_hi | res32_lo, res32_lo, 32);
     }
     else {
       dst16 = decode_rm_word_register(emu, rh);
@@ -1381,6 +1391,8 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_OF);
       }
       *dst16 = res16_lo;
+
+      SET_FLAGS_FOR_MUL(res16_hi | res16_lo, res16_lo, 16);
     }
   }
   else {
@@ -1401,6 +1413,8 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_OF);
       }
       *dst32 = res32_lo;
+
+      SET_FLAGS_FOR_MUL(res32_hi | res32_lo, res32_lo, 32);
     }
     else {
       dst16 = decode_rm_word_register(emu, rh);
@@ -1419,6 +1433,8 @@ static void x86emuOp_imul_byte_IMM(x86emu_t *emu, u8 op1)
         CLEAR_FLAG(F_OF);
       }
       *dst16 = res16_lo;
+
+      SET_FLAGS_FOR_MUL(res16_hi | res16_lo, res16_lo, 16);
     }
   }
 }

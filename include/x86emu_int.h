@@ -75,6 +75,25 @@
 #define CONDITIONAL_SET_FLAG(COND,FLAG) \
   if(COND) SET_FLAG(FLAG); else CLEAR_FLAG(FLAG)
 
+/*
+ * Processor manuals say Z, S, P, A flags are 'undefined'. Experiments on
+ * some CPUs show they are set based on the result resp. lower half of the
+ * result.
+ *
+ * RES_ZERO: value to check for zero flag (whole result)
+ * RES_LO: value to check for sign and parity (lower half)
+ * BITS: argument size (8, 16, 32)
+ */
+#define SET_FLAGS_FOR_MUL(RES_ZERO, RES_LO, BITS) \
+  CONDITIONAL_SET_FLAG((RES_ZERO) == 0, F_ZF); \
+  CONDITIONAL_SET_FLAG((RES_LO) & (1 << ((BITS) - 1)), F_SF); \
+  CONDITIONAL_SET_FLAG(PARITY((RES_LO) & 0xff), F_PF); \
+  CLEAR_FLAG(F_AF)
+
+#define PARITY(x)	(((x86emu_parity_tab[(x) / 32] >> ((x) % 32)) & 1) == 0)
+
+extern u32 x86emu_parity_tab[8];
+
 #define LOG_STR(a) memcpy(*p, a, sizeof (a) - 1), *p += sizeof (a) - 1
 #define LOG_FREE(emu) ((emu)->log.size + (emu)->log.buf - (emu)->log.ptr)
 

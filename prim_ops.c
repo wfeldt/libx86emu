@@ -100,7 +100,7 @@
 
 /*------------------------- Global Variables ------------------------------*/
 
-static u32 x86emu_parity_tab[8] =
+u32 x86emu_parity_tab[8] =
 {
 	0x96696996,
 	0x69969669,
@@ -112,7 +112,6 @@ static u32 x86emu_parity_tab[8] =
 	0x69969669,
 };
 
-#define PARITY(x)   (((x86emu_parity_tab[(x) / 32] >> ((x) % 32)) & 1) == 0)
 #define XOR2(x) 	(((x) ^ ((x)>>1)) & 0x1)
 
 /*----------------------------- Implementation ----------------------------*/
@@ -2009,6 +2008,8 @@ void imul_byte(x86emu_t *emu, u8 s)
     CLEAR_FLAG(F_CF);
     CLEAR_FLAG(F_OF);
   }
+
+  SET_FLAGS_FOR_MUL(res, emu->x86.R_AL, 8);
 }
 
 /****************************************************************************
@@ -2057,6 +2058,8 @@ void imul_word(x86emu_t *emu, u16 s)
     CLEAR_FLAG(F_CF);
     CLEAR_FLAG(F_OF);
   }
+
+  SET_FLAGS_FOR_MUL(emu->x86.R_AX | emu->x86.R_DX, emu->x86.R_AX, 16);
 }
 
 /****************************************************************************
@@ -2073,6 +2076,8 @@ void imul_long(x86emu_t *emu, u32 s)
     CLEAR_FLAG(F_CF);
     CLEAR_FLAG(F_OF);
   }
+
+  SET_FLAGS_FOR_MUL(emu->x86.R_EAX | emu->x86.R_EDX, emu->x86.R_EAX, 32);
 }
 
 /****************************************************************************
@@ -2093,6 +2098,8 @@ void mul_byte(x86emu_t *emu, u8 s)
     SET_FLAG(F_CF);
     SET_FLAG(F_OF);
   }
+
+  SET_FLAGS_FOR_MUL(res, emu->x86.R_AL, 8);
 }
 
 /****************************************************************************
@@ -2114,6 +2121,8 @@ void mul_word(x86emu_t *emu, u16 s)
     SET_FLAG(F_CF);
     SET_FLAG(F_OF);
   }
+
+  SET_FLAGS_FOR_MUL(res, emu->x86.R_AX, 16);
 }
 
 /****************************************************************************
@@ -2135,6 +2144,8 @@ void mul_long(x86emu_t *emu, u32 s)
     SET_FLAG(F_CF);
     SET_FLAG(F_OF);
   }
+
+  SET_FLAGS_FOR_MUL(res, emu->x86.R_EAX, 32);
 }
 
 /****************************************************************************
