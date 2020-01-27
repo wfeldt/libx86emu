@@ -100,7 +100,7 @@
 
 /*------------------------- Global Variables ------------------------------*/
 
-static u32 x86emu_parity_tab[8] =
+u32 x86emu_parity_tab[8] =
 {
 	0x96696996,
 	0x69969669,
@@ -112,7 +112,6 @@ static u32 x86emu_parity_tab[8] =
 	0x69969669,
 };
 
-#define PARITY(x)   (((x86emu_parity_tab[(x) / 32] >> ((x) % 32)) & 1) == 0)
 #define XOR2(x) 	(((x) ^ ((x)>>1)) & 0x1)
 
 /*----------------------------- Implementation ----------------------------*/
@@ -1997,17 +1996,52 @@ Implements the IMUL instruction and side effects.
 ****************************************************************************/
 void imul_byte(x86emu_t *emu, u8 s)
 {
-	s16 res = (s16)((s8)emu->x86.R_AL * (s8)s);
+  s16 res = (s16) (s8) emu->x86.R_AL * (s16) (s8) s;
 
-	emu->x86.R_AX = res;
-	if (((emu->x86.R_AL & 0x80) == 0 && emu->x86.R_AH == 0x00) ||
-		((emu->x86.R_AL & 0x80) != 0 && emu->x86.R_AH == 0xFF)) {
-		CLEAR_FLAG(F_CF);
-		CLEAR_FLAG(F_OF);
-	} else {
-		SET_FLAG(F_CF);
-		SET_FLAG(F_OF);
-	}
+  emu->x86.R_AX = res;
+
+  if(res >> 7 != 0 && res >> 7 != -1) {
+    SET_FLAG(F_CF);
+    SET_FLAG(F_OF);
+  }
+  else {
+    CLEAR_FLAG(F_CF);
+    CLEAR_FLAG(F_OF);
+  }
+
+  SET_FLAGS_FOR_MUL(res, emu->x86.R_AL, 8);
+}
+
+/****************************************************************************
+REMARKS:
+Implements the IMUL instruction and side effects.
+
+return 1 if result overflows
+****************************************************************************/
+int imul_word_direct(u16 *res_lo, u16* res_hi, u16 d, u16 s)
+{
+  s32 res = (s32) (s16) d * (s32) (s16) s;
+
+  *res_lo = res;
+  *res_hi = res >> 16;
+
+  return res >> 15 != 0 && res >> 15 != -1;
+}
+
+/****************************************************************************
+REMARKS:
+Implements the IMUL instruction and side effects.
+
+return 1 if result overflows
+****************************************************************************/
+int imul_long_direct(u32 *res_lo, u32* res_hi, u32 d, u32 s)
+{
+  s64 res = (s64) (s32) d * (s64) (s32) s;
+
+  *res_lo = res;
+  *res_hi = res >> 32;
+
+  return res >> 31 != 0 && res >> 31 != -1;
 }
 
 /****************************************************************************
@@ -2016,56 +2050,16 @@ Implements the IMUL instruction and side effects.
 ****************************************************************************/
 void imul_word(x86emu_t *emu, u16 s)
 {
-	s32 res = (s16)emu->x86.R_AX * (s16)s;
+  if(imul_word_direct(&emu->x86.R_AX, &emu->x86.R_DX, emu->x86.R_AX, s)) {
+    SET_FLAG(F_CF);
+    SET_FLAG(F_OF);
+  }
+  else {
+    CLEAR_FLAG(F_CF);
+    CLEAR_FLAG(F_OF);
+  }
 
-	emu->x86.R_AX = (u16)res;
-	emu->x86.R_DX = (u16)(res >> 16);
-	if (((emu->x86.R_AX & 0x8000) == 0 && emu->x86.R_DX == 0x00) ||
-		((emu->x86.R_AX & 0x8000) != 0 && emu->x86.R_DX == 0xFF)) {
-		CLEAR_FLAG(F_CF);
-		CLEAR_FLAG(F_OF);
-	} else {
-		SET_FLAG(F_CF);
-		SET_FLAG(F_OF);
-	}
-}
-
-/****************************************************************************
-REMARKS:
-Implements the IMUL instruction and side effects.
-****************************************************************************/
-void imul_long_direct(u32 *res_lo, u32* res_hi,u32 d, u32 s)
-{
-#ifdef	__HAS_LONG_LONG__
-	s64 res = (s32)d * (s32)s;
-
-	*res_lo = (u32)res;
-	*res_hi = (u32)(res >> 32);
-#else
-	u32	d_lo,d_hi,d_sign;
-	u32	s_lo,s_hi,s_sign;
-	u32	rlo_lo,rlo_hi,rhi_lo;
-
-	if ((d_sign = d & 0x80000000) != 0)
-		d = -d;
-	d_lo = d & 0xFFFF;
-	d_hi = d >> 16;
-	if ((s_sign = s & 0x80000000) != 0)
-		s = -s;
-	s_lo = s & 0xFFFF;
-	s_hi = s >> 16;
-	rlo_lo = d_lo * s_lo;
-	rlo_hi = (d_hi * s_lo + d_lo * s_hi) + (rlo_lo >> 16);
-	rhi_lo = d_hi * s_hi + (rlo_hi >> 16);
-	*res_lo = (rlo_hi << 16) | (rlo_lo & 0xFFFF);
-	*res_hi = rhi_lo;
-	if (d_sign != s_sign) {
-		d = ~*res_lo;
-		s = (((d & 0xFFFF) + 1) >> 16) + (d >> 16);
-		*res_lo = ~*res_lo+1;
-		*res_hi = ~*res_hi+(s >> 16);
-		}
-#endif
+  SET_FLAGS_FOR_MUL(emu->x86.R_AX | emu->x86.R_DX, emu->x86.R_AX, 16);
 }
 
 /****************************************************************************
@@ -2074,15 +2068,16 @@ Implements the IMUL instruction and side effects.
 ****************************************************************************/
 void imul_long(x86emu_t *emu, u32 s)
 {
-	imul_long_direct(&emu->x86.R_EAX,&emu->x86.R_EDX,emu->x86.R_EAX,s);
-	if (((emu->x86.R_EAX & 0x80000000) == 0 && emu->x86.R_EDX == 0x00) ||
-		((emu->x86.R_EAX & 0x80000000) != 0 && emu->x86.R_EDX == 0xFF)) {
-		CLEAR_FLAG(F_CF);
-		CLEAR_FLAG(F_OF);
-	} else {
-		SET_FLAG(F_CF);
-		SET_FLAG(F_OF);
-	}
+  if(imul_long_direct(&emu->x86.R_EAX, &emu->x86.R_EDX, emu->x86.R_EAX, s)) {
+    SET_FLAG(F_CF);
+    SET_FLAG(F_OF);
+  }
+  else {
+    CLEAR_FLAG(F_CF);
+    CLEAR_FLAG(F_OF);
+  }
+
+  SET_FLAGS_FOR_MUL(emu->x86.R_EAX | emu->x86.R_EDX, emu->x86.R_EAX, 32);
 }
 
 /****************************************************************************
@@ -2091,16 +2086,20 @@ Implements the MUL instruction and side effects.
 ****************************************************************************/
 void mul_byte(x86emu_t *emu, u8 s)
 {
-	u16 res = (u16)(emu->x86.R_AL * s);
+  u16 res = (u16) emu->x86.R_AL * (u16) s;
 
-	emu->x86.R_AX = res;
-	if (emu->x86.R_AH == 0) {
-		CLEAR_FLAG(F_CF);
-		CLEAR_FLAG(F_OF);
-	} else {
-		SET_FLAG(F_CF);
-		SET_FLAG(F_OF);
-	}
+  emu->x86.R_AX = res;
+
+  if(emu->x86.R_AH == 0) {
+    CLEAR_FLAG(F_CF);
+    CLEAR_FLAG(F_OF);
+  }
+  else {
+    SET_FLAG(F_CF);
+    SET_FLAG(F_OF);
+  }
+
+  SET_FLAGS_FOR_MUL(res, emu->x86.R_AL, 8);
 }
 
 /****************************************************************************
@@ -2109,17 +2108,21 @@ Implements the MUL instruction and side effects.
 ****************************************************************************/
 void mul_word(x86emu_t *emu, u16 s)
 {
-	u32 res = emu->x86.R_AX * s;
+  u32 res = (u32) emu->x86.R_AX * (u32) s;
 
-	emu->x86.R_AX = (u16)res;
-	emu->x86.R_DX = (u16)(res >> 16);
-	if (emu->x86.R_DX == 0) {
-		CLEAR_FLAG(F_CF);
-		CLEAR_FLAG(F_OF);
-    } else {
-		SET_FLAG(F_CF);
-		SET_FLAG(F_OF);
-    }
+  emu->x86.R_AX = res;
+  emu->x86.R_DX = res >> 16;
+
+  if(emu->x86.R_DX == 0) {
+    CLEAR_FLAG(F_CF);
+    CLEAR_FLAG(F_OF);
+  }
+  else {
+    SET_FLAG(F_CF);
+    SET_FLAG(F_OF);
+  }
+
+  SET_FLAGS_FOR_MUL(res, emu->x86.R_AX, 16);
 }
 
 /****************************************************************************
@@ -2128,35 +2131,21 @@ Implements the MUL instruction and side effects.
 ****************************************************************************/
 void mul_long(x86emu_t *emu, u32 s)
 {
-#ifdef	__HAS_LONG_LONG__
-	u64 res = (u32)emu->x86.R_EAX * (u32)s;
+  u64 res = (u64) emu->x86.R_EAX * (u64) s;
 
-	emu->x86.R_EAX = (u32)res;
-	emu->x86.R_EDX = (u32)(res >> 32);
-#else
-	u32	a,a_lo,a_hi;
-	u32	s_lo,s_hi;
-	u32	rlo_lo,rlo_hi,rhi_lo;
+  emu->x86.R_EAX = res;
+  emu->x86.R_EDX = res >> 32;
 
-	a = emu->x86.R_EAX;
-	a_lo = a & 0xFFFF;
-	a_hi = a >> 16;
-	s_lo = s & 0xFFFF;
-	s_hi = s >> 16;
-	rlo_lo = a_lo * s_lo;
-	rlo_hi = (a_hi * s_lo + a_lo * s_hi) + (rlo_lo >> 16);
-	rhi_lo = a_hi * s_hi + (rlo_hi >> 16);
-	emu->x86.R_EAX = (rlo_hi << 16) | (rlo_lo & 0xFFFF);
-	emu->x86.R_EDX = rhi_lo;
-#endif
+  if(emu->x86.R_EDX == 0) {
+    CLEAR_FLAG(F_CF);
+    CLEAR_FLAG(F_OF);
+  }
+  else {
+    SET_FLAG(F_CF);
+    SET_FLAG(F_OF);
+  }
 
-	if (emu->x86.R_EDX == 0) {
-		CLEAR_FLAG(F_CF);
-		CLEAR_FLAG(F_OF);
-	} else {
-		SET_FLAG(F_CF);
-		SET_FLAG(F_OF);
-    }
+  SET_FLAGS_FOR_MUL(res, emu->x86.R_EAX, 32);
 }
 
 /****************************************************************************
@@ -2165,19 +2154,20 @@ Implements the IDIV instruction and side effects.
 ****************************************************************************/
 void idiv_byte(x86emu_t *emu, u8 s)
 {
-    s32 dvd, div, mod;
+	s32 dvd, div, mod;
 
 	dvd = (s16)emu->x86.R_AX;
 	if (s == 0) {
 		INTR_RAISE_DIV0(emu);
-        return;
+		return;
 	}
 	div = dvd / (s8)s;
 	mod = dvd % (s8)s;
-	if (abs(div) > 0x7f) {
+	if (div >> 7 != 0 && div >> 7 != -1) {
 		INTR_RAISE_DIV0(emu);
 		return;
 	}
+
 	emu->x86.R_AL = (s8) div;
 	emu->x86.R_AH = (s8) mod;
 }
@@ -2190,21 +2180,17 @@ void idiv_word(x86emu_t *emu, u16 s)
 {
 	s32 dvd, div, mod;
 
-	dvd = (((s32)emu->x86.R_DX) << 16) | emu->x86.R_AX;
+	dvd = ((u32) emu->x86.R_DX << 16) + (u32) emu->x86.R_AX;
 	if (s == 0) {
 		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	div = dvd / (s16)s;
 	mod = dvd % (s16)s;
-	if (abs(div) > 0x7fff) {
+	if (div >> 15 != 0 && div >> 15 != -1) {
 		INTR_RAISE_DIV0(emu);
 		return;
 	}
-	CLEAR_FLAG(F_CF);
-	CLEAR_FLAG(F_SF);
-	CONDITIONAL_SET_FLAG(div == 0, F_ZF);
-	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
 
 	emu->x86.R_AX = (u16)div;
 	emu->x86.R_DX = (u16)mod;
@@ -2216,72 +2202,22 @@ Implements the IDIV instruction and side effects.
 ****************************************************************************/
 void idiv_long(x86emu_t *emu, u32 s)
 {
-#ifdef	__HAS_LONG_LONG__
 	s64 dvd, div, mod;
 
-	dvd = (((s64)emu->x86.R_EDX) << 32) | emu->x86.R_EAX;
+	dvd = ((u64) emu->x86.R_EDX << 32) + (u64) emu->x86.R_EAX;
 	if (s == 0) {
 		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	div = dvd / (s32)s;
 	mod = dvd % (s32)s;
-	if (abs(div) > 0x7fffffff) {
+	if (div >> 31 != 0 && div >> 31 != -1) {
 		INTR_RAISE_DIV0(emu);
 		return;
 	}
-#else
-	s32 div = 0, mod;
-	s32 h_dvd = emu->x86.R_EDX;
-	u32 l_dvd = emu->x86.R_EAX;
-	u32 abs_s = s & 0x7FFFFFFF;
-	u32 abs_h_dvd = h_dvd & 0x7FFFFFFF;
-	u32 h_s = abs_s >> 1;
-	u32 l_s = abs_s << 31;
-	int counter = 31;
-	int carry;
 
-	if (s == 0) {
-		INTR_RAISE_DIV0(emu);
-		return;
-	}
-	do {
-		div <<= 1;
-		carry = (l_dvd >= l_s) ? 0 : 1;
-		
-		if (abs_h_dvd < (h_s + carry)) {
-			h_s >>= 1;
-			l_s = abs_s << (--counter);
-			continue;
-		} else {
-			abs_h_dvd -= (h_s + carry);
-			l_dvd = carry ? ((0xFFFFFFFF - l_s) + l_dvd + 1)
-				: (l_dvd - l_s);
-			h_s >>= 1;
-			l_s = abs_s << (--counter);
-			div |= 1;
-			continue;
-		}
-		
-	} while (counter > -1);
-	/* overflow */
-	if (abs_h_dvd || (l_dvd > abs_s)) {
-		INTR_RAISE_DIV0(emu);
-		return;
-	}
-	/* sign */
-	div |= ((h_dvd & 0x10000000) ^ (s & 0x10000000));
-	mod = l_dvd;
-
-#endif
-	CLEAR_FLAG(F_CF);
-	CLEAR_FLAG(F_AF);
-	CLEAR_FLAG(F_SF);
-	SET_FLAG(F_ZF);
-	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
-
-	emu->x86.R_EAX = (u32)div;
-	emu->x86.R_EDX = (u32)mod;
+	emu->x86.R_EAX = div;
+	emu->x86.R_EDX = mod;
 }
 
 /****************************************************************************
@@ -2293,18 +2229,19 @@ void div_byte(x86emu_t *emu, u8 s)
 	u32 dvd, div, mod;
 
 	dvd = emu->x86.R_AX;
-    if (s == 0) {
+        if (s == 0) {
 		INTR_RAISE_DIV0(emu);
-        return;
-    }
+		return;
+        }
 	div = dvd / (u8)s;
 	mod = dvd % (u8)s;
-	if (abs(div) > 0xff) {
+	if (div > 0xff) {
 		INTR_RAISE_DIV0(emu);
-        return;
+		return;
 	}
-	emu->x86.R_AL = (u8)div;
-	emu->x86.R_AH = (u8)mod;
+
+	emu->x86.R_AL = div;
+	emu->x86.R_AH = mod;
 }
 
 /****************************************************************************
@@ -2315,24 +2252,20 @@ void div_word(x86emu_t *emu, u16 s)
 {
 	u32 dvd, div, mod;
 
-	dvd = (((u32)emu->x86.R_DX) << 16) | emu->x86.R_AX;
+	dvd = ((u32) emu->x86.R_DX << 16) + emu->x86.R_AX;
 	if (s == 0) {
 		INTR_RAISE_DIV0(emu);
-        return;
-    }
+		return;
+        }
 	div = dvd / (u16)s;
 	mod = dvd % (u16)s;
-	if (abs(div) > 0xffff) {
+	if (div > 0xffff) {
 		INTR_RAISE_DIV0(emu);
 		return;
 	}
-	CLEAR_FLAG(F_CF);
-	CLEAR_FLAG(F_SF);
-	CONDITIONAL_SET_FLAG(div == 0, F_ZF);
-	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
 
-	emu->x86.R_AX = (u16)div;
-	emu->x86.R_DX = (u16)mod;
+	emu->x86.R_AX = div;
+	emu->x86.R_DX = mod;
 }
 
 /****************************************************************************
@@ -2341,68 +2274,22 @@ Implements the DIV instruction and side effects.
 ****************************************************************************/
 void div_long(x86emu_t *emu, u32 s)
 {
-#ifdef	__HAS_LONG_LONG__
 	u64 dvd, div, mod;
 
-	dvd = (((u64)emu->x86.R_EDX) << 32) | emu->x86.R_EAX;
+	dvd = ((u64) emu->x86.R_EDX << 32) + emu->x86.R_EAX;
 	if (s == 0) {
 		INTR_RAISE_DIV0(emu);
 		return;
 	}
 	div = dvd / (u32)s;
 	mod = dvd % (u32)s;
-	if (abs(div) > 0xffffffff) {
+	if (div > 0xffffffff) {
 		INTR_RAISE_DIV0(emu);
 		return;
 	}
-#else
-	s32 div = 0, mod;
-	s32 h_dvd = emu->x86.R_EDX;
-	u32 l_dvd = emu->x86.R_EAX;
 
-	u32 h_s = s;
-	u32 l_s = 0;
-	int counter = 32;
-	int carry;
-		
-	if (s == 0) {
-		INTR_RAISE_DIV0(emu);
-		return;
-	}
-	do {
-		div <<= 1;
-		carry = (l_dvd >= l_s) ? 0 : 1;
-		
-		if (h_dvd < (h_s + carry)) {
-			h_s >>= 1;
-			l_s = s << (--counter);
-			continue;
-		} else {
-			h_dvd -= (h_s + carry);
-			l_dvd = carry ? ((0xFFFFFFFF - l_s) + l_dvd + 1)
-				: (l_dvd - l_s);
-			h_s >>= 1;
-			l_s = s << (--counter);
-			div |= 1;
-			continue;
-		}
-		
-	} while (counter > -1);
-	/* overflow */
-	if (h_dvd || (l_dvd > s)) {
-		INTR_RAISE_DIV0(emu);
-		return;
-	}
-	mod = l_dvd;
-#endif
-	CLEAR_FLAG(F_CF);
-	CLEAR_FLAG(F_AF);
-	CLEAR_FLAG(F_SF);
-	SET_FLAG(F_ZF);
-	CONDITIONAL_SET_FLAG(PARITY(mod & 0xff), F_PF);
-
-	emu->x86.R_EAX = (u32)div;
-	emu->x86.R_EDX = (u32)mod;
+	emu->x86.R_EAX = div;
+	emu->x86.R_EDX = mod;
 }
 
 /****************************************************************************
