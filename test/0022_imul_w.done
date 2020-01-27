@@ -4,7 +4,7 @@
 00001010:  69  ee  61  0a  b2  79  9c  66  69  f3  1c  2d  fa  d6  9c  66
 00001020:  69  4d  02  a6  cf  af  94  9c  f4
 00020100:  f0  fc  99  1d  d4  7d
-0003fff0:                  03  08  03  08  03  08  03  08  03  08  03  08
+0003fff0:                  87  08  87  08  83  08  03  08  83  08  07  08
 
 ; - - registers
 msr[0010]    000000000000000d ; tsc
@@ -26,5 +26,5 @@ gs=0000 gs.base=00000000 gs.limit=0000ffff gs.acc=0093
 
 eax=555766d0 ebx=f82012b2 ecx=cb10e836 edx=71a3da1f
 esi=d49f5578 edi=00000100 ebp=e37c6cf7 esp=0000fff4
-eip=00000029 eflags=00000803 ; of cf
+eip=00000029 eflags=00000887 ; of sf pf cf
 
