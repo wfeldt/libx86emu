@@ -20,13 +20,21 @@ The library lets you
     - trace memory and i/o accesses
     - provide statistics about accessed memory locations, i/o ports, and interrupts
 
-## Major version 1 vs. version 2
+## Major versions
 
-`libx86emu.so.2` uses the same API as `libx86emu.so.1`. The major difference is that version 2 is re-entrant.
+Programs should generally work fine with newer library versions without any changes (except re-compiling).
+
+### Version 3
+
+Extend API to include CPUID and MSR handlers.
+
+### Version 2
+
+Essentially the same API as version 1. The major difference is that version 2 is re-entrant (no global state variable).
+
+### Version 1
 
 Version 1 relies internally on a global variable `x86emu` holding the emulator state. It has been eliminated in version 2.
-
-Programs should work fine with both variants without any changes.
 
 ## Downloads
 
