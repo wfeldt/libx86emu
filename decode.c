@@ -539,7 +539,8 @@ Quad long value read from the absolute memory location.
 I128_reg_t fetch_data_qlong(x86emu_t *emu, u32 ofs)
 {
   I128_reg_t ret;
-  for (int i = 0; i < sizeof(I128_reg_t); i++) {
+  int i;
+  for (i = 0; i < sizeof(I128_reg_t); i++) {
     ret.reg[i] = fetch_data_byte(emu, ofs + i);
   }
   return ret;
@@ -655,7 +656,8 @@ the current 'default' segment, which may have been overridden.
 ****************************************************************************/
 void store_data_qlong(x86emu_t *emu, u32 ofs, I128_reg_t val)
 {
-  for (int i = 0; i < sizeof(I128_reg_t); i++) {
+  int i;
+  for (i = 0; i < sizeof(I128_reg_t); i++) {
     store_data_word_abs(emu, get_data_segment(emu), ofs, val.reg[i]);
   }
 }
@@ -1081,7 +1083,8 @@ void decode_hex8(x86emu_t *emu, char **p, u32 ofs)
 
 void decode_hex32(x86emu_t *emu, char **p, I128_reg_t ofs)
 {
-  for (int i = sizeof(ofs.reg) - 1; i >= 0; i--)
+  int i;
+  for (i = sizeof(ofs.reg) - 1; i >= 0; i--)
     decode_hex2(emu, p, ofs.reg[i]);
 }
 
