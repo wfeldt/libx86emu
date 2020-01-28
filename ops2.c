@@ -353,7 +353,7 @@ Handles opcode 0x0f,0x12-0x13 0x0f,0x16-0x17
 ****************************************************************************/
 static void x86emuOp2_SSEmovpackedops(x86emu_t *emu, u8 op2)
 {
-  int mod, rl, rh;
+  int mod, rl, rh, i;
   I128_reg_t *src, *dst;
   u32 addr;
 
@@ -389,7 +389,7 @@ static void x86emuOp2_SSEmovpackedops(x86emu_t *emu, u8 op2)
     dst = decode_rm_sse_register(emu, rh);
     OP_DECODE(",");
     src = decode_rm_sse_register(emu, rl);
-    for(int i = 0; i < FP_SP_SIZE * 2; i++) {
+    for(i = 0; i < FP_SP_SIZE * 2; i++) {
       if (op2 == 0x12) {
         dst->reg[i] = src->reg[i + FP_SP_SIZE * 2];
       } else if (op2 == 0x16) {
@@ -402,7 +402,7 @@ static void x86emuOp2_SSEmovpackedops(x86emu_t *emu, u8 op2)
       OP_DECODE(",");
       src = decode_rm_sse_register(emu, rh);
 
-      for(int i = 0; i < FP_SP_SIZE * 2; i++) {
+      for(i = 0; i < FP_SP_SIZE * 2; i++) {
         if (op2 == 0x13) {
           store_data_byte(emu, addr + i, src->reg[i]);
         } else if (op2 == 0x17) {
@@ -414,7 +414,7 @@ static void x86emuOp2_SSEmovpackedops(x86emu_t *emu, u8 op2)
       OP_DECODE(",");
       addr = decode_rm_address(emu, mod, rl);
 
-      for(int i = 0; i < FP_SP_SIZE * 2; i++) {
+      for(i = 0; i < FP_SP_SIZE * 2; i++) {
         if (op2 == 0x12) {
           dst->reg[i] = fetch_data_byte(emu, addr + i);
         } else if (op2 == 0x16) {
@@ -432,7 +432,7 @@ Handles opcode 0x0f,0x14-0x15
 ****************************************************************************/
 static void x86emuOp2_SSEpackops(x86emu_t *emu, u8 op2)
 {
-  int mod, rl, rh, off;
+  int mod, rl, rh, off, i;
   I128_reg_t *src, *dst, tmp, arith;
   u32 addr;
 
@@ -479,7 +479,7 @@ static void x86emuOp2_SSEpackops(x86emu_t *emu, u8 op2)
   arith.reg[6] = dst->reg[off + 5];
   arith.reg[7] = src->reg[off + 5];
 
-  for(int i = 0; i < FP_SP_SIZE; i++) {
+  for(i = 0; i < FP_SP_SIZE; i++) {
     dst->reg[i] = arith.reg[i];
   }
 }
@@ -804,7 +804,7 @@ Handles opcode 0x0f,0x54-57
 ****************************************************************************/
 static void x86emuOp2_SSElogicalops(x86emu_t *emu, u8 op2)
 {
-  int mod, rl, rh;
+  int mod, rl, rh, i;
   I128_reg_t *src, *dst, tmp;
   u32 addr;
 
@@ -842,7 +842,7 @@ static void x86emuOp2_SSElogicalops(x86emu_t *emu, u8 op2)
     tmp = fetch_data_qlong(emu, addr);
     src = &tmp;
   }
-  for(int i = 0; i < sizeof(dst->reg); i++) {
+  for(i = 0; i < sizeof(dst->reg); i++) {
     switch(op2) {
       case 0x54:
         dst->reg[i] &= src->reg[i];
