@@ -91,6 +91,7 @@ API_SYM unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 
     if(ACC_D(emu->x86.R_CS_ACC)) {
       emu->x86.mode |= _MODE_DATA32 | _MODE_ADDR32 | _MODE_CODE32;
+	  emu->x86.mode |= _MODE_STACK32; // 2020-05-31 to be reviewed
     }
     if(ACC_D(emu->x86.R_SS_ACC)) {
       emu->x86.mode |= _MODE_STACK32;
@@ -1844,7 +1845,7 @@ void log_regs(x86emu_t *emu)
 void check_data_access(x86emu_t *emu, sel_t *seg, u32 ofs, u32 size)
 {
   char **p = &emu->log.ptr;
-  static char seg_name[7] = "ecsdfg?";
+  static char seg_name[8] = "ecsdfg?";
   unsigned idx = seg - emu->x86.seg, lf;
 
   if((emu->log.trace & X86EMU_TRACE_ACC) && *p) {
