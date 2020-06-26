@@ -160,7 +160,7 @@ int emu_init(x86emu_t *emu, char *file)
   if(opt.bits_32) {
     /* set default data/address size to 32 bit */
     emu->x86.R_CS_ACC |= (1 << 10);
-
+    emu->x86.R_SS_ACC |= (1 << 10);
     /* maximize descriptor limits */
     emu->x86.R_CS_LIMIT =
     emu->x86.R_DS_LIMIT =
@@ -170,7 +170,7 @@ int emu_init(x86emu_t *emu, char *file)
     emu->x86.R_SS_LIMIT = ~0;
   }
 
-  if(!(f = fopen(file, "r"))) return 0;
+	if (!(f = fopen(file, "rb"))) return 0;
 
   while((i = fgetc(f)) != EOF) {
     x86emu_write_byte(emu, addr++, i);
