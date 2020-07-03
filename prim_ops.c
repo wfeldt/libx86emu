@@ -95,6 +95,7 @@
 *
 ****************************************************************************/
 
+#define DLL_EXPORT                // Needed for cross platform portability 
 
 #include "include/x86emu_int.h"
 
@@ -780,7 +781,7 @@ u32 neg_long(x86emu_t *emu, u32 s)
 	register u32 bc;
 
 	CONDITIONAL_SET_FLAG(s != 0, F_CF);
-	res = (u32)-s;
+	res = (u32)-(s32)s;    // Visual Studio Warning C4146 requires cast (s32) ??? (Not sure of this one) 
 	CONDITIONAL_SET_FLAG((res & 0xffffffff) == 0, F_ZF);
 	CONDITIONAL_SET_FLAG(res & 0x80000000, F_SF);
 	CONDITIONAL_SET_FLAG(PARITY(res & 0xff), F_PF);
@@ -2038,7 +2039,7 @@ int imul_long_direct(u32 *res_lo, u32* res_hi, u32 d, u32 s)
 {
   s64 res = (s64) (s32) d * (s64) (s32) s;
 
-  *res_lo = res;
+  *res_lo = (u32) res;   // Visual Studio Warning C4244 requires cast (u32) 
   *res_hi = res >> 32;
 
   return res >> 31 != 0 && res >> 31 != -1;
@@ -2133,7 +2134,7 @@ void mul_long(x86emu_t *emu, u32 s)
 {
   u64 res = (u64) emu->x86.R_EAX * (u64) s;
 
-  emu->x86.R_EAX = res;
+  emu->x86.R_EAX = (u32) res;   // Visual Studio Warning C4244 requires cast (u32) 
   emu->x86.R_EDX = res >> 32;
 
   if(emu->x86.R_EDX == 0) {
@@ -2216,8 +2217,8 @@ void idiv_long(x86emu_t *emu, u32 s)
 		return;
 	}
 
-	emu->x86.R_EAX = div;
-	emu->x86.R_EDX = mod;
+	emu->x86.R_EAX = (u32) div;  // Visual Studio Warning C4244 requires cast (u32) 
+	emu->x86.R_EDX = (u32) mod;  // Visual Studio Warning C4244 requires cast (u32) 
 }
 
 /****************************************************************************
@@ -2288,8 +2289,8 @@ void div_long(x86emu_t *emu, u32 s)
 		return;
 	}
 
-	emu->x86.R_EAX = div;
-	emu->x86.R_EDX = mod;
+	emu->x86.R_EAX = (u32) div;  // Visual Studio Warning C4244 requires cast (u32) 
+	emu->x86.R_EDX = (u32) mod;  // Visual Studio Warning C4244 requires cast (u32) 
 }
 
 /****************************************************************************

@@ -40,12 +40,28 @@
 #ifndef __X86EMU_X86EMU_H
 #define __X86EMU_X86EMU_H
 
+// Define EXPORTED for any platform
+#if (_MSC_VER >= 1900)  // (Visual Studio 2015 version 14.0)
+  #define ATTRIBUTE1
+  #define ATTRIBUTE2
+  #define API_SYM      __declspec(dllexport)
+  #if defined DLL_EXPORT 
+    #define EXPORTED   __declspec(dllexport)
+  #else
+    #define EXPORTED   __declspec(dllimport)
+  #endif
+#else
+  #define ATTRIBUTE1 __attribute__ ((nonnull (1)))  
+  #define ATTRIBUTE2 __attribute__ ((format (printf, 2, 3)))
+  #define API_SYM   __attribute__((visibility("default")))
+  #define EXPORTED
+#endif 
+
 #ifdef  __cplusplus
 extern "C" {            			/* Use "C" linkage when in C++ mode */
 #endif
 
 #include <stdint.h>
-
 
 /*---------------------- Macros and type definitions ----------------------*/
 
@@ -549,44 +565,43 @@ typedef struct x86emu_s {
 } x86emu_t;
 
 /*-------------------------- Function Prototypes --------------------------*/
+EXPORTED x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm);
+EXPORTED x86emu_t *x86emu_done(x86emu_t *emu);
+EXPORTED x86emu_t *x86emu_clone(x86emu_t *emu);
 
-x86emu_t *x86emu_new(unsigned def_mem_perm, unsigned def_io_perm);
-x86emu_t *x86emu_done(x86emu_t *emu);
-x86emu_t *x86emu_clone(x86emu_t *emu);
+EXPORTED void x86emu_reset(x86emu_t *emu);
+EXPORTED unsigned x86emu_run(x86emu_t *emu, unsigned flags) ATTRIBUTE1;                 // ATTRIBUTE1
+EXPORTED void x86emu_stop(x86emu_t *emu);
 
-void x86emu_reset(x86emu_t *emu);
-unsigned x86emu_run(x86emu_t *emu, unsigned flags) __attribute__ ((nonnull (1)));
-void x86emu_stop(x86emu_t *emu);
+EXPORTED void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush);
+EXPORTED unsigned x86emu_clear_log(x86emu_t *emu, int flush) ATTRIBUTE1;                // ATTRIBUTE1
+EXPORTED void x86emu_log(x86emu_t *emu, const char *format, ...) ATTRIBUTE2;            // ATTRIBUTE2
+EXPORTED void x86emu_dump(x86emu_t *emu, int flags);
 
-void x86emu_set_log(x86emu_t *emu, unsigned buffer_size, x86emu_flush_func_t flush);
-unsigned x86emu_clear_log(x86emu_t *emu, int flush) __attribute__ ((nonnull (1)));
-void x86emu_log(x86emu_t *emu, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
-void x86emu_dump(x86emu_t *emu, int flags);
+EXPORTED void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
+EXPORTED void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
+EXPORTED void x86emu_set_page(x86emu_t *emu, unsigned page, void *address);
+EXPORTED void x86emu_reset_access_stats(x86emu_t *emu);
 
-void x86emu_set_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
-void x86emu_set_io_perm(x86emu_t *emu, unsigned start, unsigned end, unsigned perm);
-void x86emu_set_page(x86emu_t *emu, unsigned page, void *address);
-void x86emu_reset_access_stats(x86emu_t *emu);
+EXPORTED x86emu_rdmsr_handler_t x86emu_set_rdmsr_handler(x86emu_t *emu, x86emu_rdmsr_handler_t handler);
+EXPORTED x86emu_wrmsr_handler_t x86emu_set_wrmsr_handler(x86emu_t *emu, x86emu_wrmsr_handler_t handler);
+EXPORTED x86emu_cpuid_handler_t x86emu_set_cpuid_handler(x86emu_t *emu, x86emu_cpuid_handler_t handler);
+EXPORTED x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code_handler_t handler);
+EXPORTED x86emu_intr_handler_t x86emu_set_intr_handler(x86emu_t *emu, x86emu_intr_handler_t handler);
+EXPORTED x86emu_memio_handler_t x86emu_set_memio_handler(x86emu_t *emu, x86emu_memio_handler_t handler);
 
-x86emu_rdmsr_handler_t x86emu_set_rdmsr_handler(x86emu_t *emu, x86emu_rdmsr_handler_t handler);
-x86emu_wrmsr_handler_t x86emu_set_wrmsr_handler(x86emu_t *emu, x86emu_wrmsr_handler_t handler);
-x86emu_cpuid_handler_t x86emu_set_cpuid_handler(x86emu_t *emu, x86emu_cpuid_handler_t handler);
-x86emu_code_handler_t x86emu_set_code_handler(x86emu_t *emu, x86emu_code_handler_t handler);
-x86emu_intr_handler_t x86emu_set_intr_handler(x86emu_t *emu, x86emu_intr_handler_t handler);
-x86emu_memio_handler_t x86emu_set_memio_handler(x86emu_t *emu, x86emu_memio_handler_t handler);
+EXPORTED void x86emu_intr_raise(x86emu_t *emu, u8 intr_nr, unsigned type, unsigned err);
 
-void x86emu_intr_raise(x86emu_t *emu, u8 intr_nr, unsigned type, unsigned err);
+EXPORTED unsigned x86emu_read_byte(x86emu_t *emu, unsigned addr);
+EXPORTED unsigned x86emu_read_byte_noperm(x86emu_t *emu, unsigned addr);
+EXPORTED unsigned x86emu_read_word(x86emu_t *emu, unsigned addr);
+EXPORTED unsigned x86emu_read_dword(x86emu_t *emu, unsigned addr);
+EXPORTED void x86emu_write_byte(x86emu_t *emu, unsigned addr, unsigned val);
+EXPORTED void x86emu_write_byte_noperm(x86emu_t *emu, unsigned addr, unsigned val);
+EXPORTED void x86emu_write_word(x86emu_t *emu, unsigned addr, unsigned val);
+EXPORTED void x86emu_write_dword(x86emu_t *emu, unsigned addr, unsigned val);
 
-unsigned x86emu_read_byte(x86emu_t *emu, unsigned addr);
-unsigned x86emu_read_byte_noperm(x86emu_t *emu, unsigned addr);
-unsigned x86emu_read_word(x86emu_t *emu, unsigned addr);
-unsigned x86emu_read_dword(x86emu_t *emu, unsigned addr);
-void x86emu_write_byte(x86emu_t *emu, unsigned addr, unsigned val);
-void x86emu_write_byte_noperm(x86emu_t *emu, unsigned addr, unsigned val);
-void x86emu_write_word(x86emu_t *emu, unsigned addr, unsigned val);
-void x86emu_write_dword(x86emu_t *emu, unsigned addr, unsigned val);
-
-void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val);
+EXPORTED void x86emu_set_seg_register(x86emu_t *emu, sel_t *seg, u16 val);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/

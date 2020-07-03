@@ -30,7 +30,9 @@
 *   Public interface functions.
 *
 ****************************************************************************/
+#define DLL_EXPORT                // Needed for cross platform portability 
 
+#define _CRT_SECURE_NO_WARNINGS   // Eliminate Visual Studio Warning C4996 on strcat() 
 
 #include "include/x86emu_int.h"
 
@@ -41,7 +43,7 @@ static void x86emu_rdmsr(x86emu_t *emu)
   unsigned u = emu->x86.R_ECX;
 
   emu->x86.R_EDX = emu->x86.msr[u] >> 32;
-  emu->x86.R_EAX = emu->x86.msr[u];
+  emu->x86.R_EAX = (u32) emu->x86.msr[u];  // Visual Studio Warning C4244 requires cast (u32) 
   emu->x86.msr_perm[u] |= X86EMU_ACC_R;
 }
 

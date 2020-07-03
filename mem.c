@@ -30,9 +30,12 @@
 *   Memory and i/o access emulation functions.
 *
 ****************************************************************************/
-
+#define DLL_EXPORT                // Needed for cross platform portability 
 
 #include "include/x86emu_int.h"
+#if (_MSC_VER >= 1900)  // (Visual Studio 2015 version 14.0)
+  #include <intrin.h>
+#endif 
 #if defined(__i386__) || defined (__x86_64__)
 #include <sys/io.h>
 #endif
@@ -577,8 +580,11 @@ unsigned vm_i_byte(x86emu_t *emu, unsigned addr)
     *perm |= X86EMU_ACC_R;
 
     emu->io.stats_i[addr]++;
-
+#if (_MSC_VER >= 1900)  // (Visual Studio 2015 version 14.0)
+    return __inbyte(addr);
+#else 	
     return inb(addr);
+#endif 
   }
   else {
     *perm |= X86EMU_ACC_INVALID;
@@ -616,7 +622,11 @@ unsigned vm_i_word(x86emu_t *emu, unsigned addr)
   emu->io.stats_i[addr]++;
   emu->io.stats_i[addr + 1]++;
 
+#if (_MSC_VER >= 1900)  // (Visual Studio 2015 version 14.0)
+  return __inword(addr);
+#else 	
   return inw(addr);
+#endif   
 }
 
 
@@ -654,7 +664,11 @@ unsigned vm_i_dword(x86emu_t *emu, unsigned addr)
   emu->io.stats_i[addr + 2]++;
   emu->io.stats_i[addr + 3]++;
 
+#if (_MSC_VER >= 1900)  // (Visual Studio 2015 version 14.0)
+  return __indword(addr);
+#else 	
   return inl(addr);
+#endif   
 }
 
 
@@ -673,7 +687,11 @@ void vm_o_byte(x86emu_t *emu, unsigned addr, unsigned val)
 
     emu->io.stats_o[addr]++;
 
+#if (_MSC_VER >= 1900)  // (Visual Studio 2015 version 14.0)
+    __outbyte(val, addr);
+#else 	
     outb(val, addr);
+#endif   
   }
   else {
     *perm |= X86EMU_ACC_INVALID;
@@ -708,7 +726,11 @@ void vm_o_word(x86emu_t *emu, unsigned addr, unsigned val)
   emu->io.stats_o[addr]++;
   emu->io.stats_o[addr + 1]++;
 
+#if (_MSC_VER >= 1900)  // (Visual Studio 2015 version 14.0)
+  __outword(val, addr);
+#else 	
   outw(val, addr);
+#endif   
 }
 
 
@@ -745,7 +767,11 @@ void vm_o_dword(x86emu_t *emu, unsigned addr, unsigned val)
   emu->io.stats_o[addr + 2]++;
   emu->io.stats_o[addr + 3]++;
 
+#if (_MSC_VER >= 1900)  // (Visual Studio 2015 version 14.0)
+  __outdword(val, addr);
+#else 	
   outl(val, addr);
+#endif   
 }
 
 

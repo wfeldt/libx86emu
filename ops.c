@@ -65,7 +65,7 @@
 *   "add" would represent a nightmare in maintenance.
 *
 ****************************************************************************/
-
+#define DLL_EXPORT                // Needed for cross platform portability 
 
 #include "include/x86emu_int.h"
 
@@ -2334,7 +2334,7 @@ static void x86emuOp_cwd(x86emu_t *emu, u8 op1)
   if(MODE_DATA32) {
     OP_DECODE("cdq");
 
-    emu->x86.R_EDX = - (emu->x86.R_EAX >> 31);
+    emu->x86.R_EDX = -(s32) (emu->x86.R_EAX >> 31);  // Visual Studio Warning C4146 requires cast (s32)
   }
   else {
     OP_DECODE("cwd");
