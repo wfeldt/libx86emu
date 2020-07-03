@@ -7,8 +7,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
-#include <x86emu.h>
+#if (_MSC_VER >= 1900)  // (Visual Studio 2015 version 14.0)
+  #include "getopt.h"
+  #include "../include/x86emu.h" 
+#else
+  #include <getopt.h>
+  #include <x86emu.h>
+#endif 
 
 void help(void);
 void flush_log(x86emu_t *emu, char *buf, unsigned size);
@@ -23,7 +28,7 @@ struct option options[] = {
   { "start",      1, NULL, 's'  },
   { "max",        1, NULL, 'm'  },
   { "32",         0, NULL, 1001 },
-  { }
+  { 0,0,0 }  // ISO C forbids empty initializer braces 
 };
 
 
