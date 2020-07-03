@@ -33,7 +33,7 @@
 *   Subroutines related to instruction decoding and logging.
 *
 ****************************************************************************/
-
+#define DLL_EXPORT                // Needed for cross platform portability 
 
 #include "include/x86emu_int.h"
 #include <time.h>
@@ -49,7 +49,6 @@ static void check_data_access(x86emu_t *emu, sel_t *seg, u32 ofs, u32 size);
 static unsigned decode_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type);
 static unsigned emu_memio(x86emu_t *emu, u32 addr, u32 *val, unsigned type);
 static void idt_lookup(x86emu_t *emu, u8 nr, u32 *new_cs, u32 *new_eip);
-
 
 /****************************************************************************
 REMARKS:
@@ -323,6 +322,7 @@ void handle_interrupt(x86emu_t *emu)
 
   emu->x86.intr_type = 0;
 }
+
 
 
 API_SYM void x86emu_intr_raise(x86emu_t *emu, u8 intr_nr, unsigned type, unsigned err)
@@ -1727,7 +1727,7 @@ void log_code(x86emu_t *emu)
   if(lf < 512) lf = x86emu_clear_log(emu, 1);
   if(lf < 512) return;
 
-  decode_hex(emu, p, emu->x86.R_TSC);
+  decode_hex(emu, p, (u32) emu->x86.R_TSC);  // Visual Studio Warning C4244 requires cast (u32) 
 
 #if WITH_TSC
   if(emu->log.trace & X86EMU_TRACE_TIME) {
@@ -1844,7 +1844,7 @@ void log_regs(x86emu_t *emu)
 void check_data_access(x86emu_t *emu, sel_t *seg, u32 ofs, u32 size)
 {
   char **p = &emu->log.ptr;
-  static char seg_name[7] = "ecsdfg?";
+  static char seg_name[8] = "ecsdfg?";
   unsigned idx = seg - emu->x86.seg, lf;
 
   if((emu->log.trace & X86EMU_TRACE_ACC) && *p) {
