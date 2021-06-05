@@ -1,7 +1,5 @@
 # x86 emulation library
 
-[![Build Status](https://travis-ci.org/wfeldt/libx86emu.svg?branch=master)](https://travis-ci.org/wfeldt/libx86emu)
-
 libx86emu is a small library to emulate x86 instructions. The focus here is not a complete emulation (go for qemu for this) but to cover enough for typical firmware blobs.
 
 At the moment 'regular' 32-bit instructions are covered together with basic protected mode support.
