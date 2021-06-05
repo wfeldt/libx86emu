@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -qq nasm
+    - name: Build
+      run: make
+    - name: Run tests
+      run: make -C test
