@@ -84,7 +84,7 @@ struct {
   unsigned dump_flags;
 
   struct {
-    unsigned stderr:1;
+    unsigned print_to_stderr:1;
   } show;
 
   FILE *log_file;
@@ -151,7 +151,7 @@ int main(int argc, char **argv)
         break;
 
       case 1004:
-        opt.show.stderr = 1;
+        opt.show.print_to_stderr = 1;
         break;
 
       default:
@@ -499,7 +499,7 @@ int run_test(char *file)
 
   if(!file) return 1;
 
-  opt.log_file = opt.show.stderr ? stderr : fopen(build_file_name(file, ".log"), "w");
+  opt.log_file = opt.show.print_to_stderr ? stderr : fopen(build_file_name(file, ".log"), "w");
 
   ok = vm_init(vm, file);
 
