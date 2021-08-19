@@ -28,7 +28,7 @@ OBJS	= $(CFILES:.c=.o)
 LIB_NAME	= $(LIBX86).so.$(VERSION)
 LIB_SONAME	= $(LIBX86).so.$(MAJOR_VERSION)
 
-.PHONY: all shared install test demo clean
+.PHONY: all shared install uninstall test demo clean
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
@@ -49,6 +49,12 @@ install: shared
 	ln -snf $(LIB_NAME) $(DESTDIR)$(LIBDIR)/$(LIB_SONAME)
 	ln -snf $(LIB_SONAME) $(DESTDIR)$(LIBDIR)/$(LIBX86).so
 	install -m 644 -D include/x86emu.h $(DESTDIR)/usr/include/x86emu.h
+
+uninstall:
+	rm -f $(DESTDIR)$(LIBDIR)/$(LIB_NAME)
+	rm -f $(DESTDIR)$(LIBDIR)/$(LIB_SONAME)
+	rm -f $(DESTDIR)$(LIBDIR)/$(LIBX86).so
+	rm -f $(DESTDIR)/usr/include/x86emu.h
 
 $(LIB_NAME): .depend $(OBJS)
 	$(CC) -shared -Wl,-soname,$(LIB_SONAME) $(OBJS) -o $(LIB_NAME) $(LDFLAGS)
