@@ -390,6 +390,14 @@ Reset memory access stats. See `x86emu_reset_access_stats()`.
 
 To build, simply run `make`. Install with `make install`.
 
+The `LIBX86EMU_VERSION` flag should be used if libx86emu isn't being compiled in a git repository
+(e.g. when compiling from release archive). For example, compilation and installation of the version
+3.2 form a release archive should look like this:
+```shell
+make LIBX86EMU_VERSION=3.2
+sudo make install LIBX86EMU_VERSION=3.2
+```
+
 Basically every new commit into the master branch of the repository will be auto-submitted
 to all current SUSE products. No further action is needed except accepting the pull request.
 
