@@ -28,7 +28,7 @@ OBJS	= $(CFILES:.c=.o)
 LIB_NAME	= $(LIBX86).so.$(VERSION)
 LIB_SONAME	= $(LIBX86).so.$(MAJOR_VERSION)
 
-.PHONY: all shared install uninstall test demo clean
+.PHONY: all shared install uninstall test demo clean distclean
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
@@ -79,6 +79,9 @@ clean:
 	make -C demo clean
 	rm -f *.o *~ include/*~ *.so.* *.so .depend
 	rm -rf package
+
+distclean: clean
+	rm -f VERSION changelog
 
 ifneq "$(MAKECMDGOALS)" "clean"
 .depend: $(CFILES)
