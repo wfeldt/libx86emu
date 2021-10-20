@@ -414,7 +414,9 @@ sub nr
   $n = ((int rand 0x1000000) & 0xffff00) << 8;
   $n += int((rand 0x1000000) / 11);
 
-  return $n;
+  # Limit the result to a 32 bit number but avoid '&' to ensure it works
+  # with 32 bit perl.
+  return $n % 2 ** 32;
 }
 
 
