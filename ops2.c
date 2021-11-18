@@ -484,6 +484,117 @@ static void x86emuOp2_SSEpackops(x86emu_t *emu, u8 op2)
   }
 }
 
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x18
+****************************************************************************/
+static void x86emuOp2_prefetch(x86emu_t *emu, u8 op2)
+{
+  int mod, rl, rh;
+
+  fetch_decode_modrm(emu, &mod, &rh, &rl);
+
+  switch(rh) {
+    case 0:
+      OP_DECODE("prefetchnta ");
+      break;
+    case 1:
+      OP_DECODE("prefetcht0 ");
+      break;
+    case 2:
+      OP_DECODE("prefetcht1 ");
+      break;
+    case 3:
+      OP_DECODE("prefetcht2 ");
+      break;
+    default:
+      OP_DECODE("hint_nop ");
+      break;
+  }
+
+  if(mod == 3) {
+    if(MODE_DATA32) {
+      decode_rm_long_register(emu, rl);
+    }
+    else {
+      decode_rm_word_register(emu, rl);
+    }
+  }
+  else {
+    OP_DECODE("byte ");
+    decode_rm_address(emu, mod, rl);
+  }
+}
+
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x19,0x1c-0x1e
+****************************************************************************/
+static void x86emuOp2_hint_nop(x86emu_t *emu, u8 op2)
+{
+  int mod, rl, rh;
+
+  OP_DECODE("hint_nop ");
+  fetch_decode_modrm(emu, &mod, &rh, &rl);
+
+  if(mod == 3) {
+    if(MODE_DATA32) {
+      decode_rm_long_register(emu, rl);
+    }
+    else {
+      decode_rm_word_register(emu, rl);
+    }
+  }
+  else {
+    if(MODE_DATA32) {
+      OP_DECODE("dword ");
+    }
+    else {
+      OP_DECODE("word ");
+    }
+    decode_rm_address(emu, mod, rl);
+  }
+}
+
+
+/****************************************************************************
+REMARKS:
+Handles opcode 0x0f,0x1f
+****************************************************************************/
+static void x86emuOp2_nop(x86emu_t *emu, u8 op2)
+{
+  int mod, rl, rh;
+
+  /*
+   * Basically the same as x86emuOp2_hint_nop() - but this is the officially
+   * documented opcode.
+   */
+
+  OP_DECODE("nop ");
+  fetch_decode_modrm(emu, &mod, &rh, &rl);
+
+  if(mod == 3) {
+    if(MODE_DATA32) {
+      decode_rm_long_register(emu, rl);
+    }
+    else {
+      decode_rm_word_register(emu, rl);
+    }
+  }
+  else {
+    if(MODE_DATA32) {
+      OP_DECODE("dword ");
+    }
+    else {
+      OP_DECODE("word ");
+    }
+    decode_rm_address(emu, mod, rl);
+  }
+}
+
+
 /****************************************************************************
 REMARKS:
 Handles opcode 0x0f,0x20
@@ -2073,14 +2184,14 @@ void (*x86emu_optab2[256])(x86emu_t *emu, u8) =
   /*  0x15 */ x86emuOp2_SSEpackops,
   /*  0x16 */ x86emuOp2_SSEmovpackedops,
   /*  0x17 */ x86emuOp2_SSEmovpackedops,
-  /*  0x18 */ x86emuOp2_illegal_op,
-  /*  0x19 */ x86emuOp2_illegal_op,
+  /*  0x18 */ x86emuOp2_prefetch,
+  /*  0x19 */ x86emuOp2_hint_nop,
   /*  0x1a */ x86emuOp2_illegal_op,
   /*  0x1b */ x86emuOp2_illegal_op,
-  /*  0x1c */ x86emuOp2_illegal_op,
-  /*  0x1d */ x86emuOp2_illegal_op,
-  /*  0x1e */ x86emuOp2_illegal_op,
-  /*  0x1f */ x86emuOp2_illegal_op,
+  /*  0x1c */ x86emuOp2_hint_nop,
+  /*  0x1d */ x86emuOp2_hint_nop,
+  /*  0x1e */ x86emuOp2_hint_nop,
+  /*  0x1f */ x86emuOp2_nop,
 
   /*  0x20 */ x86emuOp2_mov_word_RM_CRx,
   /*  0x21 */ x86emuOp2_mov_word_RM_DRx,
