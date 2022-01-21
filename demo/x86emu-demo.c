@@ -7,8 +7,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
-#include <x86emu.h>
+#if (_MSC_VER >= 1900)  // (Visual Studio 2015 version 14.0)
+  #include "getopt.h"
+  #include "../include/x86emu.h" 
+#else
+  #include <getopt.h>
+  #include <x86emu.h>
+#endif 
 
 void help(void);
 void flush_log(x86emu_t *emu, char *buf, unsigned size);
@@ -23,7 +28,7 @@ struct option options[] = {
   { "start",      1, NULL, 's'  },
   { "max",        1, NULL, 'm'  },
   { "32",         0, NULL, 1001 },
-  { }
+  { 0,0,0 }  // ISO C forbids empty initializer braces 
 };
 
 
@@ -160,7 +165,7 @@ int emu_init(x86emu_t *emu, char *file)
   if(opt.bits_32) {
     /* set default data/address size to 32 bit */
     emu->x86.R_CS_ACC |= (1 << 10);
-
+    emu->x86.R_SS_ACC |= (1 << 10);
     /* maximize descriptor limits */
     emu->x86.R_CS_LIMIT =
     emu->x86.R_DS_LIMIT =
@@ -170,7 +175,7 @@ int emu_init(x86emu_t *emu, char *file)
     emu->x86.R_SS_LIMIT = ~0;
   }
 
-  if(!(f = fopen(file, "r"))) return 0;
+	if (!(f = fopen(file, "rb"))) return 0;
 
   while((i = fgetc(f)) != EOF) {
     x86emu_write_byte(emu, addr++, i);

@@ -35,6 +35,7 @@
 *
 ****************************************************************************/
 
+#define DLL_EXPORT                // Needed for cross platform portability 
 
 #include "include/x86emu_int.h"
 
@@ -718,7 +719,7 @@ static void x86emuOp2_rdtsc(x86emu_t *emu, u8 op2)
 {
   OP_DECODE("rdtsc");
 
-  emu->x86.R_EAX = emu->x86.R_TSC;
+  emu->x86.R_EAX = (u32) emu->x86.R_TSC;  // Visual Studio Warning C4244 requires cast (u32) 
   emu->x86.R_EDX = emu->x86.R_TSC >> 32;
 
   emu->x86.msr_perm[0x10] |= X86EMU_ACC_R;
