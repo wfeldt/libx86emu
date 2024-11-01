@@ -337,19 +337,21 @@ API_SYM void x86emu_log(x86emu_t *emu, const char *format, ...)
 
   if(!emu || !emu->log.ptr) return;
 
-  size = emu->log.size - (emu->log.ptr - emu->log.buf);
-
   va_start(args, format);
-  if(size > 0) {
-    size = vsnprintf(emu->log.ptr, size, format, args);
-    if(size > 0) {
-      emu->log.ptr += size;
-    }
-    else {
-      *emu->log.ptr = 0;
-    }
+  size = vsnprintf(emu->log.ptr, LOG_FREE(emu), format, args);
+  va_end(args);
+
+  if (emu->log.ptr + size > emu->log.buf + emu->log.size) {
+    x86emu_clear_log(emu, 1);
+    va_start(args, format);
+    size = vsnprintf(emu->log.ptr, emu->log.size, format, args);
+    va_end(args);
   }
-  va_end(args);  
+
+  if (size > 0)
+    emu->log.ptr += size;
+  if (emu->log.ptr > emu->log.buf + emu->log.size)
+    emu->log.ptr = emu->log.buf + emu->log.size;
 }
 
 
