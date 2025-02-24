@@ -1776,9 +1776,10 @@ u16 sbb_word(x86emu_t *emu, u16 d, u16 s)
     register u32 bc;
 
 	if (ACCESS_FLAG(F_CF))
-        res = d - s - 1;
-    else
-        res = d - s;
+		res = d - s - 1;
+	else
+		res = d - s;
+
 	CONDITIONAL_SET_FLAG(res & 0x8000, F_SF);
 	CONDITIONAL_SET_FLAG((res & 0xffff) == 0, F_ZF);
 	CONDITIONAL_SET_FLAG(PARITY(res & 0xff), F_PF);
@@ -1801,9 +1802,9 @@ u32 sbb_long(x86emu_t *emu, u32 d, u32 s)
 	register u32 bc;
 
 	if (ACCESS_FLAG(F_CF))
-        res = d - s - 1;
-    else
-        res = d - s;
+		res = d - s - 1;
+	else
+		res = d - s;
 	CONDITIONAL_SET_FLAG(res & 0x80000000, F_SF);
 	CONDITIONAL_SET_FLAG((res & 0xffffffff) == 0, F_ZF);
 	CONDITIONAL_SET_FLAG(PARITY(res & 0xff), F_PF);
