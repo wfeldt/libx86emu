@@ -1,5 +1,6 @@
-CC         = gcc
-CFLAGS     = -g -Wall -fomit-frame-pointer -O2
+SHELL      = /bin/sh
+CC         ?= gcc
+CFLAGS     ?= -g -Wall -fomit-frame-pointer -O2
 
 .PHONY: clean
 

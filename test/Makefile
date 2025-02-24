@@ -1,6 +1,6 @@
-CC         = gcc
-CFLAGS     = -g -Wall -fomit-frame-pointer -O2
-LDFLAGS    =
+SHELL      = /bin/sh
+CC         ?= gcc
+CFLAGS     ?= -g -Wall -fomit-frame-pointer -O2
 TST_FILES  = $(sort $(wildcard *.tst))
 INIT_FILES = $(addsuffix .init,$(basename $(wildcard *.tst)))
 RES_FILES  = $(sort $(addsuffix .result,$(basename $(wildcard *.tst))))
