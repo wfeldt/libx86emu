@@ -35,6 +35,14 @@
 #include "include/x86emu_int.h"
 #if defined(__i386__) || defined (__x86_64__)
 #include <sys/io.h>
+#else
+/* define some dummy macros; see also WITH_IOPL in x86emu_int.h */
+#define inb(addr) 0xff
+#define inw(addr) 0xffff
+#define inl(addr) 0xffffffff
+#define outb(val, addr)
+#define outw(val, addr)
+#define outl(val, addr)
 #endif
 
 #define PERM16(a)	((a) + ((a) << 8))
