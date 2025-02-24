@@ -333,23 +333,30 @@ API_SYM unsigned x86emu_clear_log(x86emu_t *emu, int flush)
 API_SYM void x86emu_log(x86emu_t *emu, const char *format, ...)
 {
   va_list args;
-  int size;
+  int size, log_free;
 
   if(!emu || !emu->log.ptr) return;
 
-  size = emu->log.size - (emu->log.ptr - emu->log.buf);
+  log_free = LOG_FREE(emu);
 
   va_start(args, format);
-  if(size > 0) {
-    size = vsnprintf(emu->log.ptr, size, format, args);
-    if(size > 0) {
-      emu->log.ptr += size;
-    }
-    else {
-      *emu->log.ptr = 0;
-    }
-  }
+  size = vsnprintf(emu->log.ptr, log_free, format, args);
   va_end(args);  
+
+  /* not enough space, free log and try again */
+  if(size >= log_free) {
+    log_free = x86emu_clear_log(emu, 1);
+    va_start(args, format);
+    size = vsnprintf(emu->log.ptr, log_free, format, args);
+    va_end(args);
+  }
+
+  if(size < log_free) {
+    emu->log.ptr += size;
+  }
+  else {
+    *emu->log.ptr = 0;
+  }
 }
 
 

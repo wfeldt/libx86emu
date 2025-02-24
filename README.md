@@ -119,6 +119,7 @@ Set log buffer
 
 If the log buffer is full, `flush()` is called (if not NULL). The buffer is freed in `x86emu_done()`.
 
+The log buffer must be larger than 1024 bytes.
 
 ### x86emu_log
 
@@ -131,9 +132,11 @@ Write to log
 
 Clear log
 
-  void x86emu_clear_log(x86emu_t *emu, int flush);
+  unsigned x86emu_clear_log(x86emu_t *emu, int flush);
 
 Clear log buffer. If flush != 0, write current log via flush() function (see x86emu_set_log()).
+
+Returns buffer size.
 
 ### x86emu_dump
 
