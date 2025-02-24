@@ -1364,6 +1364,7 @@ u32 decode_rm01_address(x86emu_t *emu, int rm)
         OP_DECODE("ebp");
         DECODE_HEX2S(displacement);
         OP_DECODE("]");
+        emu->x86.mode |= _MODE_SEG_DS_SS;
         return emu->x86.R_EBP + displacement;
 
       case 6:
