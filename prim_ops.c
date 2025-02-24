@@ -721,7 +721,7 @@ u32 or_long(x86emu_t *emu, u32 d, u32 s)
 
 /****************************************************************************
 REMARKS:
-Implements the OR instruction and side effects.
+Implements the NEG instruction and side effects.
 ****************************************************************************/
 u8 neg_byte(x86emu_t *emu, u8 s)
 {
@@ -746,7 +746,7 @@ u8 neg_byte(x86emu_t *emu, u8 s)
 
 /****************************************************************************
 REMARKS:
-Implements the OR instruction and side effects.
+Implements the NEG instruction and side effects.
 ****************************************************************************/
 u16 neg_word(x86emu_t *emu, u16 s)
 {
@@ -772,7 +772,7 @@ u16 neg_word(x86emu_t *emu, u16 s)
 
 /****************************************************************************
 REMARKS:
-Implements the OR instruction and side effects.
+Implements the NEG instruction and side effects.
 ****************************************************************************/
 u32 neg_long(x86emu_t *emu, u32 s)
 {
