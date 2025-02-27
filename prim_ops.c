@@ -1262,6 +1262,7 @@ u8 shl_byte(x86emu_t *emu, u8 d, u8 s)
 			CONDITIONAL_SET_FLAG((res & 0xff) == 0, F_ZF);
 			CONDITIONAL_SET_FLAG(res & 0x80, F_SF);
 			CONDITIONAL_SET_FLAG(PARITY(res & 0xff), F_PF);
+			CLEAR_FLAG(F_AF);
 		} else {
 			res = (u8) d;
 		}
@@ -1281,6 +1282,7 @@ u8 shl_byte(x86emu_t *emu, u8 d, u8 s)
 		CONDITIONAL_SET_FLAG((d << (s-1)) & 0x80, F_CF);
 		CLEAR_FLAG(F_OF);
 		CLEAR_FLAG(F_SF);
+		CLEAR_FLAG(F_AF);
 		SET_FLAG(F_PF);
 		SET_FLAG(F_ZF);
     }
@@ -1304,6 +1306,7 @@ u16 shl_word(x86emu_t *emu, u16 d, u8 s)
 			CONDITIONAL_SET_FLAG((res & 0xffff) == 0, F_ZF);
 			CONDITIONAL_SET_FLAG(res & 0x8000, F_SF);
 			CONDITIONAL_SET_FLAG(PARITY(res & 0xff), F_PF);
+			CLEAR_FLAG(F_AF);
 		} else {
 			res = (u16) d;
 		}
@@ -1321,6 +1324,7 @@ u16 shl_word(x86emu_t *emu, u16 d, u8 s)
 		CONDITIONAL_SET_FLAG((d << (s-1)) & 0x8000, F_CF);
 		CLEAR_FLAG(F_OF);
 		CLEAR_FLAG(F_SF);
+		CLEAR_FLAG(F_AF);
 		SET_FLAG(F_PF);
 		SET_FLAG(F_ZF);
 	}
@@ -1344,6 +1348,7 @@ u32 shl_long(x86emu_t *emu, u32 d, u8 s)
 			CONDITIONAL_SET_FLAG((res & 0xffffffff) == 0, F_ZF);
 			CONDITIONAL_SET_FLAG(res & 0x80000000, F_SF);
 			CONDITIONAL_SET_FLAG(PARITY(res & 0xff), F_PF);
+			CLEAR_FLAG(F_AF);
 		} else {
 			res = d;
 		}
@@ -1358,6 +1363,7 @@ u32 shl_long(x86emu_t *emu, u32 d, u8 s)
 		CONDITIONAL_SET_FLAG((d << (s-1)) & 0x80000000, F_CF);
 		CLEAR_FLAG(F_OF);
 		CLEAR_FLAG(F_SF);
+		CLEAR_FLAG(F_AF);
 		SET_FLAG(F_PF);
 		SET_FLAG(F_ZF);
 	}
