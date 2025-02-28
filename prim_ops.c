@@ -2517,6 +2517,22 @@ void push_long(x86emu_t *emu, u32 w)
 
 /****************************************************************************
 REMARKS:
+Pushes a 16-bit (segment) register onto the 32-bit data stack.
+****************************************************************************/
+void push_halflong(x86emu_t *emu, u16 w)
+{
+  if(MODE_STACK32) {
+    emu->x86.R_ESP -= 4;
+    store_data_word_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_ESP, w);
+  }
+  else {
+    emu->x86.R_SP -= 4;
+    store_data_word_abs(emu, emu->x86.seg + R_SS_INDEX, emu->x86.R_SP, w);
+  }
+}
+
+/****************************************************************************
+REMARKS:
 Pops a word from the stack.
 ****************************************************************************/
 u16 pop_word(x86emu_t *emu)

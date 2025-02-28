@@ -2,7 +2,7 @@
 ;           0   1   2   3   4   5   6   7   8   9   a   b   c   d   e   f
 00001000:  68  aa  aa  aa  aa  0e  e8  06  00  00  00  68  bb  bb  bb  bb
 00001010:  f4  ca  04  00  90  90  f4
-fffffff0:                  0b  00  00  00  00  01  00  00  bb  bb  bb  bb
+fffffff0:                  0b  00  00  00  00  01 *   *    bb  bb  bb  bb
 
 ; - - registers
 msr[0010]    0000000000000006 ; tsc
