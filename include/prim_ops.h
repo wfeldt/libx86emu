@@ -130,6 +130,7 @@ void    ins (x86emu_t *emu, int size);
 void    outs (x86emu_t *emu, int size);
 void    push_word (x86emu_t *emu, u16 w);
 void    push_long (x86emu_t *emu, u32 w);
+void    push_halflong (x86emu_t *emu, u16 w);
 u16     pop_word (x86emu_t *emu);
 u32     pop_long (x86emu_t *emu);
 int eval_condition(x86emu_t *emu, unsigned type);

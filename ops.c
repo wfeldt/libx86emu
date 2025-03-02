@@ -437,7 +437,7 @@ static void x86emuOp_push_ES(x86emu_t *emu, u8 op1)
   OP_DECODE("push es");
 
   if(MODE_DATA32) {
-    push_long(emu, emu->x86.R_ES);
+    push_halflong(emu, emu->x86.R_ES);
   }
   else {
     push_word(emu, emu->x86.R_ES);
@@ -464,7 +464,7 @@ static void x86emuOp_push_CS(x86emu_t *emu, u8 op1)
 {
   OP_DECODE("push cs");
   if(MODE_DATA32) {
-    push_long(emu, emu->x86.R_CS);
+    push_halflong(emu, emu->x86.R_CS);
   }
   else {
     push_word(emu, emu->x86.R_CS);
@@ -493,7 +493,7 @@ static void x86emuOp_push_SS(x86emu_t *emu, u8 op1)
   OP_DECODE("push ss");
 
   if(MODE_DATA32) {
-    push_long(emu, emu->x86.R_SS);
+    push_halflong(emu, emu->x86.R_SS);
   }
   else {
     push_word(emu, emu->x86.R_SS);
@@ -521,7 +521,7 @@ static void x86emuOp_push_DS(x86emu_t *emu, u8 op1)
   OP_DECODE("push ds");
 
   if(MODE_DATA32) {
-    push_long(emu, emu->x86.R_DS);
+    push_halflong(emu, emu->x86.R_DS);
   }
   else {
     push_word(emu, emu->x86.R_DS);
