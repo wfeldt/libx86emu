@@ -2311,19 +2311,19 @@ void ins(x86emu_t *emu, int size)
 
       switch(size) {
         case 1:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_byte(emu, emu->x86.R_DX));
             emu->x86.R_EDI += inc;
           }
           break;
         case 2:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_word(emu, emu->x86.R_DX));
             emu->x86.R_EDI += inc;
           }
           break;
         case 4:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, fetch_io_long(emu, emu->x86.R_DX));
             emu->x86.R_EDI += inc;
           }
@@ -2352,19 +2352,19 @@ void ins(x86emu_t *emu, int size)
 
       switch(size) {
         case 1:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_byte(emu, emu->x86.R_DX));
             emu->x86.R_DI += inc;
           }
           break;
         case 2:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_word(emu, emu->x86.R_DX));
             emu->x86.R_DI += inc;
           }
           break;
         case 4:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, fetch_io_long(emu, emu->x86.R_DX));
             emu->x86.R_DI += inc;
           }
@@ -2406,19 +2406,19 @@ void outs(x86emu_t *emu, int size)
    
       switch(size) {
         case 1:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_io_byte(emu, emu->x86.R_DX, fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
             emu->x86.R_ESI += inc;
           }
           break;
         case 2:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_io_word(emu, emu->x86.R_DX, fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
             emu->x86.R_ESI += inc;
           }
           break;
         case 4:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_io_long(emu, emu->x86.R_DX, fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_ESI));
             emu->x86.R_ESI += inc;
           }
@@ -2447,19 +2447,19 @@ void outs(x86emu_t *emu, int size)
    
       switch(size) {
         case 1:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_io_byte(emu, emu->x86.R_DX, fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
             emu->x86.R_SI += inc;
           }
           break;
         case 2:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_io_word(emu, emu->x86.R_DX, fetch_data_word_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
             emu->x86.R_SI += inc;
           }
           break;
         case 4:
-          while(count--) {
+          while(!MODE_HALTED && count--) {
             store_io_long(emu, emu->x86.R_DX, fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_SI));
             emu->x86.R_SI += inc;
           }

@@ -2599,7 +2599,7 @@ static void x86emuOp_movs_byte(x86emu_t *emu, u8 op1)
       emu->x86.R_ECX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       val = fetch_data_byte(emu, emu->x86.R_ESI);
       store_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, val);
       emu->x86.R_ESI += inc;
@@ -2617,7 +2617,7 @@ static void x86emuOp_movs_byte(x86emu_t *emu, u8 op1)
       emu->x86.R_CX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       val = fetch_data_byte(emu, emu->x86.R_SI);
       store_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, val);
       emu->x86.R_SI += inc;
@@ -2657,7 +2657,7 @@ static void x86emuOp_movs_word(x86emu_t *emu, u8 op1)
       emu->x86.R_ECX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       if(MODE_DATA32) {
         val = fetch_data_long(emu, emu->x86.R_ESI);
         store_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, val);
@@ -2678,7 +2678,7 @@ static void x86emuOp_movs_word(x86emu_t *emu, u8 op1)
       emu->x86.R_CX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       if(MODE_DATA32) {
         val = fetch_data_long(emu, emu->x86.R_SI);
         store_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, val);
@@ -2713,7 +2713,7 @@ static void x86emuOp_cmps_byte(x86emu_t *emu, u8 op1)
     OP_DECODE("cmpsb");
 
     if(MODE_REP) {
-      while(emu->x86.R_ECX) {
+      while(!MODE_HALTED && emu->x86.R_ECX) {
         val1 = fetch_data_byte(emu, emu->x86.R_ESI);
         val2 = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
         cmp_byte(emu, val1, val2);
@@ -2736,7 +2736,7 @@ static void x86emuOp_cmps_byte(x86emu_t *emu, u8 op1)
     OP_DECODE("cmpsb");
 
     if(MODE_REP) {
-      while(emu->x86.R_CX) {
+      while(!MODE_HALTED && emu->x86.R_CX) {
         val1 = fetch_data_byte(emu, emu->x86.R_SI);
         val2 = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
         cmp_byte(emu, val1, val2);
@@ -2784,7 +2784,7 @@ static void x86emuOp_cmps_word(x86emu_t *emu, u8 op1)
 
   if(MODE_ADDR32) {
     if(MODE_REP) {
-      while(emu->x86.R_ECX) {
+      while(!MODE_HALTED && emu->x86.R_ECX) {
         if(MODE_DATA32) {
           val1 = fetch_data_long(emu, emu->x86.R_ESI);
           val2 = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
@@ -2818,7 +2818,7 @@ static void x86emuOp_cmps_word(x86emu_t *emu, u8 op1)
   }
   else {
     if(MODE_REP) {
-      while(emu->x86.R_CX) {
+      while(!MODE_HALTED && emu->x86.R_CX) {
         if(MODE_DATA32) {
           val1 = fetch_data_long(emu, emu->x86.R_SI);
           val2 = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
@@ -2915,7 +2915,7 @@ static void x86emuOp_stos_byte(x86emu_t *emu, u8 op1)
       emu->x86.R_ECX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       store_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, val);
       emu->x86.R_EDI += inc;
     }
@@ -2929,7 +2929,7 @@ static void x86emuOp_stos_byte(x86emu_t *emu, u8 op1)
       emu->x86.R_CX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       store_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, val);
       emu->x86.R_DI += inc;
     }
@@ -2968,7 +2968,7 @@ static void x86emuOp_stos_word(x86emu_t *emu, u8 op1)
       emu->x86.R_ECX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       if(MODE_DATA32) {
         store_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI, val);
       }
@@ -2984,7 +2984,7 @@ static void x86emuOp_stos_word(x86emu_t *emu, u8 op1)
       emu->x86.R_CX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       if(MODE_DATA32) {
         store_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI, val);
       }
@@ -3019,7 +3019,7 @@ static void x86emuOp_lods_byte(x86emu_t *emu, u8 op1)
       emu->x86.R_ECX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       emu->x86.R_AL = fetch_data_byte(emu, emu->x86.R_ESI);
       emu->x86.R_ESI += inc;
     }
@@ -3033,7 +3033,7 @@ static void x86emuOp_lods_byte(x86emu_t *emu, u8 op1)
       emu->x86.R_CX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       emu->x86.R_AL = fetch_data_byte(emu, emu->x86.R_SI);
       emu->x86.R_SI += inc;
     }
@@ -3071,7 +3071,7 @@ static void x86emuOp_lods_word(x86emu_t *emu, u8 op1)
       emu->x86.R_ECX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       if(MODE_DATA32) {
         emu->x86.R_EAX = fetch_data_long(emu, emu->x86.R_ESI);
       }
@@ -3087,7 +3087,7 @@ static void x86emuOp_lods_word(x86emu_t *emu, u8 op1)
       emu->x86.R_CX = 0;
     }
 
-    while(count--) {
+    while(!MODE_HALTED && count--) {
       if(MODE_DATA32) {
         emu->x86.R_EAX = fetch_data_long(emu, emu->x86.R_SI);
       }
@@ -3119,7 +3119,7 @@ static void x86emuOp_scas_byte(x86emu_t *emu, u8 op1)
     OP_DECODE("scasb");
 
     if(MODE_REP) {
-      while(emu->x86.R_ECX) {
+      while(!MODE_HALTED && emu->x86.R_ECX) {
         val = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
         cmp_byte(emu, emu->x86.R_AL, val);
         emu->x86.R_ECX--;
@@ -3138,7 +3138,7 @@ static void x86emuOp_scas_byte(x86emu_t *emu, u8 op1)
     OP_DECODE("scasb");
 
     if(MODE_REP) {
-      while(emu->x86.R_CX) {
+      while(!MODE_HALTED && emu->x86.R_CX) {
         val = fetch_data_byte_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
         cmp_byte(emu, emu->x86.R_AL, val);
         emu->x86.R_CX--;
@@ -3182,7 +3182,7 @@ static void x86emuOp_scas_word(x86emu_t *emu, u8 op1)
 
   if(MODE_ADDR32) {
     if(MODE_REP) {
-      while(emu->x86.R_ECX) {
+      while(!MODE_HALTED && emu->x86.R_ECX) {
         if(MODE_DATA32) {
           val = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_EDI);
           cmp_long(emu, emu->x86.R_EAX, val);
@@ -3210,7 +3210,7 @@ static void x86emuOp_scas_word(x86emu_t *emu, u8 op1)
   }
   else {
     if(MODE_REP) {
-      while(emu->x86.R_CX) {
+      while(!MODE_HALTED && emu->x86.R_CX) {
         if(MODE_DATA32) {
           val = fetch_data_long_abs(emu, emu->x86.seg + R_ES_INDEX, emu->x86.R_DI);
           cmp_long(emu, emu->x86.R_EAX, val);

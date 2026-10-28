@@ -29,3 +29,14 @@ x86test: x86test.c
 clean:
 	rm -f *~ *.o x86test *.init *.result *.log
 
+
+.PHONY: check-rep-stop clean-rep_stop
+check-rep-stop: rep_stop
+	./rep_stop
+
+rep_stop: rep_stop.c ../api.c ../mem.c ../decode.c ../ops.c ../ops2.c ../prim_ops.c $(wildcard ../include/*.h)
+	$(CC) $(CFLAGS) -I../include $(filter %.c,$^) -o $@ $(LDFLAGS)
+
+clean: clean-rep_stop
+clean-rep_stop:
+	rm -f rep_stop
