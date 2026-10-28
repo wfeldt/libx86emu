@@ -46,6 +46,12 @@ extern "C" {            			/* Use "C" linkage when in C++ mode */
 
 #include <stdint.h>
 
+/* Keep register layout and memory access in sync on cross compilers. */
+#if !defined(__BIG_ENDIAN__) && defined(__BYTE_ORDER__) && \
+    defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define __BIG_ENDIAN__ 1
+#endif
+
 
 /*---------------------- Macros and type definitions ----------------------*/
 

@@ -29,3 +29,14 @@ x86test: x86test.c
 clean:
 	rm -f *~ *.o x86test *.init *.result *.log
 
+
+.PHONY: check-register-layout clean-register_layout
+check-register-layout: register_layout
+	./register_layout
+
+register_layout: register_layout.c ../api.c ../mem.c ../decode.c ../ops.c ../ops2.c ../prim_ops.c $(wildcard ../include/*.h)
+	$(CC) $(CFLAGS) -I../include $(filter %.c,$^) -o $@ $(LDFLAGS)
+
+clean: clean-register_layout
+clean-register_layout:
+	rm -f register_layout
