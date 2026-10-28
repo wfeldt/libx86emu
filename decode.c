@@ -134,7 +134,7 @@ API_SYM unsigned x86emu_run(x86emu_t *emu, unsigned flags)
 
     /* handle prefixes here */
     has_prefix = 1;
-    while(has_prefix) {
+    while(has_prefix && !MODE_HALTED) {
       switch(op1 = fetch_byte(emu)) {
         case 0x26:
           memcpy(emu->x86.decode_seg, "es:[", 4);
@@ -368,6 +368,12 @@ u8 fetch_byte(x86emu_t *emu)
   u32 val;
   unsigned err;
 
+  if(emu->x86.instr_len > 15 - 1) {
+    INTR_RAISE_GP(emu, 0);
+    x86emu_stop(emu);
+    return 0;
+  }
+
   err = decode_memio(emu, emu->x86.R_CS_BASE + emu->x86.R_EIP, &val, X86EMU_MEMIO_8 + X86EMU_MEMIO_X);
 
   if(err) x86emu_stop(emu);
@@ -398,6 +404,12 @@ u16 fetch_word(x86emu_t *emu)
 {
   u32 val;
   unsigned err;
+
+  if(emu->x86.instr_len > 15 - 2) {
+    INTR_RAISE_GP(emu, 0);
+    x86emu_stop(emu);
+    return 0;
+  }
 
   err = decode_memio(emu, emu->x86.R_CS_BASE + emu->x86.R_EIP, &val, X86EMU_MEMIO_16 + X86EMU_MEMIO_X);
 
@@ -430,6 +442,12 @@ u32 fetch_long(x86emu_t *emu)
 {
   u32 val;
   unsigned err;
+
+  if(emu->x86.instr_len > 15 - 4) {
+    INTR_RAISE_GP(emu, 0);
+    x86emu_stop(emu);
+    return 0;
+  }
 
   err = decode_memio(emu, emu->x86.R_CS_BASE + emu->x86.R_EIP, &val, X86EMU_MEMIO_32 + X86EMU_MEMIO_X);
 

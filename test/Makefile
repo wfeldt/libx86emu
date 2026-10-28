@@ -29,3 +29,14 @@ x86test: x86test.c
 clean:
 	rm -f *~ *.o x86test *.init *.result *.log
 
+
+.PHONY: check-instruction-length clean-instruction_length
+check-instruction-length: instruction_length
+	./instruction_length
+
+instruction_length: instruction_length.c ../api.c ../mem.c ../decode.c ../ops.c ../ops2.c ../prim_ops.c $(wildcard ../include/*.h)
+	$(CC) $(CFLAGS) -I../include $(filter %.c,$^) -o $@ $(LDFLAGS)
+
+clean: clean-instruction_length
+clean-instruction_length:
+	rm -f instruction_length
